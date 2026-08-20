@@ -1,0 +1,2 @@
+@media(max-width:1250px){.vehicle-facts{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.vehicle-facts{grid-template-columns:1fr}.damage-history article{grid-template-columns:56px 1fr}.damage-history article>img,.damage-history article>span{width:56px;height:56px}}

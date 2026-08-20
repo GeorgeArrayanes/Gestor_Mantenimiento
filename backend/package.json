@@ -1,0 +1,32 @@
+{
+  "name": "rutasegura-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "db:migrate": "node src/scripts/migrate.js",
+    "db:seed": "node src/scripts/seed.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "bcryptjs": "^3.0.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.1",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "zod": "^4.1.8"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10",
+    "pg-mem": "^3.0.5",
+    "supertest": "^7.1.4",
+    "vitest": "^3.2.4"
+  }
+}
