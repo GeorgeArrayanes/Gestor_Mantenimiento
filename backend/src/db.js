@@ -1,5 +1,4 @@
 import pg from 'pg';
-import { newDb } from 'pg-mem';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from './config.js';
@@ -7,6 +6,7 @@ import { config } from './config.js';
 let sharedPool;
 
 export async function createMemoryPool() {
+  const { newDb } = await import('pg-mem');
   const memory = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memory.adapters.createPg();
   const pool = new adapter.Pool();
