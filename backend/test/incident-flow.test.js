@@ -36,6 +36,19 @@ describe('autenticación y autorización', () => {
     expect(response.body.user.password_hash).toBeUndefined();
   });
 
+  it('permite enviar la cookie de sesión entre los dominios de producción', async () => {
+    config.nodeEnv = 'production';
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ username: 'admin@rutasegura.test', password: 'RutaSegura2026!' })
+      .expect(200);
+    config.nodeEnv = 'test';
+
+    expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
+    expect(response.headers['set-cookie'][0]).toContain('Secure');
+    expect(response.headers['set-cookie'][0]).toContain('SameSite=None');
+  });
+
   it('impide que un conductor use recursos administrativos', async () => {
     await login(driver, 'carlos@rutasegura.test');
     await driver.get('/api/users?role=CONDUCTOR').expect(403);

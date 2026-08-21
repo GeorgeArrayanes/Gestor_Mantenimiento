@@ -9,6 +9,15 @@ import { asyncHandler } from '../utils/async-handler.js';
 const router = Router();
 const loginSchema = z.object({ username: z.string().trim().min(3), password: z.string().min(6) });
 
+function sessionCookieOptions() {
+  const production = config.nodeEnv === 'production';
+  return {
+    httpOnly: true,
+    secure: production,
+    sameSite: production ? 'none' : 'lax'
+  };
+}
+
 function publicUser(user) {
   const { password_hash, ...safe } = user;
   return safe;
@@ -24,16 +33,14 @@ router.post('/login', asyncHandler(async (req, res) => {
   }
   const token = jwt.sign({ id: user.id, name: user.name, role: user.role }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
   res.cookie('rutasegura_token', token, {
-    httpOnly: true,
-    secure: config.nodeEnv === 'production',
-    sameSite: 'lax',
+    ...sessionCookieOptions(),
     maxAge: 8 * 60 * 60 * 1000
   });
   res.json({ user: publicUser(user) });
 }));
 
 router.post('/logout', (req, res) => {
-  res.clearCookie('rutasegura_token', { httpOnly: true, sameSite: 'lax', secure: config.nodeEnv === 'production' });
+  res.clearCookie('rutasegura_token', sessionCookieOptions());
   res.json({ message: 'Sesión cerrada.' });
 });
 
