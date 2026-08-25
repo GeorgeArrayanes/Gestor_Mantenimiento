@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ArrowRight, BusFront, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
+import logo from "../img/b1df3d2e-30b9-49e5-b316-773184b30cb2.png";
 
 export default function LoginPage() {
   const { user, login } = useAuth();
@@ -32,22 +33,16 @@ export default function LoginPage() {
       <div className="login-card">
       <section className="login-visual">
         <div className="login-brand">
-          <span>
-            <ShieldCheck />
-          </span>
-          <strong>RutaSegura</strong>
+          <img src={logo} alt="Gestor Rutas" className="login-logo" />
         </div>
         <div className="login-message">
-          <span className="login-icon">
-            <BusFront />
-          </span>
-          <h1>Cada ruta comienza con un bus seguro.</h1>
-          <p>
+          <p className="login-product"><strong>Gestor Rutas</strong></p>
+          <h2>
             Gestiona novedades, reparaciones y evidencias de tu flota escolar en
             un solo lugar.
-          </p>
+          </h2>
         </div>
-        <small>Colegio San Martín · Operaciones 2026</small>
+        <small>Gimnasio Los Arrayanes Bilingüe · 2026</small>
       </section>
       <section className="login-panel">
         <form onSubmit={submit} className="login-form">
@@ -56,7 +51,7 @@ export default function LoginPage() {
             <h2>Inicia sesión</h2>
             <p>Ingresa con tu cuenta administrativa o de conductor.</p>
           </div>
-          {error && <div className="form-error">{error}</div>}
+          {error && <div className="form-error" role="alert">{error}</div>}
           <label>
             Correo o usuario
             <input
@@ -79,7 +74,8 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShow(!show)}
-                aria-label="Mostrar contraseña"
+                aria-label={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+                aria-pressed={show}
               >
                 {show ? <EyeOff /> : <Eye />}
               </button>
@@ -90,35 +86,10 @@ export default function LoginPage() {
               "Ingresando…"
             ) : (
               <>
-                Entrar a RutaSegura <ArrowRight />
+                Entrar a Gestor Rutas <ArrowRight />
               </>
             )}
           </button>
-          <div className="demo-accounts">
-            <strong>Cuentas de demostración</strong>
-            <button
-              type="button"
-              onClick={() =>
-                setForm({
-                  username: "admin@rutasegura.test",
-                  password: "RutaSegura2026!",
-                })
-              }
-            >
-              Administrador
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                setForm({
-                  username: "carlos@rutasegura.test",
-                  password: "RutaSegura2026!",
-                })
-              }
-            >
-              Conductor
-            </button>
-          </div>
         </form>
       </section>
       </div>
