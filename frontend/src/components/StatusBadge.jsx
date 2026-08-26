@@ -3,7 +3,8 @@ import React from 'react';
 const labels = {
   REPORTADO: 'Reportado', EN_PROCESO: 'En proceso', PENDIENTE_VALIDACION: 'Por validar',
   REQUIERE_CORRECCION: 'Requiere corrección', RESUELTO: 'Resuelto',
-  OPERATIVO: 'Operativo', CON_NOVEDADES: 'Con novedades', EN_MANTENIMIENTO: 'En mantenimiento', FUERA_DE_SERVICIO: 'Fuera de servicio'
+  OPERATIVO: 'Operativo', CON_NOVEDADES: 'Con novedades', EN_MANTENIMIENTO: 'En mantenimiento', FUERA_DE_SERVICIO: 'Fuera de servicio',
+  ACTIVO: 'Activo', INACTIVO: 'Inactivo'
 };
 
 export default function StatusBadge({ value, urgency = false }) {

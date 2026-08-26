@@ -11,5 +11,8 @@ describe('StatusBadge', () => {
     const urgency = renderToStaticMarkup(<StatusBadge value="ALTA" urgency />);
     expect(urgency).toContain('urgency-ALTA');
     expect(urgency).toContain('ALTA');
+    const account = renderToStaticMarkup(<StatusBadge value="INACTIVO" />);
+    expect(account).toContain('status-INACTIVO');
+    expect(account).toContain('Inactivo');
   });
 });

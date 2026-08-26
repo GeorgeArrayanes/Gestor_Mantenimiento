@@ -5,6 +5,7 @@ import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { config } from '../config.js';
 import { resolveFileUrl, saveFile } from '../services/storage.js';
+import { assertActiveDriver, assertBusDriverCanChange } from '../services/driver-assignment.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxFileSize, files: 1 } });
@@ -44,20 +45,46 @@ router.post('/', requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const parsed = busSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Revisa los datos obligatorios del bus.' });
   const d = parsed.data;
-  const { rows } = await req.app.locals.db.query(`INSERT INTO buses(reference,plate,brand,model,route,capacity,current_status,driver_id)
-    VALUES($1,UPPER($2),$3,$4,$5,$6,$7,$8) RETURNING *`, [d.reference,d.plate,d.brand,d.model,d.route||null,d.capacity,d.current_status,d.driver_id||null]);
-  res.status(201).json({ bus: rows[0] });
+  const client = await req.app.locals.db.connect();
+  try {
+    await client.query('BEGIN');
+    await assertActiveDriver(client, d.driver_id, { lock: true });
+    const { rows } = await client.query(`INSERT INTO buses(reference,plate,brand,model,route,capacity,current_status,driver_id)
+      VALUES($1,UPPER($2),$3,$4,$5,$6,$7,$8) RETURNING *`, [d.reference,d.plate,d.brand,d.model,d.route||null,d.capacity,d.current_status,d.driver_id||null]);
+    await client.query('COMMIT');
+    res.status(201).json({ bus: rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }));
 
 router.patch('/:id', requireRole('ADMIN'), asyncHandler(async (req, res) => {
   const parsed = busSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Datos del bus inválidos.' });
-  const current = await req.app.locals.db.query('SELECT * FROM buses WHERE id=$1', [req.params.id]);
-  if (!current.rows[0]) return res.status(404).json({ message: 'Bus inexistente.' });
-  const d = { ...current.rows[0], ...parsed.data };
-  const { rows } = await req.app.locals.db.query(`UPDATE buses SET reference=$1,plate=UPPER($2),brand=$3,model=$4,route=$5,capacity=$6,current_status=$7,driver_id=$8,updated_at=NOW() WHERE id=$9 RETURNING *`,
-    [d.reference,d.plate,d.brand,d.model,d.route||null,d.capacity,d.current_status,d.driver_id||null,req.params.id]);
-  res.json({ bus: rows[0] });
+  const client = await req.app.locals.db.connect();
+  try {
+    await client.query('BEGIN');
+    const current = await client.query('SELECT * FROM buses WHERE id=$1 FOR UPDATE', [req.params.id]);
+    if (!current.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Bus inexistente.' });
+    }
+    const d = { ...current.rows[0], ...parsed.data };
+    await assertActiveDriver(client, d.driver_id, { lock: true });
+    await assertBusDriverCanChange(client, current.rows[0].id, current.rows[0].driver_id, d.driver_id);
+    const { rows } = await client.query(`UPDATE buses SET reference=$1,plate=UPPER($2),brand=$3,model=$4,route=$5,capacity=$6,current_status=$7,driver_id=$8,updated_at=NOW() WHERE id=$9 RETURNING *`,
+      [d.reference,d.plate,d.brand,d.model,d.route||null,d.capacity,d.current_status,d.driver_id||null,req.params.id]);
+    await client.query('COMMIT');
+    res.json({ bus: rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }));
 
 router.post('/:id/preexisting-damages', requireRole('ADMIN'), upload.single('file'), asyncHandler(async (req, res) => {

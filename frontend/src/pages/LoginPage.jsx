@@ -5,15 +5,16 @@ import { useAuth } from "../context/AuthContext.jsx";
 import logo from "../img/b1df3d2e-30b9-49e5-b316-773184b30cb2.png";
 
 export default function LoginPage() {
-  const { user, login } = useAuth();
+  const { user, loading, login } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    username: "admin@rutasegura.test",
-    password: "RutaSegura2026!",
+    username: "",
+    password: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [show, setShow] = useState(false);
+  if (loading) return <div className="boot-screen" role="status">Comprobando sesión…</div>;
   if (user) return <Navigate to="/" replace />;
   async function submit(e) {
     e.preventDefault();
@@ -33,14 +34,14 @@ export default function LoginPage() {
       <div className="login-card">
       <section className="login-visual">
         <div className="login-brand">
-          <img src={logo} alt="Gestor Rutas" className="login-logo" />
+          <img src={logo} alt="" className="login-logo" />
         </div>
         <div className="login-message">
           <p className="login-product"><strong>Gestor Rutas</strong></p>
-          <h2>
+          <p className="login-hero-title">
             Gestiona novedades, reparaciones y evidencias de tu flota escolar en
             un solo lugar.
-          </h2>
+          </p>
         </div>
         <small>Gimnasio Los Arrayanes Bilingüe · 2026</small>
       </section>
@@ -48,7 +49,7 @@ export default function LoginPage() {
         <form onSubmit={submit} className="login-form">
           <div>
             <p className="eyebrow">Bienvenido</p>
-            <h2>Inicia sesión</h2>
+            <h1>Inicia sesión</h1>
             <p>Ingresa con tu cuenta administrativa o de conductor.</p>
           </div>
           {error && <div className="form-error" role="alert">{error}</div>}

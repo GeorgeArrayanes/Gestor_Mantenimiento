@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
+import { assertDriverCanBeInactivated } from '../services/driver-assignment.js';
 
 const router = Router();
 router.use(requireRole('ADMIN'));
@@ -41,14 +42,32 @@ router.post('/', asyncHandler(async (req, res) => {
 router.patch('/:id', asyncHandler(async (req, res) => {
   const parsed = userSchema.partial().safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Datos de usuario inválidos.' });
-  const current = await req.app.locals.db.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
-  if (!current.rows[0]) return res.status(404).json({ message: 'Usuario inexistente.' });
-  const data = { ...current.rows[0], ...parsed.data };
-  const passwordHash = parsed.data.password ? await bcrypt.hash(parsed.data.password, 12) : current.rows[0].password_hash;
-  const { rows } = await req.app.locals.db.query(`UPDATE users SET name=$1, identification=$2, username=$3, phone=$4, status=$5, password_hash=$6, updated_at=NOW()
-    WHERE id=$7 RETURNING id,name,identification,username,phone,role,status,created_at,updated_at`,
-    [data.name, data.identification, data.username, data.phone || null, data.status, passwordHash, req.params.id]);
-  res.json({ user: rows[0] });
+  const client = await req.app.locals.db.connect();
+  try {
+    await client.query('BEGIN');
+    // Mantiene el mismo orden de bloqueo que la asignación de buses: bus y luego usuario.
+    await client.query('SELECT id FROM buses WHERE driver_id=$1 FOR UPDATE', [req.params.id]);
+    const current = await client.query('SELECT * FROM users WHERE id = $1 FOR UPDATE', [req.params.id]);
+    if (!current.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ message: 'Usuario inexistente.' });
+    }
+    if (current.rows[0].role === 'CONDUCTOR' && current.rows[0].status === 'ACTIVO' && parsed.data.status === 'INACTIVO') {
+      await assertDriverCanBeInactivated(client, current.rows[0].id);
+    }
+    const data = { ...current.rows[0], ...parsed.data };
+    const passwordHash = parsed.data.password ? await bcrypt.hash(parsed.data.password, 12) : current.rows[0].password_hash;
+    const { rows } = await client.query(`UPDATE users SET name=$1, identification=$2, username=$3, phone=$4, status=$5, password_hash=$6, updated_at=NOW()
+      WHERE id=$7 RETURNING id,name,identification,username,phone,role,status,created_at,updated_at`,
+      [data.name, data.identification, data.username, data.phone || null, data.status, passwordHash, req.params.id]);
+    await client.query('COMMIT');
+    res.json({ user: rows[0] });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }));
 
 export default router;

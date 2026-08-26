@@ -4,8 +4,11 @@ import { asyncHandler } from '../utils/async-handler.js';
 const router = Router();
 
 router.get('/', asyncHandler(async (req, res) => {
-  const { rows } = await req.app.locals.db.query('SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50', [req.user.id]);
-  res.json({ notifications: rows, unread: rows.filter((item) => !item.is_read).length });
+  const [items, unread] = await Promise.all([
+    req.app.locals.db.query('SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50', [req.user.id]),
+    req.app.locals.db.query('SELECT COUNT(*)::int AS total FROM notifications WHERE user_id=$1 AND is_read=FALSE', [req.user.id]),
+  ]);
+  res.json({ notifications: items.rows, unread: unread.rows[0]?.total || 0 });
 }));
 
 router.patch('/:id/read', asyncHandler(async (req, res) => {

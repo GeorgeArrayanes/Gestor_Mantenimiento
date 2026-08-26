@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { resolveFileUrl, saveFile } from '../services/storage.js';
 import { assertTransition, eventNames } from '../services/incident-service.js';
 import { externalNotifications } from '../services/external-notifications.js';
+import { assertActiveDriver } from '../services/driver-assignment.js';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxFileSize, files: 5 } });
@@ -64,10 +65,11 @@ router.post('/', requireRole('ADMIN'), upload.array('files', 5), asyncHandler(as
   const client = await req.app.locals.db.connect();
   try {
     await client.query('BEGIN');
-    const busResult = await client.query('SELECT * FROM buses WHERE id=$1', [parsed.data.bus_id]);
+    const busResult = await client.query('SELECT * FROM buses WHERE id=$1 FOR UPDATE', [parsed.data.bus_id]);
     const bus = busResult.rows[0];
     if (!bus) { const e = new Error('Bus inexistente.'); e.status = 404; throw e; }
     if (!bus.driver_id) { const e = new Error('Asigna un conductor al bus antes de crear la novedad.'); e.status = 409; throw e; }
+    await assertActiveDriver(client, bus.driver_id, { lock: true });
     const d = parsed.data;
     const created = await client.query(`INSERT INTO incidents(bus_id,reported_by,responsible_driver_id,damage_type,other_damage_type,description,urgency)
       VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`, [d.bus_id,req.user.id,bus.driver_id,d.damage_type,d.damage_type==='OTRO'?d.other_damage_type:null,d.description,d.urgency]);
@@ -78,7 +80,8 @@ router.post('/', requireRole('ADMIN'), upload.array('files', 5), asyncHandler(as
     }
     await client.query(`INSERT INTO incident_history(incident_id,user_id,event_type,new_status,comment) VALUES($1,$2,'NOVEDAD_CREADA','REPORTADO',$3)`, [incident.id,req.user.id,d.description]);
     await client.query(`INSERT INTO notifications(user_id,message,type,reference_url) VALUES($1,$2,'NUEVA_NOVEDAD',$3)`, [bus.driver_id,`Nueva novedad asignada a ${bus.reference}.`,`/novedades/${incident.id}`]);
-    await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW() WHERE id=$1`, [bus.id]);
+    await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW()
+      WHERE id=$1 AND current_status='OPERATIVO'`, [bus.id]);
     await client.query('COMMIT');
     await externalNotifications.sendIncidentAssigned({ incident, bus });
     res.status(201).json({ incident: await getIncident(req.app.locals.db, incident.id) });
@@ -151,7 +154,8 @@ router.post('/:id/:action', asyncHandler(async (req, res) => {
     }
     if (action === 'approve') {
       const open = await client.query(`SELECT 1 FROM incidents WHERE bus_id=$1 AND id<>$2 AND status<>'RESUELTO' LIMIT 1`, [incident.bus_id,incident.id]);
-      if (!open.rowCount) await client.query(`UPDATE buses SET current_status='OPERATIVO',updated_at=NOW() WHERE id=$1`, [incident.bus_id]);
+      if (!open.rowCount) await client.query(`UPDATE buses SET current_status='OPERATIVO',updated_at=NOW()
+        WHERE id=$1 AND current_status='CON_NOVEDADES'`, [incident.bus_id]);
     }
     await client.query('COMMIT');
     res.json({ incident: await getIncident(req.app.locals.db, incident.id) });
