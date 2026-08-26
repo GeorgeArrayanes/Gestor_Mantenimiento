@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_URL = import.meta.env.VITE_API_URL
+  || (import.meta.env.PROD ? 'https://gestor-danos-rutas.onrender.com/api' : '/api');
 
 const unauthorizedListeners = new Set();
 
