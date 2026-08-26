@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileImage, Send, UploadCloud, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
 
 const damageTypes = [
@@ -20,9 +20,10 @@ const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "applicatio
 
 export default function ReportIncidentPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [buses, setBuses] = useState([]);
   const [form, setForm] = useState({
-    bus_id: "",
+    bus_id: searchParams.get("bus_id") || "",
     damage_type: "",
     other_damage_type: "",
     urgency: "",

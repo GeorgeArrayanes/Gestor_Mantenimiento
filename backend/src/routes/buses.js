@@ -36,9 +36,19 @@ router.get('/:id', asyncHandler(async (req, res) => {
   const bus = rows[0];
   if (!bus) return res.status(404).json({ message: 'Bus inexistente.' });
   if (req.user.role === 'CONDUCTOR' && bus.driver_id !== req.user.id) return res.status(403).json({ message: 'No tienes acceso a este bus.' });
-  const damages = await req.app.locals.db.query(`SELECT p.*,u.name AS registered_by_name FROM preexisting_damages p JOIN users u ON u.id=p.registered_by WHERE p.bus_id=$1 ORDER BY p.damage_date DESC`, [bus.id]);
+  const [damages, summary, recent] = await Promise.all([
+    req.app.locals.db.query(`SELECT p.*,u.name AS registered_by_name FROM preexisting_damages p JOIN users u ON u.id=p.registered_by WHERE p.bus_id=$1 ORDER BY p.damage_date DESC`, [bus.id]),
+    req.app.locals.db.query(`SELECT
+      COUNT(*)::int AS total,
+      COUNT(*) FILTER (WHERE status <> 'RESUELTO')::int AS active,
+      COUNT(*) FILTER (WHERE status = 'RESUELTO')::int AS resolved,
+      MAX(reported_at) AS last_reported_at
+      FROM incidents WHERE bus_id=$1`, [bus.id]),
+    req.app.locals.db.query(`SELECT id,damage_type,other_damage_type,status,urgency,reported_at
+      FROM incidents WHERE bus_id=$1 ORDER BY reported_at DESC LIMIT 4`, [bus.id])
+  ]);
   const preexistingDamages = await Promise.all(damages.rows.map(async (item) => ({ ...item, file_url: await resolveFileUrl(item.file_url) })));
-  res.json({ bus, preexistingDamages });
+  res.json({ bus, preexistingDamages, incidentSummary: summary.rows[0], recentIncidents: recent.rows });
 }));
 
 router.post('/', requireRole('ADMIN'), asyncHandler(async (req, res) => {

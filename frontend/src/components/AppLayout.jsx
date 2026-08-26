@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BusFront, ClipboardList, LayoutDashboard, LogOut, Menu, Users, Bell, X, PlusCircle } from 'lucide-react';
+import { Bell, BusFront, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PlusCircle, Users, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { api } from '../api.js';
 import logo from '../img/b1df3d2e-30b9-49e5-b316-773184b30cb2.png';
@@ -8,6 +8,10 @@ import logo from '../img/b1df3d2e-30b9-49e5-b316-773184b30cb2.png';
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.localStorage.getItem('gestor-rutas-sidebar-collapsed') === 'true';
+  });
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 920px)').matches);
   const [unread, setUnread] = useState(0);
   const drawerRef = useRef(null);
@@ -38,6 +42,9 @@ export default function AppLayout() {
     };
   }, []);
   useEffect(() => { openRef.current = false; setOpen(false); }, [location.pathname]);
+  useEffect(() => {
+    window.localStorage.setItem('gestor-rutas-sidebar-collapsed', String(collapsed));
+  }, [collapsed]);
   useEffect(() => {
     if (!open || !isMobile) return undefined;
     const previousOverflow = document.body.style.overflow;
@@ -89,15 +96,21 @@ export default function AppLayout() {
   ] : [['/', 'Mi resumen', LayoutDashboard], ['/novedades', 'Mis novedades', ClipboardList], ['/buses', 'Mi bus', BusFront]];
   const section = location.pathname.startsWith('/novedades') ? 'Novedades' : location.pathname.startsWith('/buses') ? 'Flota' : location.pathname.startsWith('/conductores') ? 'Conductores' : location.pathname.startsWith('/reportar') ? 'Nuevo reporte' : location.pathname.startsWith('/notificaciones') ? 'Notificaciones' : 'Dashboard';
   async function signOut() { await logout(); navigate('/login'); }
-  return <div className="app-shell">
+  const compactSidebar = !isMobile && collapsed;
+  return <div className={`app-shell ${compactSidebar ? 'sidebar-collapsed' : ''}`}>
     <a className="skip-link" href="#main-content">Saltar al contenido</a>
     {isMobile&&open&&<button type="button" className="sidebar-backdrop" onClick={()=>closeDrawer()} aria-label="Cerrar menú"/>}
-    <aside id="primary-navigation-drawer" ref={drawerRef} className={`sidebar ${open ? 'open' : ''}`} aria-label="Navegación y cuenta" aria-hidden={isMobile ? !open : undefined} inert={isMobile && !open}>
+    <aside id="primary-navigation-drawer" ref={drawerRef} className={`sidebar ${open ? 'open' : ''} ${compactSidebar ? 'collapsed' : ''}`} aria-label="Navegación y cuenta" aria-hidden={isMobile ? !open : undefined} inert={isMobile && !open}>
       <button ref={drawerCloseRef} type="button" className="mobile-close" onClick={() => closeDrawer()} aria-label="Cerrar menú"><X aria-hidden="true"/></button>
-      <div className="brand"><span><img src={logo} alt=""/></span><div><strong>Gestor Rutas</strong><small>Gimnasio Los Arrayanes</small></div></div>
-      <nav aria-label="Navegación principal"><p className="nav-label">Operación</p>{links.map(([to,label,Icon]) => <NavLink key={to} to={to} end={to==='/'} onClick={()=>closeDrawer({restoreFocus:false,focusMain:true})}><Icon aria-hidden="true"/><span>{label}</span></NavLink>)}</nav>
-      <div className="system-status"><i/>Sistema operativo <span>2026</span></div>
-      <div className="profile-card"><div className="avatar">{user.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div><strong>{user.name}</strong><small>{user.role === 'ADMIN' ? 'Administrador de flota' : 'Conductor'}</small></div><button onClick={signOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={19}/></button></div>
+      <div className="sidebar-head">
+        <div className="brand"><span><img src={logo} alt=""/></span><div className="brand-copy"><strong>Gestor Rutas</strong><small>Gimnasio Los Arrayanes</small></div></div>
+        <button type="button" className="sidebar-collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'} aria-pressed={collapsed} title={collapsed ? 'Expandir menú' : 'Contraer menú'}>
+          {collapsed ? <PanelLeftOpen aria-hidden="true"/> : <PanelLeftClose aria-hidden="true"/>}
+        </button>
+      </div>
+      <nav aria-label="Navegación principal"><p className="nav-label">Operación</p>{links.map(([to,label,Icon]) => <NavLink key={to} to={to} end={to==='/'} title={compactSidebar ? label : undefined} aria-label={compactSidebar ? label : undefined} onClick={()=>closeDrawer({restoreFocus:false,focusMain:true})}><Icon aria-hidden="true"/><span>{label}</span></NavLink>)}</nav>
+      <div className="system-status" aria-label="Sistema operativo, año escolar 2026" title={compactSidebar ? 'Sistema operativo · 2026' : undefined}><i/><span className="system-copy">Sistema operativo</span><span className="system-year">2026</span></div>
+      <div className="profile-card"><div className="avatar" title={compactSidebar ? user.name : undefined}>{user.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div className="profile-copy"><strong>{user.name}</strong><small>{user.role === 'ADMIN' ? 'Administrador de flota' : 'Conductor'}</small></div><button onClick={signOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={19}/></button></div>
     </aside>
     <div className="app-main">
       <header className="topbar"><button ref={menuButtonRef} type="button" className="menu-button" onClick={openDrawer} aria-label="Abrir menú" aria-expanded={open} aria-controls="primary-navigation-drawer"><Menu aria-hidden="true"/></button><div className="topbar-context"><span>Espacio de trabajo</span><strong>{section}</strong></div><div className="topbar-spacer"/>{user.role==='ADMIN'&&<NavLink to="/reportar" className="topbar-action"><PlusCircle aria-hidden="true"/><span>Crear reporte</span></NavLink>}<NavLink to="/notificaciones" className="notification-button" aria-label={`${unread} notificaciones sin leer`}><Bell aria-hidden="true"/>{unread>0&&<b aria-hidden="true">{unread}</b>}</NavLink><span className="period"><i/>Año escolar 2026</span></header>

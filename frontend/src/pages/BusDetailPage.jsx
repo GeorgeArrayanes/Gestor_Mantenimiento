@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ArrowRight,
+  BusFront,
   Calendar,
   Camera,
+  CircleAlert,
   FileText,
+  History,
+  Phone,
+  Plus,
   Route,
   ShieldCheck,
   UserRound,
   Users,
+  Wrench,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { api, fileUrl } from "../api.js";
@@ -14,7 +21,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import Toast from "../components/Toast.jsx";
-import { formatDate, isPdfResource } from "../utils/formatters.js";
+import { formatDamageType, formatDate, isPdfResource } from "../utils/formatters.js";
+import busImage from "../img/bus-arrayanes.png";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const maxSize = 5 * 1024 * 1024;
@@ -104,27 +112,113 @@ export default function BusDetailPage() {
     return <div className="loading-page" role="status">Cargando ficha…</div>;
   }
 
-  const { bus, preexistingDamages } = data;
+  const {
+    bus,
+    preexistingDamages,
+    incidentSummary = { total: 0, active: 0, resolved: 0, last_reported_at: null },
+    recentIncidents = [],
+  } = data;
+  const totalIncidents = Number(incidentSummary.total || 0);
+  const activeIncidents = Number(incidentSummary.active || 0);
+  const resolvedIncidents = Number(incidentSummary.resolved || 0);
+  const resolutionRate = totalIncidents ? Math.round((resolvedIncidents / totalIncidents) * 100) : 100;
   return (
     <>
-      <div className="page-heading">
+      <div className="page-heading vehicle-page-heading">
         <div>
           <Link to="/buses" className="back-link">← Volver a buses</Link>
-          <p className="eyebrow">Ficha del vehículo</p>
+          <p className="eyebrow">Expediente de flota</p>
           <h1>{bus.reference} · {bus.plate}</h1>
-          <p>{bus.brand} {bus.model}</p>
+          <p>Información operativa, historial y novedades de esta unidad.</p>
         </div>
-        <StatusBadge value={bus.current_status} />
+        <div className="vehicle-heading-actions">
+          <StatusBadge value={bus.current_status} />
+          {user.role === "ADMIN" && <Link className="primary-button" to={`/reportar?bus_id=${bus.id}`}><Plus />Reportar novedad</Link>}
+        </div>
       </div>
 
-      <section className="vehicle-facts panel">
-        <Fact icon={Route} label="Ruta asignada" value={bus.route || "Sin ruta"} />
-        <Fact icon={Users} label="Capacidad" value={`${bus.capacity} estudiantes`} />
-        <Fact icon={UserRound} label="Conductor principal" value={bus.driver_name || "Sin asignar"} />
-        <Fact icon={ShieldCheck} label="Estado" value={bus.current_status.replaceAll("_", " ")} />
+      <section className="vehicle-profile panel">
+        <div className="vehicle-profile-copy">
+          <span className="vehicle-reference"><BusFront /> Unidad escolar · {bus.reference}</span>
+          <h2>{bus.brand} <span>{bus.model}</span></h2>
+          <p>Vista central de la unidad asignada a la operación escolar de Los Arrayanes.</p>
+          <div className="vehicle-identity">
+            <div className="vehicle-plate"><small>Placa</small><strong>{bus.plate}</strong></div>
+            <div className="vehicle-route"><Route /><span><small>Ruta asignada</small><strong>{bus.route || "Sin ruta asignada"}</strong></span></div>
+          </div>
+          <div className="vehicle-contact-actions">
+            <Link className="secondary-button" to={`/novedades?bus_id=${bus.id}`}><History />Ver historial operativo</Link>
+            {user.role === "ADMIN" && bus.driver_phone && <a className="vehicle-phone-link" href={`tel:${bus.driver_phone}`}><Phone />Llamar al conductor</a>}
+          </div>
+        </div>
+        <div className="vehicle-visual">
+          <span className="vehicle-orbit vehicle-orbit-one" aria-hidden="true" />
+          <span className="vehicle-orbit vehicle-orbit-two" aria-hidden="true" />
+          <img src={busImage} alt={`Bus escolar de referencia para ${bus.reference}`} />
+          <div className="vehicle-visual-caption"><i />Modelo visual de la flota</div>
+        </div>
       </section>
 
-      <div className="detail-grid bus-history-grid">
+      <section className="vehicle-facts vehicle-stat-grid" aria-label="Resumen del vehículo">
+        <Fact icon={Users} label="Capacidad" value={`${bus.capacity} estudiantes`} />
+        <Fact icon={UserRound} label="Conductor principal" value={bus.driver_name || "Sin asignar"} />
+        <Fact icon={CircleAlert} label="Novedades activas" value={String(activeIncidents)} tone={activeIncidents ? "alert" : "ok"} />
+        <Fact icon={ShieldCheck} label="Casos resueltos" value={String(resolvedIncidents)} tone="ok" />
+      </section>
+
+      <div className="vehicle-dashboard-grid">
+        <section className="panel vehicle-activity-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Bitácora de la unidad</p>
+              <h2>Actividad reciente</h2>
+              <p>Últimos reportes asociados a {bus.reference}.</p>
+            </div>
+            <Link className="text-link" to={`/novedades?bus_id=${bus.id}`}>Abrir archivo <ArrowRight /></Link>
+          </div>
+          {recentIncidents.length ? (
+            <div className="vehicle-activity-list">
+              {recentIncidents.map((incident) => (
+                <Link className="vehicle-activity-card" to={`/novedades/${incident.id}`} key={incident.id}>
+                  <span className={`activity-icon urgency-${incident.urgency}`}><Wrench /></span>
+                  <span className="activity-copy">
+                    <small>NR-{String(incident.id).padStart(3, "0")} · {formatDate(incident.reported_at)}</small>
+                    <strong>{formatDamageType(incident.damage_type, incident.other_damage_type)}</strong>
+                    <span>Prioridad {incident.urgency.toLowerCase()}</span>
+                  </span>
+                  <StatusBadge value={incident.status} />
+                  <ArrowRight className="activity-arrow" aria-hidden="true" />
+                </Link>
+              ))}
+            </div>
+          ) : <EmptyState title="Sin actividad registrada" text="Esta unidad todavía no tiene novedades operativas." />}
+        </section>
+
+        <aside className="panel vehicle-health-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Estado operativo</p>
+              <h2>Resolución de novedades</h2>
+              <p>Calculado con el historial real de la unidad.</p>
+            </div>
+          </div>
+          <div className="resolution-score">
+            <div><strong>{resolutionRate}%</strong><span>resuelto</span></div>
+            <div className="resolution-track" role="img" aria-label={`${resolutionRate}% de las novedades históricas están resueltas`}><i style={{ width: `${resolutionRate}%` }} /></div>
+          </div>
+          <dl className="vehicle-health-list">
+            <div><dt><i className="health-dot active" />Activas</dt><dd>{activeIncidents}</dd></div>
+            <div><dt><i className="health-dot resolved" />Resueltas</dt><dd>{resolvedIncidents}</dd></div>
+            <div><dt><i className="health-dot total" />Histórico total</dt><dd>{totalIncidents}</dd></div>
+          </dl>
+          <div className="vehicle-last-activity">
+            <Calendar />
+            <span><small>Último reporte</small><strong>{incidentSummary.last_reported_at ? formatDate(incidentSummary.last_reported_at) : "Sin reportes"}</strong></span>
+          </div>
+        </aside>
+      </div>
+
+      <div className="detail-grid bus-history-grid vehicle-records-grid">
         <section className="panel">
           <div className="section-heading">
             <div>
@@ -193,6 +287,6 @@ export default function BusDetailPage() {
   );
 }
 
-function Fact({ icon: Icon, label, value }) {
-  return <div><Icon /><span><small>{label}</small><b>{value}</b></span></div>;
+function Fact({ icon: Icon, label, value, tone = "" }) {
+  return <div className={`vehicle-stat-card ${tone ? `is-${tone}` : ""}`}><Icon /><span><small>{label}</small><b>{value}</b></span></div>;
 }
