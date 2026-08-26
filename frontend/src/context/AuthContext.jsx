@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { api, onUnauthorized } from '../api.js';
+import { api, clearSessionToken, createSession, onUnauthorized } from '../api.js';
 
 const AuthContext = createContext(null);
 
@@ -24,11 +24,16 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const login = async (credentials) => { const data = await api('/auth/login', { method: 'POST', body: JSON.stringify(credentials) }); setUser(data.user); return data.user; };
+  const login = async (credentials) => {
+    const data = await createSession(credentials);
+    setUser(data.user);
+    return data.user;
+  };
   const logout = async () => {
     try {
       await api('/auth/logout', { method: 'POST' });
     } finally {
+      clearSessionToken();
       setUser(null);
     }
   };

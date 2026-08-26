@@ -36,7 +36,7 @@ describe('autenticación y autorización', () => {
     expect(response.body.user.password_hash).toBeUndefined();
   });
 
-  it('permite enviar la cookie de sesión entre los dominios de producción', async () => {
+  it('entrega cookie particionada y token bearer para navegadores que bloquean cookies de terceros', async () => {
     config.nodeEnv = 'production';
     const response = await request(app)
       .post('/api/auth/login')
@@ -47,6 +47,14 @@ describe('autenticación y autorización', () => {
     expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
     expect(response.headers['set-cookie'][0]).toContain('Secure');
     expect(response.headers['set-cookie'][0]).toContain('SameSite=None');
+    expect(response.headers['set-cookie'][0]).toContain('Partitioned');
+    expect(response.body.token).toEqual(expect.any(String));
+
+    const session = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${response.body.token}`)
+      .expect(200);
+    expect(session.body.user.role).toBe('ADMIN');
   });
 
   it('impide que un conductor use recursos administrativos', async () => {

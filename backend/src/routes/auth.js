@@ -14,7 +14,8 @@ function sessionCookieOptions() {
   return {
     httpOnly: true,
     secure: production,
-    sameSite: production ? 'none' : 'lax'
+    sameSite: production ? 'none' : 'lax',
+    partitioned: production
   };
 }
 
@@ -36,7 +37,7 @@ router.post('/login', asyncHandler(async (req, res) => {
     ...sessionCookieOptions(),
     maxAge: 8 * 60 * 60 * 1000
   });
-  res.json({ user: publicUser(user) });
+  res.json({ user: publicUser(user), token });
 }));
 
 router.post('/logout', (req, res) => {
