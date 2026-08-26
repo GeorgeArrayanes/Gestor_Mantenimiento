@@ -98,7 +98,7 @@ export default function DriversPage() {
                 </div>
                 <div>
                   <h2>{d.name}</h2>
-                  <span>{d.identification}</span>
+                  <span className="person-identification">{d.identification}</span>
                 </div>
                 <StatusBadge value={d.status} />
               </div>

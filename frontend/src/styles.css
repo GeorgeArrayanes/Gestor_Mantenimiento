@@ -438,7 +438,7 @@ td small {
   flex-direction: column;
   gap: 3px;
 }
-.incident-card span,
+.incident-card-detail,
 .incident-card small {
   color: var(--muted);
 }

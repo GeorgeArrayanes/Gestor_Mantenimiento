@@ -93,7 +93,7 @@ export default function DashboardPage() {
                     <strong>
                       #{i.id} · {i.reference}
                     </strong>
-                    <span>{formatDamageType(i.damage_type, i.other_damage_type)}</span>
+                    <span className="incident-card-detail">{formatDamageType(i.damage_type, i.other_damage_type)}</span>
                     <small><time dateTime={i.reported_at}>{formatDate(i.reported_at)}</time></small>
                   </div>
                   <StatusBadge value={i.status} />
@@ -208,7 +208,7 @@ export default function DashboardPage() {
                 key={i.id}
               >
                 <div className="recent-card-head">
-                  <span>NR-{String(i.id).padStart(3, "0")}</span>
+                  <span className="recent-card-id">NR-{String(i.id).padStart(3, "0")}</span>
                   <StatusBadge value={i.status} />
                 </div>
                 <div>

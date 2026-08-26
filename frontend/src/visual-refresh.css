@@ -342,6 +342,7 @@ height: 82px;
 .notification-button b {
   top: -2px;
   right: -2px;
+  background: #b8322c;
   border-color: #f0f1ed;
 }
 
@@ -376,7 +377,7 @@ main {
 }
 
 .page-heading p {
-  color: #747771;
+  color: #5f625d;
   font-size: 14px;
 }
 
@@ -699,14 +700,14 @@ table a:hover {
   background: var(--ink);
 }
 
-.recent-card-head > span {
+.recent-card-id {
   color: #666963;
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.12em;
 }
 
-.recent-card.featured .recent-card-head > span,
+.recent-card.featured .recent-card-id,
 .recent-card.featured small,
 .recent-card.featured footer {
   color: rgba(255, 255, 255, 0.58);
@@ -823,7 +824,7 @@ tbody tr:hover {
 .status-EN_PROCESO,
 .status-PENDIENTE_VALIDACION,
 .urgency-MEDIA {
-  color: #a66b12;
+  color: #8a570d;
   background: #fff9ed;
 }
 
@@ -965,6 +966,10 @@ tbody tr:hover {
   background: #f4f5f1;
 }
 
+.upload-zone span {
+  color: #626b78;
+}
+
 .upload-zone:hover {
   color: var(--blue);
   border-color: var(--blue);
@@ -1073,6 +1078,14 @@ tbody tr:hover {
   background: var(--ink);
 }
 
+.notification-list strong {
+  color: var(--ink);
+}
+
+.notification-list small {
+  color: #5f625d;
+}
+
 .notification-list > a.read {
   opacity: 1;
 }
@@ -1083,8 +1096,9 @@ tbody tr:hover {
 }
 
 .notification-list > a.read b,
+.notification-list > a.read strong,
 .notification-list > a.read small {
-  color: #6a6d67;
+  color: #5f625d;
 }
 
 .notification-list > .notification-row {
@@ -1131,8 +1145,9 @@ tbody tr:hover {
 }
 
 .notification-list > .notification-row.read b,
+.notification-list > .notification-row.read strong,
 .notification-list > .notification-row.read small {
-  color: #6a6d67;
+  color: #5f625d;
 }
 
 .status-ACTIVO {
@@ -1141,8 +1156,20 @@ tbody tr:hover {
 }
 
 .status-INACTIVO {
-  color: #6a6d67;
+  color: #5a5d58;
   background: #e8e9e5;
+}
+
+.progress-step {
+  color: #5f625d;
+}
+
+.progress-step.done {
+  color: #126f50;
+}
+
+.progress-step.active {
+  color: #815916;
 }
 
 .empty-state {
