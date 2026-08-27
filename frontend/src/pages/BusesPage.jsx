@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Toast from '../components/Toast.jsx';
 import Modal from '../components/Modal.jsx';
+import { isAdminRole } from '../utils/roles.js';
 
 const empty={reference:'',plate:'',brand:'',model:'',route:'',capacity:18,current_status:'OPERATIVO',driver_id:null};
 
@@ -16,7 +17,7 @@ export default function BusesPage(){
   const [form,setForm]=useState(empty);const [error,setError]=useState('');const [driversError,setDriversError]=useState('');const [toast,setToast]=useState(null);const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);
   const load=()=>{setLoading(true);setError('');return api('/buses').then(d=>setBuses(d.buses)).catch(e=>{setBuses([]);setError(e.message)}).finally(()=>setLoading(false))};
   const loadDrivers=()=>{setDriversError('');return api('/users?role=CONDUCTOR').then(d=>setDrivers(d.users)).catch(()=>{setDrivers([]);setDriversError('No pudimos cargar los conductores disponibles.')})};
-  useEffect(()=>{load();if(user.role==='ADMIN')loadDrivers()},[user.role]);
+  useEffect(()=>{load();if(isAdminRole(user.role))loadDrivers()},[user.role]);
   function open(bus=null){setEditing(bus?.id||'new');setForm(bus?{...bus,driver_id:bus.driver_id||null}:empty);setError('')}
   function close(){if(saving)return;setEditing(null);setError('')}
   function update(field,value){setForm(current=>({...current,[field]:value}));if(error)setError('')}

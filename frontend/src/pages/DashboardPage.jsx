@@ -13,6 +13,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { formatDamageType, formatDate } from "../utils/formatters.js";
+import { isAdminRole } from "../utils/roles.js";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   useEffect(() => {
-    const path = user.role === "ADMIN" ? "/dashboard" : "/incidents";
+    const path = isAdminRole(user.role) ? "/dashboard" : "/incidents";
     setError("");
     setData(null);
     api(path)

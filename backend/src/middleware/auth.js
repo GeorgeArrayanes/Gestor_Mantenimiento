@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
+import { roleCanAccess } from '../utils/roles.js';
 
 export async function authenticate(req, res, next) {
   const bearer = req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null;
@@ -17,6 +18,6 @@ export async function authenticate(req, res, next) {
 }
 
 export const requireRole = (...roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) return res.status(403).json({ message: 'No tienes permiso para realizar esta acción.' });
+  if (!roleCanAccess(req.user.role, roles)) return res.status(403).json({ message: 'No tienes permiso para realizar esta acción.' });
   next();
 };

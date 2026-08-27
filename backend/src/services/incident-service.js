@@ -1,3 +1,5 @@
+import { roleCanAccess } from '../utils/roles.js';
+
 const transitions = {
   start: { roles: ['CONDUCTOR'], from: ['REPORTADO', 'REQUIERE_CORRECCION'], to: 'EN_PROCESO' },
   submit: { roles: ['CONDUCTOR'], from: ['EN_PROCESO'], to: 'PENDIENTE_VALIDACION' },
@@ -7,7 +9,7 @@ const transitions = {
 
 export function assertTransition(action, incident, user) {
   const rule = transitions[action];
-  if (!rule || !rule.roles.includes(user.role) || !rule.from.includes(incident.status)) {
+  if (!rule || !roleCanAccess(user.role, rule.roles) || !rule.from.includes(incident.status)) {
     const error = new Error('Transición de estado inválida para esta novedad.');
     error.status = 409;
     throw error;

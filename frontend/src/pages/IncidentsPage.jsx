@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import EmptyState from "../components/EmptyState.jsx";
 import { formatDamageType, formatDate } from "../utils/formatters.js";
+import { isAdminRole } from "../utils/roles.js";
 
 export default function IncidentsPage() {
   const { user } = useAuth();
@@ -67,11 +68,11 @@ export default function IncidentsPage() {
         <div>
           <p className="eyebrow">Seguimiento</p>
           <h1>
-            {user.role === "ADMIN" ? "Novedades de la flota" : "Mis novedades"}
+            {isAdminRole(user.role) ? "Novedades de la flota" : "Mis novedades"}
           </h1>
           <p>Consulta el estado, la urgencia y el historial de cada reporte.</p>
         </div>
-        {user.role === "ADMIN" && (
+        {isAdminRole(user.role) && (
           <Link to="/reportar" className="primary-button">
             <Plus />
             Nuevo reporte

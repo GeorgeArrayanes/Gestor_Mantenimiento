@@ -1,6 +1,37 @@
 import bcrypt from 'bcryptjs';
+import { config } from './config.js';
+
+const DEVELOPMENT_PASSWORD = 'RutaSegura2026!';
+
+export async function bootstrapSuperAdmin(pool) {
+  const existing = await pool.query(
+    'SELECT id, role FROM users WHERE LOWER(username)=LOWER($1) LIMIT 1',
+    [config.superAdminEmail]
+  );
+
+  if (existing.rows[0]) {
+    if (existing.rows[0].role !== 'SUPER_ADMIN') {
+      throw new Error(`Ya existe una cuenta con el correo ${config.superAdminEmail}; no se promovió automáticamente por seguridad.`);
+    }
+    return existing.rows[0].id;
+  }
+
+  const password = config.superAdminPassword
+    || (config.nodeEnv === 'test' || config.memoryDb ? DEVELOPMENT_PASSWORD : '');
+  if (password.length < 12) {
+    throw new Error('Configura SUPER_ADMIN_PASSWORD con al menos 12 caracteres antes de crear el superadministrador.');
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+  const { rows } = await pool.query(`
+    INSERT INTO users(name, identification, username, phone, password_hash, role, status)
+    VALUES('Administrador General','SA-GLA-001',$1,NULL,$2,'SUPER_ADMIN','ACTIVO')
+    RETURNING id`, [config.superAdminEmail, passwordHash]);
+  return rows[0].id;
+}
 
 export async function seedDatabase(pool) {
+  await bootstrapSuperAdmin(pool);
   const existing = await pool.query("SELECT 1 FROM users WHERE username='admin@rutasegura.test'");
   if (existing.rowCount) return;
   const passwordHash = await bcrypt.hash('RutaSegura2026!', 12);

@@ -11,9 +11,12 @@ import BusesPage from './pages/BusesPage.jsx';
 import BusDetailPage from './pages/BusDetailPage.jsx';
 import DriversPage from './pages/DriversPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
+import AdminsPage from './pages/AdminsPage.jsx';
+import { isAdminRole, isSuperAdminRole } from './utils/roles.js';
 
 function Protected(){const {user,loading}=useAuth();if(loading)return <div className="boot-screen">Preparando Gestor Rutas…</div>;return user?<AppLayout/>:<Navigate to="/login" replace/>}
-function AdminOnly({children}){const {user}=useAuth();return user?.role==='ADMIN'?children:<Navigate to="/" replace/>}
+function AdminOnly({children}){const {user}=useAuth();return isAdminRole(user?.role)?children:<Navigate to="/" replace/>}
+function SuperAdminOnly({children}){const {user}=useAuth();return isSuperAdminRole(user?.role)?children:<Navigate to="/" replace/>}
 
 const pageNames = [
   [/^\/login$/, 'Iniciar sesión'],
@@ -24,6 +27,7 @@ const pageNames = [
   [/^\/buses\/\d+$/, 'Ficha del bus'],
   [/^\/buses$/, 'Buses'],
   [/^\/conductores$/, 'Conductores'],
+  [/^\/administradores$/, 'Administradores'],
   [/^\/notificaciones$/, 'Notificaciones'],
 ];
 
@@ -43,4 +47,4 @@ function RouteAccessibility() {
   return null;
 }
 
-export default function App(){return <><RouteAccessibility/><Routes><Route path="/login" element={<LoginPage/>}/><Route element={<Protected/>}><Route index element={<DashboardPage/>}/><Route path="reportar" element={<AdminOnly><ReportIncidentPage/></AdminOnly>}/><Route path="novedades" element={<IncidentsPage/>}/><Route path="novedades/:id" element={<IncidentDetailPage/>}/><Route path="buses" element={<BusesPage/>}/><Route path="buses/:id" element={<BusDetailPage/>}/><Route path="conductores" element={<AdminOnly><DriversPage/></AdminOnly>}/><Route path="notificaciones" element={<NotificationsPage/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Route></Routes></>}
+export default function App(){return <><RouteAccessibility/><Routes><Route path="/login" element={<LoginPage/>}/><Route element={<Protected/>}><Route index element={<DashboardPage/>}/><Route path="reportar" element={<AdminOnly><ReportIncidentPage/></AdminOnly>}/><Route path="novedades" element={<IncidentsPage/>}/><Route path="novedades/:id" element={<IncidentDetailPage/>}/><Route path="buses" element={<BusesPage/>}/><Route path="buses/:id" element={<BusDetailPage/>}/><Route path="conductores" element={<AdminOnly><DriversPage/></AdminOnly>}/><Route path="administradores" element={<SuperAdminOnly><AdminsPage/></SuperAdminOnly>}/><Route path="notificaciones" element={<NotificationsPage/>}/><Route path="*" element={<Navigate to="/" replace/>}/></Route></Routes></>}

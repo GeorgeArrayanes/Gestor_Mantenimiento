@@ -2995,3 +2995,131 @@ main,
     justify-self: start;
   }
 }
+
+/* Final contrast pass: keep secondary metadata readable on the warm light surfaces. */
+.bus-card dt,
+.bus-card-head small,
+.person-identification,
+.person-info small,
+.evidence-card small,
+.evidence-card span,
+.timeline small,
+.notification-list small,
+.vehicle-facts small,
+.damage-history small {
+  color: #5f6b7c;
+}
+
+.vehicle-strip p,
+.strip-driver,
+.report-meta span,
+.section-heading p,
+.state-change,
+.timeline p,
+.action-intro p,
+.waiting-box span,
+.resolved-box span {
+  color: #596676;
+}
+
+.resolved-box {
+  color: #087a54;
+}
+
+.waiting-box {
+  color: #875709;
+}
+
+.page-heading p,
+.helper {
+  color: #5f625d;
+}
+
+.table-wrap small,
+.vehicle-activity-card small {
+  color: #5f6b7c;
+}
+
+.vehicle-plate small {
+  color: #5a4a12;
+}
+
+.admin-access-note {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 22px;
+  padding: 21px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 88% 20%, rgba(77, 108, 226, 0.46), transparent 32%),
+    #1d1d1b;
+  box-shadow: 0 18px 38px rgba(29, 29, 27, 0.14);
+}
+
+.admin-access-note > span {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  color: #fff;
+  background: #3559d2;
+}
+
+.admin-access-note svg {
+  width: 24px;
+  height: 24px;
+}
+
+.admin-access-note strong {
+  font-size: 16px;
+}
+
+.admin-access-note p {
+  margin: 5px 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.5;
+}
+
+.admin-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.admin-card::after {
+  position: absolute;
+  right: -54px;
+  bottom: -54px;
+  width: 118px;
+  height: 118px;
+  border: 1px solid rgba(53, 89, 210, 0.12);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.admin-avatar {
+  color: #fff;
+  background: #1d1d1b;
+}
+
+main h1[tabindex='-1']:focus {
+  outline: none;
+}
+
+@media (max-width: 560px) {
+  .admin-access-note {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 18px;
+  }
+
+  .admin-access-note > span {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+  }
+}

@@ -23,6 +23,7 @@ import EmptyState from "../components/EmptyState.jsx";
 import Toast from "../components/Toast.jsx";
 import { formatDamageType, formatDate, isPdfResource } from "../utils/formatters.js";
 import busImage from "../img/bus-arrayanes.png";
+import { isAdminRole } from "../utils/roles.js";
 
 const allowedTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const maxSize = 5 * 1024 * 1024;
@@ -133,7 +134,7 @@ export default function BusDetailPage() {
         </div>
         <div className="vehicle-heading-actions">
           <StatusBadge value={bus.current_status} />
-          {user.role === "ADMIN" && <Link className="primary-button" to={`/reportar?bus_id=${bus.id}`}><Plus />Reportar novedad</Link>}
+          {isAdminRole(user.role) && <Link className="primary-button" to={`/reportar?bus_id=${bus.id}`}><Plus />Reportar novedad</Link>}
         </div>
       </div>
 
@@ -148,7 +149,7 @@ export default function BusDetailPage() {
           </div>
           <div className="vehicle-contact-actions">
             <Link className="secondary-button" to={`/novedades?bus_id=${bus.id}`}><History />Ver historial operativo</Link>
-            {user.role === "ADMIN" && bus.driver_phone && <a className="vehicle-phone-link" href={`tel:${bus.driver_phone}`}><Phone />Llamar al conductor</a>}
+            {isAdminRole(user.role) && bus.driver_phone && <a className="vehicle-phone-link" href={`tel:${bus.driver_phone}`}><Phone />Llamar al conductor</a>}
           </div>
         </div>
         <div className="vehicle-visual">
@@ -252,7 +253,7 @@ export default function BusDetailPage() {
           )}
         </section>
 
-        {user.role === "ADMIN" && (
+        {isAdminRole(user.role) && (
           <form className="panel" onSubmit={submit} noValidate>
             <div className="section-heading">
               <div>

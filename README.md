@@ -1,6 +1,6 @@
 # RutaSegura
 
-RutaSegura es un MVP funcional para gestionar buses escolares, conductores, daños, reparaciones, evidencias, validaciones e historial. Tiene dos portales protegidos: **ADMIN** y **CONDUCTOR**.
+RutaSegura es un MVP funcional para gestionar buses escolares, conductores, daños, reparaciones, evidencias, validaciones e historial. Tiene tres perfiles protegidos: **SUPER_ADMIN**, **ADMIN** y **CONDUCTOR**.
 
 ## Arquitectura
 
@@ -57,7 +57,18 @@ Para una demostración efímera, defina `DEV_MEMORY_DB=true` en `.env` y ejecute
 1. Cree un proyecto Supabase o una base PostgreSQL vacía.
 2. Copie su conexión en `DATABASE_URL`. Para Supabase, use la URL del pooler o la conexión directa adecuada al entorno.
 3. Active `DATABASE_SSL=true` cuando el proveedor lo requiera.
-4. Ejecute `npm run db:migrate` y luego `npm run db:seed`.
+4. Defina `SUPER_ADMIN_PASSWORD` con al menos 12 caracteres.
+5. Ejecute `npm run db:migrate` y luego `npm run db:seed`.
+
+Para una base ya desplegada, cree únicamente la cuenta maestra sin insertar datos de demostración:
+
+```bash
+npm run db:migrate
+# Configure SUPER_ADMIN_PASSWORD en el entorno antes del siguiente comando.
+npm run db:bootstrap-super-admin
+```
+
+El bootstrap usa `Admin@gla.edu.co` por defecto, es idempotente y no promueve cuentas existentes automáticamente. La contraseña debe tener al menos 12 caracteres y nunca debe guardarse en el repositorio.
 
 La migración [001_init.sql](database/migrations/001_init.sql) crea:
 
@@ -92,6 +103,8 @@ El backend genera nombres aleatorios, valida MIME/tamaño y entrega URLs firmada
 | `SUPABASE_URL` | URL del proyecto Supabase. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Credencial privada del backend. |
 | `SUPABASE_STORAGE_BUCKET` | Bucket privado de evidencias. |
+| `SUPER_ADMIN_EMAIL` | Correo de la cuenta maestra; por defecto `Admin@gla.edu.co`. |
+| `SUPER_ADMIN_PASSWORD` | Contraseña inicial, obligatoria para crear la cuenta en una base persistente. |
 | `DEV_MEMORY_DB` | Base efímera sólo para demo/pruebas. |
 | `VITE_API_URL` | URL pública de la API para el frontend. |
 
@@ -107,6 +120,8 @@ Todas usan la contraseña: `RutaSegura2026!`
 
 Son credenciales exclusivas del seed de desarrollo. Cámbielas o elimínelas antes de usar datos reales.
 
+En una base persistente, la cuenta `SUPER_ADMIN` usa exclusivamente la contraseña configurada en el entorno. Sólo la demostración efímera con `DEV_MEMORY_DB=true` utiliza la contraseña común de desarrollo. Esta cuenta es la única que puede listar, crear o editar administradores.
+
 ## Comandos
 
 ```bash
@@ -115,6 +130,7 @@ npm run build        # compilación de producción del frontend
 npm test             # pruebas de reglas críticas y UI
 npm run db:migrate   # aplica el esquema
 npm run db:seed      # carga datos de desarrollo de forma idempotente
+npm run db:bootstrap-super-admin # crea únicamente la cuenta maestra
 ```
 
 ## API principal
@@ -133,7 +149,7 @@ La suite de integración recorre autenticación, autorización administrativa, a
 ## Despliegue
 
 1. Despliegue `backend/` en un servicio Node (Render, Railway, Fly.io, Cloud Run u otro) con las variables privadas.
-2. Ejecute migración y seed sólo si requiere datos demo.
+2. Ejecute la migración y `db:bootstrap-super-admin`; use el seed completo sólo si requiere datos demo.
 3. Compile `frontend/` con `VITE_API_URL=https://su-api.example.com/api` y publique `frontend/dist` en un host estático.
 4. Configure `FRONTEND_URL` con el origen exacto del frontend y HTTPS en ambos servicios.
 5. Para cookies entre dominios distintos, adapte `sameSite`/`secure` y use dominios propios del mismo sitio cuando sea posible.

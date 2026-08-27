@@ -22,6 +22,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Toast from "../components/Toast.jsx";
 import { formatDamageType, formatDate, isPdfResource } from "../utils/formatters.js";
+import { isAdminRole } from "../utils/roles.js";
 
 const allowedEvidenceTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const maxEvidenceSize = 5 * 1024 * 1024;
@@ -389,7 +390,7 @@ export default function IncidentDetailPage() {
                 </span>
               </div>
             )}
-            {user.role === "ADMIN" && i.status === "PENDIENTE_VALIDACION" && (
+            {isAdminRole(user.role) && i.status === "PENDIENTE_VALIDACION" && (
               <div className="validation-actions">
                 <p>
                   Revisa todas las evidencias antes de aprobar o pedir una
@@ -450,7 +451,7 @@ export default function IncidentDetailPage() {
                 )}
               </div>
             )}
-            {user.role === "ADMIN" &&
+            {isAdminRole(user.role) &&
               !["PENDIENTE_VALIDACION", "RESUELTO"].includes(i.status) && (
                 <div className="waiting-box neutral">
                   <Clock3 />

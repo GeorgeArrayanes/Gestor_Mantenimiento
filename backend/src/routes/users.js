@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { assertDriverCanBeInactivated } from '../services/driver-assignment.js';
+import { isSuperAdminRole } from '../utils/roles.js';
 
 const router = Router();
 router.use(requireRole('ADMIN'));
@@ -19,6 +20,9 @@ const userSchema = z.object({
 
 router.get('/', asyncHandler(async (req, res) => {
   const role = req.query.role === 'ADMIN' ? 'ADMIN' : 'CONDUCTOR';
+  if (role === 'ADMIN' && !isSuperAdminRole(req.user.role)) {
+    return res.status(403).json({ message: 'Sólo el superadministrador puede consultar administradores.' });
+  }
   const { rows } = await req.app.locals.db.query(`
     SELECT u.id, u.name, u.identification, u.username, u.phone, u.role, u.status,
       b.id AS bus_id, b.reference AS bus_reference, b.plate AS bus_plate
@@ -31,6 +35,12 @@ router.post('/', asyncHandler(async (req, res) => {
   const parsed = userSchema.extend({ password: z.string().min(8), role: z.enum(['ADMIN', 'CONDUCTOR']).default('CONDUCTOR') }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Revisa los datos. La contraseña debe tener al menos 8 caracteres.' });
   const data = parsed.data;
+  if (data.role === 'ADMIN' && !isSuperAdminRole(req.user.role)) {
+    return res.status(403).json({ message: 'Sólo el superadministrador puede crear administradores.' });
+  }
+  if (data.role === 'ADMIN' && data.password.length < 12) {
+    return res.status(400).json({ message: 'La contraseña de un administrador debe tener al menos 12 caracteres.' });
+  }
   const passwordHash = await bcrypt.hash(data.password, 12);
   const { rows } = await req.app.locals.db.query(`
     INSERT INTO users (name, identification, username, phone, password_hash, role, status)
@@ -51,6 +61,18 @@ router.patch('/:id', asyncHandler(async (req, res) => {
     if (!current.rows[0]) {
       await client.query('ROLLBACK');
       return res.status(404).json({ message: 'Usuario inexistente.' });
+    }
+    if (current.rows[0].role === 'SUPER_ADMIN') {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: 'La cuenta del superadministrador no se modifica desde este módulo.' });
+    }
+    if (current.rows[0].role === 'ADMIN' && !isSuperAdminRole(req.user.role)) {
+      await client.query('ROLLBACK');
+      return res.status(403).json({ message: 'Sólo el superadministrador puede editar administradores.' });
+    }
+    if (current.rows[0].role === 'ADMIN' && parsed.data.password && parsed.data.password.length < 12) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({ message: 'La contraseña de un administrador debe tener al menos 12 caracteres.' });
     }
     if (current.rows[0].role === 'CONDUCTOR' && current.rows[0].status === 'ACTIVO' && parsed.data.status === 'INACTIVO') {
       await assertDriverCanBeInactivated(client, current.rows[0].id);

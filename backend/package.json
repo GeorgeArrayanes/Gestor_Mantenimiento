@@ -7,6 +7,7 @@
     "start": "node src/server.js",
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js",
+    "db:bootstrap-super-admin": "node src/scripts/bootstrap-super-admin.js",
     "test": "vitest run"
   },
   "dependencies": {

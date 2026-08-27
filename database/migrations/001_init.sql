@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(120) NOT NULL UNIQUE,
   phone VARCHAR(30),
   password_hash VARCHAR(255) NOT NULL,
-  role VARCHAR(20) NOT NULL CHECK (role IN ('ADMIN', 'CONDUCTOR')),
+  role VARCHAR(20) NOT NULL CHECK (role IN ('SUPER_ADMIN', 'ADMIN', 'CONDUCTOR')),
   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVO' CHECK (status IN ('ACTIVO', 'INACTIVO')),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -94,3 +94,4 @@ CREATE INDEX IF NOT EXISTS idx_incidents_reported_at ON incidents(reported_at DE
 CREATE INDEX IF NOT EXISTS idx_evidences_incident ON evidences(incident_id);
 CREATE INDEX IF NOT EXISTS idx_history_incident ON incident_history(incident_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, is_read);
+CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_unique ON users (LOWER(username));

@@ -146,7 +146,7 @@ router.post('/:id/:action', asyncHandler(async (req, res) => {
     await client.query(`INSERT INTO incident_history(incident_id,user_id,event_type,previous_status,new_status,comment) VALUES($1,$2,$3,$4,$5,$6)`, [incident.id,req.user.id,eventNames[action],incident.status,nextStatus,comment]);
     if (action === 'submit') {
       await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
-        SELECT id,$1,'REVISION_PENDIENTE',$2 FROM users WHERE role='ADMIN' AND status='ACTIVO'`, [`La novedad #${incident.id} espera validación.`,`/novedades/${incident.id}`]);
+        SELECT id,$1,'REVISION_PENDIENTE',$2 FROM users WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVO'`, [`La novedad #${incident.id} espera validación.`,`/novedades/${incident.id}`]);
     }
     if (action === 'reject' || action === 'approve') {
       const message = action === 'reject' ? `Tu reparación #${incident.id} fue rechazada: ${comment}` : `Tu reparación #${incident.id} fue aprobada.`;
