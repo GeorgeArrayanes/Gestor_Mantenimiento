@@ -22,10 +22,18 @@ import { useAuth } from "../context/AuthContext.jsx";
 import StatusBadge from "../components/StatusBadge.jsx";
 import Toast from "../components/Toast.jsx";
 import { formatDamageType, formatDate, isPdfResource } from "../utils/formatters.js";
-import { isAdminRole } from "../utils/roles.js";
+import { isAdminRole, isSuperAdminRole } from "../utils/roles.js";
 
 const allowedEvidenceTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 const maxEvidenceSize = 5 * 1024 * 1024;
+
+const incidentStatusOptions = [
+  ["REPORTADO", "Reportado"],
+  ["EN_PROCESO", "En proceso"],
+  ["PENDIENTE_VALIDACION", "Pendiente de validación"],
+  ["REQUIERE_CORRECCION", "Requiere corrección"],
+  ["RESUELTO", "Resuelto"],
+];
 
 const eventLabels = {
   NOVEDAD_CREADA: "Novedad creada",
@@ -34,6 +42,7 @@ const eventLabels = {
   SOLUCION_ENVIADA: "Solución enviada",
   REPARACION_RECHAZADA: "Reparación rechazada",
   REPARACION_APROBADA: "Reparación aprobada",
+  ESTADO_AJUSTADO_SUPER_ADMIN: "Estado ajustado por superadministrador",
 };
 export default function IncidentDetailPage() {
   const { id } = useParams();
@@ -48,6 +57,8 @@ export default function IncidentDetailPage() {
   const [files, setFiles] = useState([]);
   const [reason, setReason] = useState("");
   const [rejecting, setRejecting] = useState(false);
+  const [overrideStatus, setOverrideStatus] = useState("");
+  const [overrideReason, setOverrideReason] = useState("");
   const [toast, setToast] = useState(null);
   const load = useCallback(
     () => {
@@ -110,6 +121,28 @@ export default function IncidentDetailPage() {
       setFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
       setToast({ message: "Evidencia agregada sin eliminar las anteriores." });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy("");
+    }
+  }
+  async function changeStatus(e) {
+    e.preventDefault();
+    if (!overrideStatus || overrideReason.trim().length < 8) return;
+    const targetLabel = incidentStatusOptions.find(([value]) => value === overrideStatus)?.[1] || overrideStatus;
+    if (!window.confirm(`¿Cambiar el estado de esta novedad a “${targetLabel}”?`)) return;
+    setBusy("override-status");
+    setError("");
+    try {
+      await api(`/incidents/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: overrideStatus, reason: overrideReason.trim() }),
+      });
+      setOverrideStatus("");
+      setOverrideReason("");
+      setToast({ message: `Estado actualizado a ${targetLabel}.` });
       await load();
     } catch (e) {
       setError(e.message);
@@ -461,6 +494,47 @@ export default function IncidentDetailPage() {
                   </span>
                 </div>
               )}
+            {isSuperAdminRole(user.role) && (
+              <form className="super-admin-status-control" onSubmit={changeStatus}>
+                <div className="super-admin-status-heading">
+                  <span><ShieldCheck /></span>
+                  <div>
+                    <small>Control de superadministrador</small>
+                    <h3>Ajustar estado manualmente</h3>
+                  </div>
+                </div>
+                <p>
+                  Úsalo para corregir casos excepcionales. El cambio y su motivo quedarán registrados en el historial.
+                </p>
+                <label>
+                  Nuevo estado
+                  <select value={overrideStatus} onChange={(e) => setOverrideStatus(e.target.value)} required>
+                    <option value="">Selecciona un estado</option>
+                    {incidentStatusOptions
+                      .filter(([value]) => value !== i.status)
+                      .map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  Motivo del ajuste
+                  <textarea
+                    rows="3"
+                    minLength="8"
+                    maxLength="500"
+                    value={overrideReason}
+                    onChange={(e) => setOverrideReason(e.target.value)}
+                    placeholder="Explica por qué es necesario cambiar el estado…"
+                    required
+                  />
+                </label>
+                <button
+                  className="secondary-button wide"
+                  disabled={Boolean(busy) || !overrideStatus || overrideReason.trim().length < 8}
+                >
+                  {busy === "override-status" ? "Actualizando…" : "Aplicar cambio de estado"}
+                </button>
+              </form>
+            )}
           </section>
           <section className="panel">
             <div className="section-heading">

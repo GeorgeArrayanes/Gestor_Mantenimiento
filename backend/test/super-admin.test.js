@@ -103,4 +103,43 @@ describe('gobierno de administradores', () => {
       status: 'ACTIVO',
     }).expect(409);
   });
+
+  it('permite ajustar el estado de una novedad sólo al SUPER_ADMIN y conserva la trazabilidad', async () => {
+    const incident = (await pool.query("SELECT id, bus_id FROM incidents WHERE status='REPORTADO' LIMIT 1")).rows[0];
+
+    await admin.patch(`/api/incidents/${incident.id}/status`).send({
+      status: 'RESUELTO',
+      reason: 'Intento de ajuste desde una cuenta sin permiso.'
+    }).expect(403);
+
+    await driver.patch(`/api/incidents/${incident.id}/status`).send({
+      status: 'RESUELTO',
+      reason: 'Intento de ajuste desde el conductor.'
+    }).expect(403);
+
+    const resolved = await superAdmin.patch(`/api/incidents/${incident.id}/status`).send({
+      status: 'RESUELTO',
+      reason: 'Cierre administrativo verificado por coordinación general.'
+    }).expect(200);
+    expect(resolved.body.incident.status).toBe('RESUELTO');
+
+    const resolvedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [incident.bus_id])).rows[0];
+    expect(resolvedBus.current_status).toBe('OPERATIVO');
+
+    const reopened = await superAdmin.patch(`/api/incidents/${incident.id}/status`).send({
+      status: 'REPORTADO',
+      reason: 'Reapertura administrativa para continuar el seguimiento.'
+    }).expect(200);
+    expect(reopened.body.incident.status).toBe('REPORTADO');
+    expect(reopened.body.incident.resolved_at).toBeNull();
+
+    const reopenedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [incident.bus_id])).rows[0];
+    expect(reopenedBus.current_status).toBe('CON_NOVEDADES');
+
+    const history = await pool.query(`SELECT previous_status,new_status,comment FROM incident_history
+      WHERE incident_id=$1 AND event_type='ESTADO_AJUSTADO_SUPER_ADMIN' ORDER BY created_at`, [incident.id]);
+    expect(history.rows).toHaveLength(2);
+    expect(history.rows[0]).toMatchObject({ previous_status: 'REPORTADO', new_status: 'RESUELTO' });
+    expect(history.rows[1]).toMatchObject({ previous_status: 'RESUELTO', new_status: 'REPORTADO' });
+  });
 });

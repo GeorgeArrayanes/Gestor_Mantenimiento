@@ -3111,6 +3111,107 @@ main h1[tabindex='-1']:focus {
   outline: none;
 }
 
+.super-admin-status-control {
+  display: grid;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  color: #fff;
+  background:
+    radial-gradient(circle at 94% 8%, rgba(73, 105, 221, 0.45), transparent 34%),
+    #1d1d1b;
+}
+
+.super-admin-status-heading {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.super-admin-status-heading > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  background: #3154cf;
+}
+
+.super-admin-status-heading svg {
+  width: 21px;
+}
+
+.super-admin-status-heading small {
+  color: #aebcf2;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.super-admin-status-heading h3 {
+  margin: 3px 0 0;
+  color: #fff;
+  font-size: 17px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.super-admin-status-control > p {
+  margin: 0;
+  color: #c9ccc6;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.super-admin-status-control label {
+  display: grid;
+  gap: 7px;
+  color: #eef0eb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.super-admin-status-control select,
+.super-admin-status-control textarea {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  outline: 0;
+  color: #1d1d1b;
+  background: #f8f8f4;
+}
+
+.super-admin-status-control select {
+  height: 44px;
+  padding: 0 12px;
+}
+
+.super-admin-status-control textarea {
+  padding: 11px 12px;
+  resize: vertical;
+}
+
+.super-admin-status-control select:focus,
+.super-admin-status-control textarea:focus {
+  border-color: #7590f1;
+  box-shadow: 0 0 0 3px rgba(117, 144, 241, 0.2);
+}
+
+.super-admin-status-control .secondary-button {
+  border-color: transparent;
+  color: #1d1d1b;
+  background: #fff;
+}
+
+.super-admin-status-control .secondary-button:hover:not(:disabled) {
+  background: #e9edff;
+}
+
 @media (max-width: 560px) {
   .admin-access-note {
     grid-template-columns: 44px minmax(0, 1fr);
@@ -3121,5 +3222,9 @@ main h1[tabindex='-1']:focus {
     width: 44px;
     height: 44px;
     border-radius: 13px;
+  }
+
+  .super-admin-status-control {
+    padding: 17px;
   }
 }

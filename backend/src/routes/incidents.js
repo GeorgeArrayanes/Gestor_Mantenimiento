@@ -19,6 +19,11 @@ const incidentSchema = z.object({
   urgency: z.enum(['BAJA','MEDIA','ALTA'])
 }).refine((data) => data.damage_type !== 'OTRO' || data.other_damage_type?.length, { message: 'Describe el otro tipo de daño.' });
 
+const incidentStatusSchema = z.object({
+  status: z.enum(['REPORTADO', 'EN_PROCESO', 'PENDIENTE_VALIDACION', 'REQUIERE_CORRECCION', 'RESUELTO']),
+  reason: z.string().trim().min(8).max(500)
+});
+
 async function getIncident(db, id) {
   const { rows } = await db.query(`SELECT i.*,b.reference,b.plate,b.brand,b.model,b.route,b.capacity,
     driver.name AS driver_name,driver.phone AS driver_phone,reporter.name AS reporter_name
@@ -118,6 +123,75 @@ router.post('/:id/evidences', upload.array('files', 5), asyncHandler(async (req,
   }
   await req.app.locals.db.query(`INSERT INTO incident_history(incident_id,user_id,event_type,new_status,comment) VALUES($1,$2,'EVIDENCIA_AGREGADA',$3,$4)`, [incident.id,req.user.id,incident.status,req.body.comment?.trim()||`${saved.length} archivo(s)`]);
   res.status(201).json({ evidences: saved });
+}));
+
+router.patch('/:id/status', requireRole('SUPER_ADMIN'), asyncHandler(async (req, res) => {
+  const parsed = incidentStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ message: 'Selecciona un estado e indica un motivo de al menos 8 caracteres.' });
+  }
+
+  const client = await req.app.locals.db.connect();
+  try {
+    await client.query('BEGIN');
+    const locked = await client.query('SELECT * FROM incidents WHERE id=$1 FOR UPDATE', [req.params.id]);
+    const incident = locked.rows[0];
+    assertCanView(incident, req.user);
+
+    if (incident.status === parsed.data.status) {
+      const error = new Error('La novedad ya se encuentra en ese estado.');
+      error.status = 409;
+      throw error;
+    }
+
+    const nextStatus = parsed.data.status;
+    const { rows } = await client.query(`UPDATE incidents SET status=$1,
+      attention_started_at=CASE
+        WHEN $1='REPORTADO' THEN NULL
+        WHEN $1<>'REPORTADO' THEN COALESCE(attention_started_at,NOW())
+        ELSE attention_started_at
+      END,
+      last_solution_at=CASE
+        WHEN $1='REPORTADO' THEN NULL
+        WHEN $1='PENDIENTE_VALIDACION' THEN COALESCE(last_solution_at,NOW())
+        ELSE last_solution_at
+      END,
+      resolved_at=CASE WHEN $1='RESUELTO' THEN NOW() ELSE NULL END,
+      updated_at=NOW()
+      WHERE id=$2 RETURNING *`, [nextStatus, incident.id]);
+
+    await client.query(`INSERT INTO incident_history
+      (incident_id,user_id,event_type,previous_status,new_status,comment)
+      VALUES($1,$2,'ESTADO_AJUSTADO_SUPER_ADMIN',$3,$4,$5)`,
+    [incident.id, req.user.id, incident.status, nextStatus, parsed.data.reason]);
+
+    if (incident.responsible_driver_id) {
+      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
+        VALUES($1,$2,'ESTADO_AJUSTADO',$3)`, [
+        incident.responsible_driver_id,
+        `El estado de la novedad #${incident.id} cambió a ${nextStatus.replaceAll('_', ' ')}.`,
+        `/novedades/${incident.id}`
+      ]);
+    }
+
+    const open = await client.query(`SELECT 1 FROM incidents
+      WHERE bus_id=$1 AND status<>'RESUELTO' LIMIT 1`, [incident.bus_id]);
+    if (open.rowCount) {
+      await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW()
+        WHERE id=$1 AND current_status='OPERATIVO'`, [incident.bus_id]);
+    } else {
+      await client.query(`UPDATE buses SET current_status='OPERATIVO',updated_at=NOW()
+        WHERE id=$1 AND current_status='CON_NOVEDADES'`, [incident.bus_id]);
+    }
+
+    await client.query('COMMIT');
+    res.json({ incident: await getIncident(req.app.locals.db, rows[0].id) });
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 }));
 
 router.post('/:id/:action', asyncHandler(async (req, res) => {
