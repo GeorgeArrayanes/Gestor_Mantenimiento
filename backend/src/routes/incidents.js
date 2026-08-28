@@ -145,18 +145,18 @@ router.patch('/:id/status', requireRole('SUPER_ADMIN'), asyncHandler(async (req,
     }
 
     const nextStatus = parsed.data.status;
-    const { rows } = await client.query(`UPDATE incidents SET status=$1,
+    const { rows } = await client.query(`UPDATE incidents SET status=$1::varchar,
       attention_started_at=CASE
-        WHEN $1='REPORTADO' THEN NULL
-        WHEN $1<>'REPORTADO' THEN COALESCE(attention_started_at,NOW())
+        WHEN $1::varchar='REPORTADO' THEN NULL
+        WHEN $1::varchar<>'REPORTADO' THEN COALESCE(attention_started_at,NOW())
         ELSE attention_started_at
       END,
       last_solution_at=CASE
-        WHEN $1='REPORTADO' THEN NULL
-        WHEN $1='PENDIENTE_VALIDACION' THEN COALESCE(last_solution_at,NOW())
+        WHEN $1::varchar='REPORTADO' THEN NULL
+        WHEN $1::varchar='PENDIENTE_VALIDACION' THEN COALESCE(last_solution_at,NOW())
         ELSE last_solution_at
       END,
-      resolved_at=CASE WHEN $1='RESUELTO' THEN NOW() ELSE NULL END,
+      resolved_at=CASE WHEN $1::varchar='RESUELTO' THEN NOW() ELSE NULL END,
       updated_at=NOW()
       WHERE id=$2 RETURNING *`, [nextStatus, incident.id]);
 
