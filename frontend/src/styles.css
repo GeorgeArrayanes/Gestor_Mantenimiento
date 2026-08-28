@@ -1,6 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap");
 :root {
-  font-family: "DM Sans", system-ui, sans-serif;
+  font-family: "Raleway", system-ui, sans-serif;
   color: #121b30;
   background: #edf2f8;
   font-synthesis: none;
@@ -75,7 +75,7 @@ a {
   width: 27px;
 }
 .brand strong {
-  font: 800 25px Manrope;
+  font: 800 25px Raleway;
 }
 .brand small {
   display: block;
@@ -211,7 +211,7 @@ main {
   margin-bottom: 28px;
 }
 .page-heading h1 {
-  font: 800 34px Manrope;
+  font: 800 34px Raleway;
   margin: 2px 0 6px;
 }
 .page-heading p {
@@ -282,7 +282,7 @@ main {
   color: #526177;
 }
 .metric-card strong {
-  font: 800 38px Manrope;
+  font: 800 38px Raleway;
   margin-top: 18px;
 }
 .metric-card span:not(.metric-icon) {
@@ -327,7 +327,7 @@ main {
   margin-bottom: 24px;
 }
 .section-heading h2 {
-  font: 800 24px Manrope;
+  font: 800 24px Raleway;
   margin: 0 0 4px;
 }
 .section-heading p {
@@ -536,7 +536,7 @@ min-height: 100vh;
   display: flex;
   align-items: center;
   gap: 12px;
-  font: 800 24px Manrope;
+  font: 800 24px Raleway;
 }
 .login-brand span {
   display: grid;
@@ -563,7 +563,7 @@ min-height: 100vh;
   height: 34px;
 }
 .login-message h1 {
-  font: 800 clamp(38px, 5vw, 34px)/1.08 Manrope;
+  font: 800 clamp(38px, 5vw, 34px)/1.08 Raleway;
   margin: 150px 0 18px;
   text-shadow: 0 2px 18px rgba(19, 10, 91, 0.28);
 }
@@ -588,7 +588,7 @@ min-height: 100vh;
   gap: 22px;
 }
 .login-form h2 {
-  font: 800 34px Manrope;
+  font: 800 34px Raleway;
   margin: 4px 0;
 }
 .login-form > div:first-child > p:last-child {

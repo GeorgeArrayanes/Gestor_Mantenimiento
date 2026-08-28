@@ -295,7 +295,7 @@ height: 82px;
 }
 
 .topbar-context strong {
-  font: 800 17px Manrope, sans-serif;
+  font: 800 17px Raleway, sans-serif;
   letter-spacing: -0.035em;
 }
 
@@ -536,7 +536,7 @@ table a:hover {
 }
 
 .fleet-pulse-value strong {
-  font: 800 54px/0.9 Manrope, sans-serif;
+  font: 800 54px/0.9 Raleway, sans-serif;
   letter-spacing: -0.07em;
 }
 
@@ -716,7 +716,7 @@ table a:hover {
 .recent-card h3 {
   max-width: 210px;
   margin: 6px 0 0;
-  font: 800 19px/1.15 Manrope, sans-serif;
+  font: 800 19px/1.15 Raleway, sans-serif;
   letter-spacing: -0.04em;
   text-transform: capitalize;
 }
@@ -1219,7 +1219,7 @@ tbody tr:hover {
 .login-message h2,
 .login-hero-title {
   margin: 150px 0 18px;
-  font: 800 clamp(32px, 3.5vw, 46px) / 1.06 Manrope, sans-serif;
+  font: 800 clamp(32px, 3.5vw, 46px) / 1.06 Raleway, sans-serif;
   letter-spacing: -0.05em;
 }
 
@@ -1235,7 +1235,7 @@ tbody tr:hover {
 .login-form h2 {
   margin: 4px 0;
   color: var(--ink);
-  font: 800 34px Manrope, sans-serif;
+  font: 800 34px Raleway, sans-serif;
   letter-spacing: -0.05em;
 }
 
@@ -2428,7 +2428,7 @@ main,
   max-width: 13ch;
   margin: 16px 0 9px;
   color: var(--ink);
-  font: 800 clamp(35px, 4vw, 54px)/0.98 Manrope, sans-serif;
+  font: 800 clamp(35px, 4vw, 54px)/0.98 Raleway, sans-serif;
   letter-spacing: -0.06em;
 }
 
@@ -2481,7 +2481,7 @@ main,
 }
 
 .vehicle-plate strong {
-  font: 800 20px Manrope, sans-serif;
+  font: 800 20px Raleway, sans-serif;
   letter-spacing: 0.08em;
 }
 
@@ -2663,7 +2663,7 @@ main,
 .vehicle-stat-card b {
   overflow: hidden;
   color: var(--ink);
-  font: 800 15px Manrope, sans-serif;
+  font: 800 15px Raleway, sans-serif;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -2754,7 +2754,7 @@ main,
 .activity-copy strong {
   overflow: hidden;
   color: var(--ink);
-  font: 800 15px Manrope, sans-serif;
+  font: 800 15px Raleway, sans-serif;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -2782,7 +2782,7 @@ main,
 }
 
 .resolution-score strong {
-  font: 800 37px Manrope, sans-serif;
+  font: 800 37px Raleway, sans-serif;
   letter-spacing: -0.05em;
 }
 

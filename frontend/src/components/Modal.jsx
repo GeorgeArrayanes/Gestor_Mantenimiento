@@ -19,6 +19,7 @@ function getFocusable(container) {
 /**
  * Accessible overlay shared by the fleet forms.
  * It owns focus while open, restores it on close and keeps the document behind it still.
+ * Backdrop clicks are ignored by default so an accidental click cannot discard form data.
  */
 export default function Modal({
   as: Element = 'div',
@@ -27,7 +28,7 @@ export default function Modal({
   describedBy,
   initialFocusSelector = '[data-autofocus]',
   onClose,
-  closeOnBackdrop = true,
+  closeOnBackdrop = false,
   className = 'modal',
   ...elementProps
 }) {
