@@ -105,11 +105,16 @@ export default function AppLayout() {
       <button ref={drawerCloseRef} type="button" className="mobile-close" onClick={() => closeDrawer()} aria-label="Cerrar menú"><X aria-hidden="true"/></button>
       <div className="sidebar-head">
         <div className="brand"><span><img src={logo} alt=""/></span><div className="brand-copy"><strong>Gestor Rutas</strong><small>Gimnasio Los Arrayanes</small></div></div>
-        <button type="button" className="sidebar-collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'} aria-pressed={collapsed} title={collapsed ? 'Expandir menú' : 'Contraer menú'}>
-          {collapsed ? <PanelLeftOpen aria-hidden="true"/> : <PanelLeftClose aria-hidden="true"/>}
-        </button>
       </div>
-      <nav aria-label="Navegación principal"><p className="nav-label">Operación</p>{links.map(([to,label,Icon]) => <NavLink key={to} to={to} end={to==='/'} title={compactSidebar ? label : undefined} aria-label={compactSidebar ? label : undefined} onClick={()=>closeDrawer({restoreFocus:false,focusMain:true})}><Icon aria-hidden="true"/><span>{label}</span></NavLink>)}</nav>
+      <nav aria-label="Navegación principal">
+        <div className="nav-heading">
+          <p className="nav-label">Operación</p>
+          <button type="button" className="sidebar-collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'} aria-pressed={collapsed} title={collapsed ? 'Expandir menú' : 'Contraer menú'}>
+            {collapsed ? <PanelLeftOpen aria-hidden="true"/> : <PanelLeftClose aria-hidden="true"/>}
+          </button>
+        </div>
+        {links.map(([to,label,Icon]) => <NavLink key={to} to={to} end={to==='/'} title={compactSidebar ? label : undefined} aria-label={compactSidebar ? label : undefined} onClick={()=>closeDrawer({restoreFocus:false,focusMain:true})}><Icon aria-hidden="true"/><span>{label}</span></NavLink>)}
+      </nav>
       <div className="system-status" aria-label="Sistema operativo, año escolar 2026" title={compactSidebar ? 'Sistema operativo · 2026' : undefined}><i/><span className="system-copy">Sistema operativo</span><span className="system-year">2026</span></div>
       <div className="profile-card"><div className="avatar" title={compactSidebar ? user.name : undefined}>{user.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div className="profile-copy"><strong>{user.name}</strong><small>{isSuperAdminRole(user.role) ? 'Superadministrador' : isAdminRole(user.role) ? 'Administrador de flota' : 'Conductor'}</small></div><button onClick={signOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={19}/></button></div>
     </aside>
