@@ -62,6 +62,37 @@ describe('autenticación y autorización', () => {
     await driver.get('/api/users?role=CONDUCTOR').expect(403);
     await login(foreignDriver, 'roberto@rutasegura.test');
   });
+
+  it('permite al conductor reportar sólo sobre su bus asignado', async () => {
+    await login(admin, 'admin@rutasegura.test');
+    await login(driver, 'carlos@rutasegura.test');
+    const buses = await admin.get('/api/buses').expect(200);
+    const assignedBus = buses.body.buses.find((item) => item.reference === 'Bus 04');
+    const foreignBus = buses.body.buses.find((item) => item.reference === 'Bus 12');
+
+    const forbidden = await driver.post('/api/incidents')
+      .field('bus_id', String(foreignBus.id))
+      .field('damage_type', 'MOTOR')
+      .field('description', 'Intento de registrar una novedad en una unidad que pertenece a otro conductor.')
+      .field('urgency', 'MEDIA');
+    expect(forbidden.status).toBe(403);
+    expect(forbidden.body.message).toContain('bus que tienes asignado');
+
+    const created = await driver.post('/api/incidents')
+      .field('bus_id', String(assignedBus.id))
+      .field('damage_type', 'LLANTAS')
+      .field('description', 'La llanta delantera derecha presenta una pérdida constante de presión.')
+      .field('urgency', 'ALTA');
+    expect(created.status).toBe(201);
+    expect(created.body.incident.bus_id).toBe(assignedBus.id);
+    expect(created.body.incident.reported_by).toBe(created.body.incident.responsible_driver_id);
+    expect(created.body.incident.reporter_name).toBe('Carlos Mendoza');
+
+    const adminNotifications = await pool.query(`SELECT n.id FROM notifications n
+      JOIN users u ON u.id=n.user_id
+      WHERE n.reference_url=$1 AND u.role IN ('ADMIN','SUPER_ADMIN')`, [`/novedades/${created.body.incident.id}`]);
+    expect(adminNotifications.rowCount).toBeGreaterThan(0);
+  });
 });
 
 describe('flujo completo e historial inmutable', () => {

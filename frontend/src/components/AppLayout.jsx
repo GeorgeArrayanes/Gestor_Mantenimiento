@@ -94,7 +94,7 @@ export default function AppLayout() {
   }
   const links = isAdminRole(user.role) ? [
     ['/', 'Dashboard', LayoutDashboard], ['/reportar', 'Reportar daño', PlusCircle], ['/novedades', 'Novedades', ClipboardList], ['/conductores', 'Conductores', Users], ...(isSuperAdminRole(user.role) ? [['/administradores', 'Administradores', ShieldCheck]] : []), ['/buses', 'Buses', BusFront]
-  ] : [['/', 'Mi resumen', LayoutDashboard], ['/novedades', 'Mis novedades', ClipboardList], ['/buses', 'Mi bus', BusFront]];
+  ] : [['/', 'Mi resumen', LayoutDashboard], ['/reportar', 'Reportar daño', PlusCircle], ['/novedades', 'Mis novedades', ClipboardList], ['/buses', 'Mi bus', BusFront]];
   const section = location.pathname.startsWith('/novedades') ? 'Novedades' : location.pathname.startsWith('/buses') ? 'Flota' : location.pathname.startsWith('/conductores') ? 'Conductores' : location.pathname.startsWith('/administradores') ? 'Administradores' : location.pathname.startsWith('/reportar') ? 'Nuevo reporte' : location.pathname.startsWith('/notificaciones') ? 'Notificaciones' : 'Dashboard';
   async function signOut() { await logout(); navigate('/login'); }
   const compactSidebar = !isMobile && collapsed;
@@ -119,7 +119,7 @@ export default function AppLayout() {
       <div className="profile-card"><div className="avatar" title={compactSidebar ? user.name : undefined}>{user.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div className="profile-copy"><strong>{user.name}</strong><small>{isSuperAdminRole(user.role) ? 'Superadministrador' : isAdminRole(user.role) ? 'Administrador de flota' : 'Conductor'}</small></div><button onClick={signOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={19}/></button></div>
     </aside>
     <div className="app-main">
-      <header className="topbar"><button ref={menuButtonRef} type="button" className="menu-button" onClick={openDrawer} aria-label="Abrir menú" aria-expanded={open} aria-controls="primary-navigation-drawer"><Menu aria-hidden="true"/></button><div className="topbar-context"><span>Espacio de trabajo</span><strong>{section}</strong></div><div className="topbar-spacer"/>{isAdminRole(user.role)&&<NavLink to="/reportar" className="topbar-action"><PlusCircle aria-hidden="true"/><span>Crear reporte</span></NavLink>}<NavLink to="/notificaciones" className="notification-button" aria-label={`${unread} notificaciones sin leer`}><Bell aria-hidden="true"/>{unread>0&&<b aria-hidden="true">{unread}</b>}</NavLink><span className="period"><i/>Año escolar 2026</span></header>
+      <header className="topbar"><button ref={menuButtonRef} type="button" className="menu-button" onClick={openDrawer} aria-label="Abrir menú" aria-expanded={open} aria-controls="primary-navigation-drawer"><Menu aria-hidden="true"/></button><div className="topbar-context"><span>Espacio de trabajo</span><strong>{section}</strong></div><div className="topbar-spacer"/><NavLink to="/reportar" className="topbar-action"><PlusCircle aria-hidden="true"/><span>Crear reporte</span></NavLink><NavLink to="/notificaciones" className="notification-button" aria-label={`${unread} notificaciones sin leer`}><Bell aria-hidden="true"/>{unread>0&&<b aria-hidden="true">{unread}</b>}</NavLink><span className="period"><i/>Año escolar 2026</span></header>
       <main id="main-content" ref={mainRef} tabIndex={-1}><Outlet context={{ setUnread }}/></main>
     </div>
   </div>;

@@ -72,12 +72,10 @@ export default function IncidentsPage() {
           </h1>
           <p>Consulta el estado, la urgencia y el historial de cada reporte.</p>
         </div>
-        {isAdminRole(user.role) && (
-          <Link to="/reportar" className="primary-button">
-            <Plus />
-            Nuevo reporte
-          </Link>
-        )}
+        <Link to="/reportar" className="primary-button">
+          <Plus />
+          Nuevo reporte
+        </Link>
       </div>
       <section className="panel" aria-busy={loading}>
         <div className="filter-bar">

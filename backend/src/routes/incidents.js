@@ -64,7 +64,7 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ incidents: rows });
 }));
 
-router.post('/', requireRole('ADMIN'), upload.array('files', 5), asyncHandler(async (req, res) => {
+router.post('/', requireRole('ADMIN', 'CONDUCTOR'), upload.array('files', 5), asyncHandler(async (req, res) => {
   const parsed = incidentSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message || 'Revisa los datos obligatorios.' });
   const client = await req.app.locals.db.connect();
@@ -73,6 +73,11 @@ router.post('/', requireRole('ADMIN'), upload.array('files', 5), asyncHandler(as
     const busResult = await client.query('SELECT * FROM buses WHERE id=$1 FOR UPDATE', [parsed.data.bus_id]);
     const bus = busResult.rows[0];
     if (!bus) { const e = new Error('Bus inexistente.'); e.status = 404; throw e; }
+    if (req.user.role === 'CONDUCTOR' && Number(bus.driver_id) !== Number(req.user.id)) {
+      const e = new Error('Sólo puedes reportar daños del bus que tienes asignado.');
+      e.status = 403;
+      throw e;
+    }
     if (!bus.driver_id) { const e = new Error('Asigna un conductor al bus antes de crear la novedad.'); e.status = 409; throw e; }
     await assertActiveDriver(client, bus.driver_id, { lock: true });
     const d = parsed.data;
@@ -84,7 +89,16 @@ router.post('/', requireRole('ADMIN'), upload.array('files', 5), asyncHandler(as
       await client.query(`INSERT INTO evidences(incident_id,file_url,file_name,file_type,category,uploaded_by) VALUES($1,$2,$3,$4,'REPORTE',$5)`, [incident.id,url,file.originalname,file.mimetype,req.user.id]);
     }
     await client.query(`INSERT INTO incident_history(incident_id,user_id,event_type,new_status,comment) VALUES($1,$2,'NOVEDAD_CREADA','REPORTADO',$3)`, [incident.id,req.user.id,d.description]);
-    await client.query(`INSERT INTO notifications(user_id,message,type,reference_url) VALUES($1,$2,'NUEVA_NOVEDAD',$3)`, [bus.driver_id,`Nueva novedad asignada a ${bus.reference}.`,`/novedades/${incident.id}`]);
+    if (req.user.role === 'CONDUCTOR') {
+      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
+        SELECT id,$1,'NUEVA_NOVEDAD',$2 FROM users
+        WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVO'`, [
+        `${req.user.name} reportó una novedad en ${bus.reference}.`,
+        `/novedades/${incident.id}`
+      ]);
+    } else {
+      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url) VALUES($1,$2,'NUEVA_NOVEDAD',$3)`, [bus.driver_id,`Nueva novedad asignada a ${bus.reference}.`,`/novedades/${incident.id}`]);
+    }
     await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW()
       WHERE id=$1 AND current_status='OPERATIVO'`, [bus.id]);
     await client.query('COMMIT');

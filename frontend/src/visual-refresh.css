@@ -3356,3 +3356,93 @@ main h1[tabindex='-1']:focus {
     grid-template-columns: 1fr;
   }
 }
+
+/* Unidad protegida en el reporte creado por un conductor. */
+.report-assigned-bus {
+  display: grid;
+  gap: 8px;
+}
+
+.report-assigned-bus .field-label {
+  margin: 0;
+}
+
+.assigned-bus-summary {
+  min-width: 0;
+  padding: 16px 18px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(29, 29, 27, 0.1);
+  border-radius: 18px;
+  background: #f1f2ee;
+}
+
+.assigned-bus-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: white;
+  border-radius: 14px;
+  background: var(--ink);
+}
+
+.assigned-bus-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.assigned-bus-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.assigned-bus-copy strong,
+.assigned-bus-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assigned-bus-copy strong {
+  color: var(--ink);
+  font-size: 15px;
+}
+
+.assigned-bus-copy small {
+  color: #666963;
+  font-size: 12px;
+}
+
+.assigned-bus-lock {
+  min-height: 34px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #38508f;
+  border-radius: 999px;
+  background: #e7ebfa;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.assigned-bus-lock svg {
+  width: 14px;
+  height: 14px;
+}
+
+@media (max-width: 620px) {
+  .assigned-bus-summary {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .assigned-bus-lock {
+    width: max-content;
+    grid-column: 2;
+  }
+}

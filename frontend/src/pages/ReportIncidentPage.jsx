@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { FileImage, Send, UploadCloud, X } from "lucide-react";
+import { BusFront, FileImage, LockKeyhole, Send, UploadCloud, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const damageTypes = [
   ["CARROCERIA", "Carrocería"],
@@ -19,11 +20,13 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
 
 export default function ReportIncidentPage() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isDriver = user.role === "CONDUCTOR";
   const [buses, setBuses] = useState([]);
   const [form, setForm] = useState({
-    bus_id: searchParams.get("bus_id") || "",
+    bus_id: isDriver ? "" : searchParams.get("bus_id") || "",
     damage_type: "",
     other_damage_type: "",
     urgency: "",
@@ -41,10 +44,19 @@ export default function ReportIncidentPage() {
     setLoadingBuses(true);
     setLoadError("");
     api("/buses")
-      .then((d) => setBuses(d.buses))
-      .catch((e) => { setBuses([]); setLoadError(e.message); })
+      .then((d) => {
+        setBuses(d.buses);
+        if (isDriver) {
+          setForm((current) => ({ ...current, bus_id: d.buses[0] ? String(d.buses[0].id) : "" }));
+        }
+      })
+      .catch((e) => {
+        setBuses([]);
+        if (isDriver) setForm((current) => ({ ...current, bus_id: "" }));
+        setLoadError(e.message);
+      })
       .finally(() => setLoadingBuses(false));
-  }, [loadKey]);
+  }, [isDriver, loadKey]);
   const bus = useMemo(
     () => buses.find((b) => String(b.id) === String(form.bus_id)),
     [buses, form.bus_id],
@@ -65,7 +77,7 @@ export default function ReportIncidentPage() {
   }
   function validate() {
     const next = {};
-    if (!form.bus_id) next.bus_id = "Selecciona un bus.";
+    if (!form.bus_id) next.bus_id = isDriver ? "No tienes un bus asignado." : "Selecciona un bus.";
     if (!form.damage_type) next.damage_type = "Selecciona el tipo de daño.";
     if (form.damage_type === "OTRO" && !form.other_damage_type.trim()) next.other_damage_type = "Describe el tipo de daño.";
     if (!form.urgency) next.urgency = "Selecciona un nivel de urgencia.";
@@ -92,7 +104,7 @@ export default function ReportIncidentPage() {
       setBusy(false);
     }
   }
-  const dirty = Boolean(form.bus_id || form.damage_type || form.urgency || form.description || form.other_damage_type || files.length);
+  const dirty = Boolean((!isDriver && form.bus_id) || form.damage_type || form.urgency || form.description || form.other_damage_type || files.length);
   function cancel() {
     if (dirty && !window.confirm("Hay información sin guardar. ¿Quieres salir del reporte?")) return;
     navigate("/");
@@ -101,44 +113,62 @@ export default function ReportIncidentPage() {
     <>
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Registro administrativo</p>
-          <h1>Generar nuevo reporte de daño</h1>
-          <p>Completa los detalles técnicos y adjunta la evidencia inicial.</p>
+          <p className="eyebrow">{isDriver ? "Reporte del conductor" : "Registro administrativo"}</p>
+          <h1>{isDriver ? "Reportar daño de mi bus" : "Generar nuevo reporte de daño"}</h1>
+          <p>{isDriver ? "Registra la novedad de tu unidad asignada y adjunta la evidencia inicial." : "Completa los detalles técnicos y adjunta la evidencia inicial."}</p>
         </div>
       </div>
       <form className="panel form-card" onSubmit={submit} noValidate>
         {loadError && <div className="page-error" role="alert">{loadError} <button type="button" onClick={() => setLoadKey((value) => value + 1)}>Reintentar carga</button></div>}
         {error && <div className="page-error" role="alert">{error}</div>}
         {loadingBuses && <div className="loading-page compact" role="status">Cargando buses disponibles…</div>}
-        {!loadingBuses && !loadError && !buses.length && <div className="page-notice" role="status">No hay buses registrados. Registra una unidad antes de crear una novedad.</div>}
+        {!loadingBuses && !loadError && !buses.length && <div className="page-notice" role="status">{isDriver ? "No tienes un bus asignado. Solicita a un administrador que vincule tu cuenta con una unidad antes de reportar." : "No hay buses registrados. Registra una unidad antes de crear una novedad."}</div>}
         <div className="form-grid">
-          <label className="full">
-            Seleccionar vehículo / bus
-            <select
-              id="report-bus_id"
-              value={form.bus_id}
-              onChange={(e) => { setForm({ ...form, bus_id: e.target.value }); setFieldErrors((current) => ({ ...current, bus_id: "" })); }}
-              aria-invalid={Boolean(fieldErrors.bus_id)}
-              aria-describedby={fieldErrors.bus_id ? "report-bus_id-error" : undefined}
-              disabled={loadingBuses}
-              required
-            >
-              <option value="">Selecciona un bus</option>
-              {buses.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {b.reference} ({b.plate}) — {b.driver_name || "Sin conductor"}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.bus_id && <small className="field-error" id="report-bus_id-error">{fieldErrors.bus_id}</small>}
-            {bus && (
-              <small className={bus.driver_id ? "helper" : "helper danger"}>
-                {bus.driver_id
-                  ? `Conductor asociado: ${bus.driver_name}`
-                  : "Este bus no tiene conductor asignado."}
-              </small>
-            )}
-          </label>
+          {isDriver ? (
+            <div className="full report-assigned-bus">
+              <span className="field-label" id="report-assigned-bus-label">Bus asignado</span>
+              {bus && (
+                <div className="assigned-bus-summary" aria-labelledby="report-assigned-bus-label">
+                  <span className="assigned-bus-icon"><BusFront aria-hidden="true" /></span>
+                  <span className="assigned-bus-copy">
+                    <strong>{bus.reference} · {bus.plate}</strong>
+                    <small>{bus.brand} {bus.model}{bus.route ? ` · ${bus.route}` : ""}</small>
+                  </span>
+                  <span className="assigned-bus-lock"><LockKeyhole aria-hidden="true" />Unidad asignada</span>
+                </div>
+              )}
+              {fieldErrors.bus_id && <small className="field-error" id="report-bus_id-error">{fieldErrors.bus_id}</small>}
+              {bus && <small className="helper">El reporte se vinculará automáticamente a esta unidad y no puede asignarse a otro bus.</small>}
+            </div>
+          ) : (
+            <label className="full">
+              Seleccionar vehículo / bus
+              <select
+                id="report-bus_id"
+                value={form.bus_id}
+                onChange={(e) => { setForm({ ...form, bus_id: e.target.value }); setFieldErrors((current) => ({ ...current, bus_id: "" })); }}
+                aria-invalid={Boolean(fieldErrors.bus_id)}
+                aria-describedby={fieldErrors.bus_id ? "report-bus_id-error" : undefined}
+                disabled={loadingBuses}
+                required
+              >
+                <option value="">Selecciona un bus</option>
+                {buses.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.reference} ({b.plate}) — {b.driver_name || "Sin conductor"}
+                  </option>
+                ))}
+              </select>
+              {fieldErrors.bus_id && <small className="field-error" id="report-bus_id-error">{fieldErrors.bus_id}</small>}
+              {bus && (
+                <small className={bus.driver_id ? "helper" : "helper danger"}>
+                  {bus.driver_id
+                    ? `Conductor asociado: ${bus.driver_name}`
+                    : "Este bus no tiene conductor asignado."}
+                </small>
+              )}
+            </label>
+          )}
           <label>
             Tipo de daño
             <select

@@ -134,7 +134,7 @@ export default function BusDetailPage() {
         </div>
         <div className="vehicle-heading-actions">
           <StatusBadge value={bus.current_status} />
-          {isAdminRole(user.role) && <Link className="primary-button" to={`/reportar?bus_id=${bus.id}`}><Plus />Reportar novedad</Link>}
+          <Link className="primary-button" to={`/reportar?bus_id=${bus.id}`}><Plus />Reportar novedad</Link>
         </div>
       </div>
 
