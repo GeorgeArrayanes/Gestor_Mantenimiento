@@ -1,12 +1,9 @@
-import React from 'react';
+import { AlertTriangle, CheckCircle2, Clock3, Minus, UserRound } from 'lucide-react';
 
-const labels = {
-  REPORTADO: 'Reportado', EN_PROCESO: 'En proceso', PENDIENTE_VALIDACION: 'Por validar',
-  REQUIERE_CORRECCION: 'Requiere corrección', RESUELTO: 'Resuelto',
-  OPERATIVO: 'Operativo', CON_NOVEDADES: 'Con novedades', EN_MANTENIMIENTO: 'En mantenimiento', FUERA_DE_SERVICIO: 'Fuera de servicio',
-  ACTIVO: 'Activo', INACTIVO: 'Inactivo'
-};
+const labels = { PENDING: 'Pendiente', ASSIGNED: 'Asignada', CLOSED: 'Cerrada', ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja', ACTIVO: 'Activo', INACTIVO: 'Inactivo', true: 'Activo', false: 'Inactivo' };
+const icons = { PENDING: Clock3, ASSIGNED: UserRound, CLOSED: CheckCircle2, ALTA: AlertTriangle, MEDIA: Clock3, BAJA: Minus };
 
 export default function StatusBadge({ value, urgency = false }) {
-  return <span className={`badge ${urgency ? `urgency-${value}` : `status-${value}`}`}>{labels[value] || value?.replaceAll('_', ' ')}</span>;
+  const Icon = icons[value];
+  return <span className={`badge ${urgency ? 'priority' : 'status'}-${value}`}>{Icon && <Icon size={12} aria-hidden="true" />}{labels[value] || String(value || 'Sin estado').replaceAll('_', ' ')}</span>;
 }

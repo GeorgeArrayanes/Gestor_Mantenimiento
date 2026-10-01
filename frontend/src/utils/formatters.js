@@ -1,19 +1,3 @@
-const damageLabels = {
-  CARROCERIA: "Carrocería",
-  LLANTAS: "Llantas",
-  LUCES_ELECTRICO: "Luces / sistema eléctrico",
-  MOTOR: "Motor",
-  FRENOS: "Frenos",
-  INTERIOR: "Interior",
-  VIDRIOS: "Vidrios",
-  PUERTAS: "Puertas",
-};
-
-export function formatDamageType(value, otherValue = "") {
-  if (value === "OTRO") return otherValue?.trim() || "Otro";
-  return damageLabels[value] || value?.replaceAll("_", " ") || "Sin tipo";
-}
-
 export function parseDateValue(value) {
   if (!value) return null;
   if (value instanceof Date) return Number.isNaN(value.getTime()) ? null : value;
@@ -26,7 +10,7 @@ export function parseDateValue(value) {
 
 export function formatDate(value, options = { dateStyle: "medium" }) {
   const date = parseDateValue(value);
-  return date ? date.toLocaleString("es-CO", options) : "Fecha no disponible";
+  return date ? date.toLocaleString("es-CO", { timeZone: 'America/Bogota', ...options }) : "Fecha no disponible";
 }
 
 export function isPdfResource(itemOrUrl) {

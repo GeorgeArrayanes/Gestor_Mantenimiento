@@ -1,145 +1,76 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { createMemoryPool } from '../src/db.js';
-import { createApp } from '../src/app.js';
-import { seedDatabase } from '../src/seed.js';
+import jwt from 'jsonwebtoken';
 import { config } from '../src/config.js';
+import { createIncident, fixture, DEMO_PASSWORD } from './helpers.js';
 
-let pool;
-let app;
-let superAdmin;
-let admin;
-let driver;
-let createdAdminId;
+let context;
+beforeAll(async () => { context = await fixture(); });
+afterAll(async () => context?.pool.end());
 
-beforeAll(async () => {
-  config.nodeEnv = 'test';
-  pool = await createMemoryPool();
-  await seedDatabase(pool);
-  app = createApp(pool);
-  superAdmin = request.agent(app);
-  admin = request.agent(app);
-  driver = request.agent(app);
-  await superAdmin.post('/api/auth/login').send({ username: 'Admin@gla.edu.co', password: 'RutaSegura2026!' }).expect(200);
-  await admin.post('/api/auth/login').send({ username: 'admin@rutasegura.test', password: 'RutaSegura2026!' }).expect(200);
-  await driver.post('/api/auth/login').send({ username: 'carlos@rutasegura.test', password: 'RutaSegura2026!' }).expect(200);
-});
-
-afterAll(async () => pool.end());
+const adminData = {
+  name: 'Coordinación de Mantenimiento', identification: 'ADM-GLA-002',
+  username: 'coordinacion@gla.edu.co', phone: '3005550101',
+  password: 'ClaveSegura2026!', role: 'ADMIN', status: 'ACTIVO'
+};
 
 describe('gobierno de administradores', () => {
-  it('entrega al superadministrador todos los permisos operativos de ADMIN', async () => {
-    const session = await superAdmin.get('/api/auth/me').expect(200);
+  it('entrega a SUPER_ADMIN los permisos operativos de ADMIN', async () => {
+    const session = await context.superAdmin.get('/api/auth/me').expect(200);
     expect(session.body.user.role).toBe('SUPER_ADMIN');
-    await superAdmin.get('/api/dashboard').expect(200);
-    await superAdmin.get('/api/users?role=CONDUCTOR').expect(200);
+    await context.superAdmin.get('/api/dashboard').expect(200);
+    await context.superAdmin.get('/api/personnel').expect(200);
+    await context.superAdmin.get('/api/spaces').expect(200);
+    const created = await createIncident(context.superAdmin, context.spaces[0].id).expect(201);
+    expect(created.body.incident.status).toBe('PENDING');
   });
 
-  it('reserva el listado y la creación de administradores al SUPER_ADMIN', async () => {
+  it('reserva el listado y la creación de administradores a SUPER_ADMIN', async () => {
+    const { admin, superAdmin, app } = context;
     await admin.get('/api/users?role=ADMIN').expect(403);
-    await driver.get('/api/users?role=ADMIN').expect(403);
-    await admin.post('/api/users').send({
-      name: 'Admin sin permiso',
-      identification: 'ADM-DENIED',
-      username: 'denied@gla.edu.co',
-      password: 'ClaveSegura2026!',
-      role: 'ADMIN',
-      status: 'ACTIVO',
-    }).expect(403);
-
-    const created = await superAdmin.post('/api/users').send({
-      name: 'Coordinación de Flota',
-      identification: 'ADM-GLA-002',
-      username: 'coordinacion@gla.edu.co',
-      phone: '3005550101',
-      password: 'ClaveSegura2026!',
-      role: 'ADMIN',
-      status: 'ACTIVO',
-    }).expect(201);
-    createdAdminId = created.body.user.id;
-    expect(created.body.user.role).toBe('ADMIN');
-
+    await admin.get('/api/users').expect(403);
+    await admin.post('/api/users').send(adminData).expect(403);
+    await request(app).get('/api/users?role=ADMIN').expect(401);
+    const created = await superAdmin.post('/api/users').send(adminData).expect(201);
+    expect(created.body.user).toMatchObject({ role: 'ADMIN', name: adminData.name });
+    expect(created.body.user.password_hash).toBeUndefined();
     const listing = await superAdmin.get('/api/users?role=ADMIN').expect(200);
-    expect(listing.body.users.some((user) => user.id === createdAdminId)).toBe(true);
+    expect(listing.body.users.some((user) => user.id === created.body.user.id)).toBe(true);
+    expect(listing.body.users.every((user) => !('password_hash' in user))).toBe(true);
   });
 
-  it('impide crear otro SUPER_ADMIN y exige contraseñas administrativas robustas', async () => {
-    await superAdmin.post('/api/users').send({
-      name: 'Segundo Super Admin',
-      identification: 'SA-002',
-      username: 'super2@gla.edu.co',
-      password: 'ClaveSegura2026!',
-      role: 'SUPER_ADMIN',
-      status: 'ACTIVO',
-    }).expect(400);
-
-    await superAdmin.post('/api/users').send({
-      name: 'Admin Débil',
-      identification: 'ADM-WEAK',
-      username: 'weak@gla.edu.co',
-      password: '12345678',
-      role: 'ADMIN',
-      status: 'ACTIVO',
-    }).expect(400);
+  it('impide crear SUPER_ADMIN o cuentas de trabajadores y exige contraseñas robustas', async () => {
+    for (const role of ['SUPER_ADMIN', 'CONDUCTOR']) {
+      await context.superAdmin.post('/api/users').send({ ...adminData, username: `${role.toLowerCase()}@gla.edu.co`, role }).expect(400);
+    }
+    await context.superAdmin.post('/api/users').send({ ...adminData, username: 'weak@gla.edu.co', password: '12345678' }).expect(400);
   });
 
-  it('evita que un ADMIN edite administradores o la cuenta maestra', async () => {
-    await admin.patch(`/api/users/${createdAdminId}`).send({ status: 'INACTIVO' }).expect(403);
-    const superAdminUser = (await pool.query("SELECT id FROM users WHERE role='SUPER_ADMIN'")).rows[0];
-    await admin.patch(`/api/users/${superAdminUser.id}`).send({ status: 'INACTIVO' }).expect(403);
-    await superAdmin.patch(`/api/users/${superAdminUser.id}`).send({ status: 'INACTIVO' }).expect(403);
-
-    const updated = await superAdmin.patch(`/api/users/${createdAdminId}`).send({ status: 'INACTIVO' }).expect(200);
-    expect(updated.body.user.status).toBe('INACTIVO');
+  it('protege cuentas administrativas, correo único e invalida sesiones de administradores inactivos', async () => {
+    const { admin, superAdmin, pool, app } = context;
+    const created = await superAdmin.post('/api/users').send({ ...adminData, identification: 'ADM-EDIT', username: 'editable@gla.edu.co', password: DEMO_PASSWORD }).expect(201);
+    const newSession = request.agent(app);
+    await newSession.post('/api/auth/login').send({ username: 'editable@gla.edu.co', password: DEMO_PASSWORD }).expect(200);
+    await admin.patch(`/api/users/${created.body.user.id}`).send({ status: 'INACTIVO' }).expect(403);
+    const master = (await pool.query("SELECT id FROM users WHERE role='SUPER_ADMIN'")).rows[0];
+    await admin.patch(`/api/users/${master.id}`).send({ status: 'INACTIVO' }).expect(403);
+    await superAdmin.patch(`/api/users/${master.id}`).send({ status: 'INACTIVO' }).expect(403);
+    await superAdmin.patch(`/api/users/${created.body.user.id}`).send({ status: 'INACTIVO' }).expect(200);
+    await newSession.get('/api/dashboard').expect(401);
+    await newSession.post('/api/auth/login').send({ username: 'editable@gla.edu.co', password: DEMO_PASSWORD }).expect(401);
+    await superAdmin.post('/api/users').send({ ...adminData, identification: 'ADM-DUP', username: 'COORDINACION@GLA.EDU.CO' }).expect(409);
   });
 
-  it('rechaza correos duplicados aunque cambie la capitalización', async () => {
-    await superAdmin.post('/api/users').send({
-      name: 'Correo Duplicado',
-      identification: 'ADM-DUP',
-      username: 'COORDINACION@GLA.EDU.CO',
-      password: 'OtraClaveSegura2026!',
-      role: 'ADMIN',
-      status: 'ACTIVO',
-    }).expect(409);
+  it('consulta el rol actual en base de datos aunque el JWT declare SUPER_ADMIN', async () => {
+    const user = (await context.pool.query("SELECT id FROM users WHERE role='ADMIN' LIMIT 1")).rows[0];
+    const forgedRoleToken = jwt.sign({ id: user.id, role: 'SUPER_ADMIN' }, config.jwtSecret, { algorithm: 'HS256', issuer: 'gestor-mantenimiento', audience: 'mantenimiento-admin' });
+    await request(context.app).get('/api/users').set('Authorization', `Bearer ${forgedRoleToken}`).expect(403);
   });
 
-  it('permite ajustar el estado de una novedad sólo al SUPER_ADMIN y conserva la trazabilidad', async () => {
-    const incident = (await pool.query("SELECT id, bus_id FROM incidents WHERE status='REPORTADO' LIMIT 1")).rows[0];
-
-    await admin.patch(`/api/incidents/${incident.id}/status`).send({
-      status: 'RESUELTO',
-      reason: 'Intento de ajuste desde una cuenta sin permiso.'
-    }).expect(403);
-
-    await driver.patch(`/api/incidents/${incident.id}/status`).send({
-      status: 'RESUELTO',
-      reason: 'Intento de ajuste desde el conductor.'
-    }).expect(403);
-
-    const resolved = await superAdmin.patch(`/api/incidents/${incident.id}/status`).send({
-      status: 'RESUELTO',
-      reason: 'Cierre administrativo verificado por coordinación general.'
-    }).expect(200);
-    expect(resolved.body.incident.status).toBe('RESUELTO');
-
-    const resolvedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [incident.bus_id])).rows[0];
-    expect(resolvedBus.current_status).toBe('OPERATIVO');
-
-    const reopened = await superAdmin.patch(`/api/incidents/${incident.id}/status`).send({
-      status: 'REPORTADO',
-      reason: 'Reapertura administrativa para continuar el seguimiento.'
-    }).expect(200);
-    expect(reopened.body.incident.status).toBe('REPORTADO');
-    expect(reopened.body.incident.resolved_at).toBeNull();
-
-    const reopenedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [incident.bus_id])).rows[0];
-    expect(reopenedBus.current_status).toBe('CON_NOVEDADES');
-
-    const history = await pool.query(`SELECT previous_status,new_status,comment FROM incident_history
-      WHERE incident_id=$1 AND event_type='ESTADO_AJUSTADO_SUPER_ADMIN' ORDER BY created_at`, [incident.id]);
-    expect(history.rows).toHaveLength(2);
-    expect(history.rows[0]).toMatchObject({ previous_status: 'REPORTADO', new_status: 'RESUELTO' });
-    expect(history.rows[1]).toMatchObject({ previous_status: 'RESUELTO', new_status: 'REPORTADO' });
+  it('rechaza IDs inválidos y no admite el antiguo ajuste de estado fuera del flujo', async () => {
+    const incident = (await createIncident(context.admin, context.spaces[0].id)).body.incident;
+    await context.superAdmin.patch(`/api/incidents/${incident.id}/status`).send({ status: 'CLOSED', reason: 'No debe omitir la evidencia final.' }).expect(404);
+    await context.superAdmin.patch('/api/users/not-an-id').send({ status: 'INACTIVO' }).expect(400);
+    await context.admin.get('/api/incidents/not-an-id').expect(400);
   });
 });

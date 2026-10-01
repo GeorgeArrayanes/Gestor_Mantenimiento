@@ -1,647 +1,143 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  BusFront,
-  Check,
-  Clock3,
-  ExternalLink,
-  FileText,
-  Image as ImageIcon,
-  Play,
-  RotateCcw,
-  Send,
-  ShieldCheck,
-  UploadCloud,
-  UserRound,
-  Wrench,
-  X,
-} from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, fileUrl } from "../api.js";
-import { useAuth } from "../context/AuthContext.jsx";
-import StatusBadge from "../components/StatusBadge.jsx";
-import Toast from "../components/Toast.jsx";
-import { formatDamageType, formatDate, isPdfResource } from "../utils/formatters.js";
-import { isAdminRole, isSuperAdminRole } from "../utils/roles.js";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, CheckCircle2, Clock3, Download, Edit3, FileText, Image, MessageCircle, ShieldCheck, UserRound, Wrench, X } from 'lucide-react';
+import { Link, useLocation, useParams } from 'react-router-dom';
+import { api, downloadEvidence } from '../api.js';
+import StatusBadge from '../components/StatusBadge.jsx';
+import EvidenceUpload from '../components/EvidenceUpload.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import Modal from '../components/Modal.jsx';
+import Toast from '../components/Toast.jsx';
+import { activeRecord, evidenceError, formatDate, HISTORY_LABELS, PRIORITIES, problemLabel, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
+import usePageLifecycle from './usePageLifecycle.js';
+import './maintenance-pages.css';
 
-const allowedEvidenceTypes = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-const maxEvidenceSize = 5 * 1024 * 1024;
+function EvidenceList({ items, onDownload, busy }) {
+  if (!items.length) return <p className="no-evidence">No se adjuntaron archivos en esta etapa.</p>;
+  return <div className="evidence-list">{items.map((evidence) => <button className="evidence-file" type="button" key={evidence.id} onClick={() => onDownload(evidence)} disabled={busy === `file-${evidence.id}`} aria-label={`Descargar ${evidence.file_name}`}>
+    {evidence.file_type?.startsWith('image/') ? <Image aria-hidden="true" /> : <FileText aria-hidden="true" />}<span>{evidence.file_name}<small>{busy === `file-${evidence.id}` ? 'Descargando…' : `${(Number(evidence.file_size) / 1024 / 1024).toFixed(1)} MB · ${evidence.file_type === 'application/pdf' ? 'Documento PDF' : 'Fotografía'}`}</small></span><Download aria-hidden="true" />
+  </button>)}</div>;
+}
 
-const incidentStatusOptions = [
-  ["REPORTADO", "Reportado"],
-  ["EN_PROCESO", "En proceso"],
-  ["PENDIENTE_VALIDACION", "Pendiente de validación"],
-  ["REQUIERE_CORRECCION", "Requiere corrección"],
-  ["RESUELTO", "Resuelto"],
-];
-
-const eventLabels = {
-  NOVEDAD_CREADA: "Novedad creada",
-  EVIDENCIA_AGREGADA: "Evidencia agregada",
-  REPARACION_INICIADA: "Reparación iniciada",
-  SOLUCION_ENVIADA: "Solución enviada",
-  REPARACION_RECHAZADA: "Reparación rechazada",
-  REPARACION_APROBADA: "Reparación aprobada",
-  ESTADO_AJUSTADO_SUPER_ADMIN: "Estado ajustado por superadministrador",
-};
 export default function IncidentDetailPage() {
   const { id } = useParams();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const fileInputRef = useRef(null);
-  const rejectButtonRef = useRef(null);
+  const activeRoute = useRef(id);
+  activeRoute.current = id;
+  const { mounted, startRequest } = usePageLifecycle();
+  const location = useLocation();
   const [data, setData] = useState(null);
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState("");
-  const [comment, setComment] = useState("");
+  const [spaces, setSpaces] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState('');
+  const [catalogRetry, setCatalogRetry] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [busy, setBusy] = useState('');
+  const [toast, setToast] = useState(location.state?.success ? { message: location.state.success } : null);
+  const [dialog, setDialog] = useState('');
+  const [assignedId, setAssignedId] = useState('');
+  const [editForm, setEditForm] = useState({});
+  const [resolution, setResolution] = useState('');
   const [files, setFiles] = useState([]);
-  const [reason, setReason] = useState("");
-  const [rejecting, setRejecting] = useState(false);
-  const [overrideStatus, setOverrideStatus] = useState("");
-  const [overrideReason, setOverrideReason] = useState("");
-  const [toast, setToast] = useState(null);
-  const load = useCallback(
-    () => {
-      setError("");
-      return (
-      api(`/incidents/${id}`)
-        .then(setData)
-        .catch((e) => setError(e.message))
-      );
-    },
-    [id],
-  );
+  const [confirmed, setConfirmed] = useState(false);
+  const [whatsapp, setWhatsapp] = useState(null);
+  const load = useCallback(async () => {
+    const signal = startRequest();
+    setError('');
+    try { const result = await api(`/incidents/${id}`, { signal }); if (!signal.aborted) setData(result); } catch (e) { if (!signal.aborted) setError(e.message); } finally { if (!signal.aborted) setLoading(false); }
+  }, [id, startRequest]);
+  useEffect(() => { setLoading(true); setData(null); setWhatsapp(null); setDialog(''); setActionError(''); setBusy(''); load(); }, [load]);
   useEffect(() => {
-    load();
-  }, [load]);
-  async function transition(action, body = {}) {
-    if (
-      action === "approve" &&
-      !window.confirm(
-        action === "approve"
-          ? "¿Aprobar esta reparación y marcar la novedad como resuelta?"
-          : "",
-      )
-    )
-      return;
-    setBusy(action);
-    setError("");
+    const controller = new AbortController();
+    setCatalogLoading(true); setCatalogError('');
+    Promise.all([api('/spaces', { signal: controller.signal }), api('/personnel', { signal: controller.signal })]).then(([s, p]) => { if (!controller.signal.aborted) { setSpaces(s.spaces); setPersonnel(p.personnel); } }).catch((e) => { if (!controller.signal.aborted) setCatalogError(`No fue posible cargar los espacios y el personal: ${e.message}`); }).finally(() => { if (!controller.signal.aborted) setCatalogLoading(false); });
+    return () => controller.abort();
+  }, [id, catalogRetry]);
+  const incident = data?.incident;
+  const closed = incident?.status === 'CLOSED';
+  const availablePersonnel = personnel.filter(activeRecord);
+  const initialEvidence = (data?.evidences || []).filter((item) => item.category === 'INITIAL');
+  const finalEvidence = (data?.evidences || []).filter((item) => item.category === 'FINAL');
+  function openDialog(type) {
+    setActionError(''); setConfirmed(false);
+    if (type === 'assign') setAssignedId(String(incident.assigned_person_id || ''));
+    if (type === 'edit') setEditForm({ space_id: String(incident.space_id), problem_type: incident.problem_type, priority: incident.priority, description: incident.description });
+    if (type === 'close') { setResolution(''); setFiles([]); }
+    setDialog(type);
+  }
+  function dismiss() { if (!busy) { setDialog(''); setActionError(''); } }
+  async function mutate(path, body, success, method = 'POST') {
+    setBusy(dialog); setActionError('');
+    try { await api(`/incidents/${id}${path}`, { method, body }); if (!mounted.current || activeRoute.current !== id) return; setDialog(''); setWhatsapp(null); setToast({ message: success }); await load(); } catch (e) { if (mounted.current && activeRoute.current === id) setActionError(e.message); } finally { if (mounted.current && activeRoute.current === id) setBusy(''); }
+  }
+  function assign(event) { event.preventDefault(); if (busy || !assignedId) return; return mutate('/assign', JSON.stringify({ assigned_person_id: assignedId }), 'Responsable asignado correctamente.'); }
+  function edit(event) { event.preventDefault(); if (busy) return; if (editForm.description.trim().length < 10) { setActionError('Describe el problema con al menos 10 caracteres.'); return; } return mutate('', JSON.stringify(editForm), 'Incidencia actualizada correctamente.', 'PATCH'); }
+  function submitResolution(event) {
+    event.preventDefault(); if (busy) return;
+    const validation = evidenceError(files, true);
+    if (validation) { setActionError(validation); return; }
+    if (resolution.trim().length < 10) { setActionError('Describe la reparación realizada con al menos 10 caracteres.'); return; }
+    setActionError(''); setConfirmed(false); setDialog('confirm-close');
+  }
+  function closeIncident(event) {
+    event.preventDefault(); if (busy || !confirmed) return;
+    const body = new FormData(); body.append('resolution_notes', resolution.trim()); body.append('confirmed', 'true'); files.forEach((file) => body.append('files', file));
+    return mutate('/close', body, 'Solución registrada. La incidencia está cerrada.');
+  }
+  async function notify() {
+    if (busy) return; setBusy('whatsapp'); setActionError('');
+    const target = window.open('', '_blank');
+    if (target) target.opener = null;
     try {
-      await api(`/incidents/${id}/${action}`, {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
-      setToast({
-        message:
-          action === "approve"
-            ? "Reparación aprobada."
-            : action === "reject"
-              ? "Corrección solicitada."
-              : "Estado actualizado.",
-      });
-      setRejecting(false);
-      setReason("");
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy("");
-    }
+      const prepared = await api(`/incidents/${id}/whatsapp`);
+      if (!mounted.current || activeRoute.current !== id) { target?.close(); return; }
+      const destination = new URL(prepared.url);
+      if (destination.protocol !== 'https:' || destination.hostname !== 'wa.me') throw new Error('El enlace de WhatsApp no es válido.');
+      setWhatsapp(prepared);
+      if (target) target.location.replace(destination.href);
+      else setToast({ message: 'El navegador bloqueó la nueva ventana. Usa “Abrir mensaje” debajo del botón.' });
+    } catch (e) { target?.close(); if (mounted.current && activeRoute.current === id) setActionError(e.message); } finally { if (mounted.current && activeRoute.current === id) setBusy(''); }
   }
-  async function upload(e) {
-    e.preventDefault();
-    if (!files.length) return setError("Selecciona al menos un archivo.");
-    setBusy("upload");
-    setError("");
-    try {
-      const body = new FormData();
-      files.forEach((f) => body.append("files", f));
-      body.append("comment", comment);
-      await api(`/incidents/${id}/evidences`, { method: "POST", body });
-      setFiles([]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setToast({ message: "Evidencia agregada sin eliminar las anteriores." });
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy("");
-    }
+  async function download(evidence) {
+    if (busy) return; setBusy(`file-${evidence.id}`); setActionError('');
+    try { await downloadEvidence(evidence.file_url, evidence.file_name); } catch (e) { if (mounted.current) setActionError(e.message); } finally { if (mounted.current) setBusy(''); }
   }
-  async function changeStatus(e) {
-    e.preventDefault();
-    if (!overrideStatus || overrideReason.trim().length < 8) return;
-    const targetLabel = incidentStatusOptions.find(([value]) => value === overrideStatus)?.[1] || overrideStatus;
-    if (!window.confirm(`¿Cambiar el estado de esta novedad a “${targetLabel}”?`)) return;
-    setBusy("override-status");
-    setError("");
-    try {
-      await api(`/incidents/${id}/status`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: overrideStatus, reason: overrideReason.trim() }),
-      });
-      setOverrideStatus("");
-      setOverrideReason("");
-      setToast({ message: `Estado actualizado a ${targetLabel}.` });
-      await load();
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy("");
-    }
-  }
-  function selectFiles(event) {
-    const selected = [...event.target.files];
-    const invalid = selected.filter((file) => !allowedEvidenceTypes.includes(file.type) || file.size > maxEvidenceSize);
-    const valid = selected.filter((file) => allowedEvidenceTypes.includes(file.type) && file.size <= maxEvidenceSize);
-    const accepted = valid.slice(0, 5);
-    const messages = [];
-    if (invalid.length) messages.push(`${invalid.length} archivo(s) no cumplen el formato o el máximo de 5 MB.`);
-    if (valid.length > 5) messages.push(`Solo se seleccionaron los primeros 5 archivos.`);
-    setError(messages.join(" "));
-    setFiles(accepted);
-    event.target.value = "";
-  }
-  if (error && !data)
-    return (
-      <div className="page-error state-card" role="alert">
-        <p>{error}</p>
-        <button className="secondary-button" onClick={load}>Reintentar</button>
-        <button className="text-button" onClick={() => navigate("/novedades")}>Volver a novedades</button>
-      </div>
-    );
-  if (!data) return <div className="loading-page" role="status">Cargando detalle…</div>;
-  const { incident: i, evidences, history } = data;
-  const driver = user.role === "CONDUCTOR";
-  const canWork = driver && i.status === "EN_PROCESO";
-  const latestStart = history.filter((item) => item.event_type === "REPARACION_INICIADA").at(-1);
-  const hasCurrentEvidence = Boolean(latestStart && evidences.some((item) => item.category !== "REPORTE" && new Date(item.created_at) >= new Date(latestStart.created_at)));
-  return (
-    <>
-      <div className="page-heading detail-title">
-        <div>
-          <Link to="/novedades" className="back-link">
-            ← Volver a novedades
-          </Link>
-          <p className="eyebrow">Novedad #{i.id}</p>
-          <h1>{formatDamageType(i.damage_type, i.other_damage_type)}</h1>
-          <p>
-            Reportada el{" "}
-            <time dateTime={i.reported_at}>{formatDate(i.reported_at, {
-              dateStyle: "long",
-              timeStyle: "short",
-            })}</time>
-          </p>
-        </div>
-        <div className="title-badges">
-          <StatusBadge value={i.urgency} urgency />
-          <StatusBadge value={i.status} />
-        </div>
-      </div>
-      {error && <div className="page-error detail-error" role="alert">{error}</div>}
-      <section className="vehicle-strip">
-        <div className="bus-card-icon">
-          <BusFront />
-        </div>
-        <div>
-          <strong>
-            {i.reference} <span>· {i.plate}</span>
-          </strong>
-          <p>
-            {i.brand} {i.model} · {i.route || "Sin ruta asignada"}
-          </p>
-        </div>
-        <div className="strip-driver">
-          <UserRound />
-          <span>
-            <small>Conductor responsable</small>
-            <b>{i.driver_name || "Sin asignar"}</b>
-          </span>
-        </div>
-      </section>
-      <section className="progress-track" role="list" aria-label="Progreso de la novedad">
-        <Step done active={i.status === "REPORTADO"} icon={Check} label="Reportado" />
-        <div className="progress-line done" aria-hidden="true" />
-        <Step
-          done={[
-            "EN_PROCESO",
-            "PENDIENTE_VALIDACION",
-            "REQUIERE_CORRECCION",
-            "RESUELTO",
-          ].includes(i.status)}
-          active={["EN_PROCESO", "REQUIERE_CORRECCION"].includes(i.status)}
-          icon={Wrench}
-          label="En reparación"
-        />
-        <div
-          className={`progress-line ${["PENDIENTE_VALIDACION", "REQUIERE_CORRECCION", "RESUELTO"].includes(i.status) ? "done" : ""}`}
-          aria-hidden="true"
-        />
-        <Step
-          done={[
-            "PENDIENTE_VALIDACION",
-            "REQUIERE_CORRECCION",
-            "RESUELTO",
-          ].includes(i.status)}
-          active={i.status === "PENDIENTE_VALIDACION"}
-          icon={ShieldCheck}
-          label="Validación"
-        />
-        <div
-          className={`progress-line ${i.status === "RESUELTO" ? "done" : ""}`}
-          aria-hidden="true"
-        />
-        <Step done={i.status === "RESUELTO"} active={i.status === "RESUELTO"} icon={Check} label="Resuelto" />
-      </section>
-      <div className="detail-grid">
-        <div className="detail-column">
-          <section className="panel">
-            <div className="section-heading">
-              <div>
-                <h2>Detalle del daño reportado</h2>
-                <p>Información original de la novedad.</p>
-              </div>
-            </div>
-            <div className="report-meta">
-              <span>
-                <AlertTriangle />
-                Urgencia <b>{i.urgency}</b>
-              </span>
-              <span>
-                <UserRound />
-                Reportado por <b>{i.reporter_name}</b>
-              </span>
-            </div>
-            <h3>Descripción del reporte</h3>
-            <p className="report-description">{i.description}</p>
-          </section>
-          <section className="panel">
-            <div className="section-heading">
-              <div>
-                <h2>Evidencias</h2>
-                <p>
-                  {evidences.length} archivo(s) conservados en el historial.
-                </p>
-              </div>
-            </div>
-            {evidences.length ? (
-              <div className="evidence-groups">
-                {["REPORTE", "SOLUCION", "CORRECCION"].map((category) => {
-                  const group = evidences.filter(
-                    (e) => e.category === category,
-                  );
-                  return group.length ? (
-                    <div key={category}>
-                      <h3>
-                        {category === "REPORTE"
-                          ? "Daño original"
-                          : category === "SOLUCION"
-                            ? "Primera solución"
-                            : "Correcciones posteriores"}
-                      </h3>
-                      <div className="evidence-grid">
-                        {group.map((e) => (
-                          <Evidence key={e.id} item={e} />
-                        ))}
-                      </div>
-                    </div>
-                  ) : null;
-                })}
-              </div>
-            ) : (
-              <div className="evidence-empty">
-                <ImageIcon />
-                Aún no hay archivos adjuntos.
-              </div>
-            )}
-          </section>
-        </div>
-        <div className="detail-column">
-          <section className="panel action-panel">
-            <h2>Acciones disponibles</h2>
-            {i.status === "RESUELTO" && (
-              <div className="resolved-box">
-                <Check />
-                <div>
-                  <strong>Novedad resuelta</strong>
-                  <span>
-                    La reparación fue aprobada y ya no admite cambios normales.
-                  </span>
-                </div>
-              </div>
-            )}
-            {driver && i.status === "REPORTADO" && (
-              <ActionIntro
-                icon={Play}
-                title="¿Listo para atenderla?"
-                text="Al iniciar, la novedad pasará a reparación y se registrará en el historial."
-                button="Iniciar reparación"
-                onClick={() => transition("start")}
-                busy={busy}
-              />
-            )}{" "}
-            {driver && i.status === "REQUIERE_CORRECCION" && (
-              <ActionIntro
-                icon={RotateCcw}
-                title="Se requiere una corrección"
-                text={
-                  history
-                    .filter((h) => h.event_type === "REPARACION_RECHAZADA")
-                    .at(-1)?.comment ||
-                  "Revisa la observación del administrador y vuelve a intentarlo."
-                }
-                button="Iniciar corrección"
-                onClick={() => transition("start")}
-                busy={busy}
-              />
-            )}{" "}
-            {canWork && (
-              <form className="repair-form" onSubmit={upload}>
-                <p>
-                  Adjunta fotografías o un PDF que demuestre el trabajo
-                  realizado. Los archivos anteriores no se reemplazan.
-                </p>
-                <label className="upload-zone compact">
-                  <UploadCloud />
-                  <strong>Seleccionar evidencia</strong>
-                  <span>JPG, PNG, WEBP o PDF · máx. 5 MB</span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".jpg,.jpeg,.png,.webp,.pdf"
-                    onChange={selectFiles}
-                  />
-                </label>
-                {files.length > 0 && (
-                  <div className="selected-files">
-                    {files.map((f, index) => (
-                      <span key={`${f.name}-${f.lastModified}`}>
-                        {f.name}
-                        <button type="button" aria-label={`Quitar ${f.name}`} onClick={() => setFiles((current) => current.filter((_, itemIndex) => itemIndex !== index))}><X /></button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <label>
-                  Comentario de la reparación
-                  <textarea
-                    rows="3"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                    placeholder="Explica qué se reparó o cambió…"
-                  />
-                </label>
-                <button
-                  className="secondary-button wide"
-                  disabled={busy === "upload" || !files.length}
-                >
-                  {busy === "upload" ? "Subiendo…" : "Guardar evidencia"}
-                </button>
-                <div className={`repair-check ${hasCurrentEvidence ? "complete" : "pending"}`} role="status">
-                  {hasCurrentEvidence ? <Check /> : <Clock3 />}
-                  <span>{hasCurrentEvidence ? "Evidencia de esta reparación guardada." : "Guarda al menos una evidencia antes de enviarla a validación."}</span>
-                </div>
-                <button
-                  type="button"
-                  className="primary-button wide"
-                  disabled={Boolean(busy) || !hasCurrentEvidence}
-                  onClick={() => transition("submit", { comment })}
-                >
-                  <Send />
-                  Enviar para validación
-                </button>
-              </form>
-            )}
-            {driver && i.status === "PENDIENTE_VALIDACION" && (
-              <div className="waiting-box">
-                <Clock3 />
-                <strong>Esperando revisión del administrador</strong>
-                <span>
-                  La solución fue enviada y no puede modificarse mientras está
-                  en validación.
-                </span>
-              </div>
-            )}
-            {isAdminRole(user.role) && i.status === "PENDIENTE_VALIDACION" && (
-              <div className="validation-actions">
-                <p>
-                  Revisa todas las evidencias antes de aprobar o pedir una
-                  corrección.
-                </p>
-                <button
-                  className="success-button wide"
-                  onClick={() =>
-                    transition("approve", {
-                      comment: "Solución aprobada por administración.",
-                    })
-                  }
-                  disabled={Boolean(busy)}
-                >
-                  <Check />
-                  Aprobar solución
-                </button>
-                <button
-                  ref={rejectButtonRef}
-                  className="danger-button wide"
-                  onClick={() => setRejecting(true)}
-                  disabled={Boolean(busy)}
-                >
-                  <X />
-                  Solicitar corrección
-                </button>
-                {rejecting && (
-                  <div className="reject-box">
-                    <label>
-                      Motivo obligatorio
-                      <textarea
-                        rows="3"
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        placeholder="Indica claramente qué debe corregirse…"
-                        autoFocus
-                      />
-                    </label>
-                    <div>
-                      <button
-                        className="secondary-button"
-                        onClick={() => {
-                          setRejecting(false);
-                          window.requestAnimationFrame(() => rejectButtonRef.current?.focus());
-                        }}
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        className="danger-button"
-                        disabled={!reason.trim()}
-                        onClick={() => transition("reject", { reason })}
-                      >
-                        Confirmar rechazo
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-            {isAdminRole(user.role) &&
-              !["PENDIENTE_VALIDACION", "RESUELTO"].includes(i.status) && (
-                <div className="waiting-box neutral">
-                  <Clock3 />
-                  <strong>Seguimiento en curso</strong>
-                  <span>
-                    Las próximas acciones corresponden al conductor responsable.
-                  </span>
-                </div>
-              )}
-            {isSuperAdminRole(user.role) && (
-              <form className="super-admin-status-control" onSubmit={changeStatus}>
-                <div className="super-admin-status-heading">
-                  <span><ShieldCheck /></span>
-                  <div>
-                    <small>Control de superadministrador</small>
-                    <h3>Ajustar estado manualmente</h3>
-                  </div>
-                </div>
-                <p>
-                  Úsalo para corregir casos excepcionales. El cambio y su motivo quedarán registrados en el historial.
-                </p>
-                <label>
-                  Nuevo estado
-                  <select value={overrideStatus} onChange={(e) => setOverrideStatus(e.target.value)} required>
-                    <option value="">Selecciona un estado</option>
-                    {incidentStatusOptions
-                      .filter(([value]) => value !== i.status)
-                      .map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                  </select>
-                </label>
-                <label>
-                  Motivo del ajuste
-                  <textarea
-                    rows="3"
-                    minLength="8"
-                    maxLength="500"
-                    value={overrideReason}
-                    onChange={(e) => setOverrideReason(e.target.value)}
-                    placeholder="Explica por qué es necesario cambiar el estado…"
-                    required
-                  />
-                </label>
-                <button
-                  className="secondary-button wide"
-                  disabled={Boolean(busy) || !overrideStatus || overrideReason.trim().length < 8}
-                >
-                  {busy === "override-status" ? "Actualizando…" : "Aplicar cambio de estado"}
-                </button>
-              </form>
-            )}
-          </section>
-          <section className="panel">
-            <div className="section-heading">
-              <div>
-                <h2>Historial</h2>
-                <p>Registro inmutable de actividad.</p>
-              </div>
-            </div>
-            <div className="timeline">
-              {history.map((h, index) => (
-                <article key={h.id}>
-                  <span
-                    className={`timeline-dot ${h.event_type.includes("RECHAZADA") ? "red" : h.event_type.includes("APROBADA") ? "green" : ""}`}
-                  >
-                    {h.event_type.includes("RECHAZADA") ? <X /> : <Check />}
-                  </span>
-                  <div>
-                    <strong>
-                      {eventLabels[h.event_type] ||
-                        h.event_type.replaceAll("_", " ")}
-                    </strong>
-                    <small>
-                      {h.user_name} ·{" "}
-                      <time dateTime={h.created_at}>{formatDate(h.created_at, {
-                        dateStyle: "medium",
-                        timeStyle: "short",
-                      })}</time>
-                    </small>
-                    {h.comment && <p>{h.comment}</p>}
-                    {h.previous_status && (
-                      <span className="state-change">
-                        {h.previous_status.replaceAll("_", " ")} →{" "}
-                        {h.new_status.replaceAll("_", " ")}
-                      </span>
-                    )}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-      </div>
-      <Toast toast={toast} onClose={() => setToast(null)} />
-    </>
-  );
+  return <div className="maintenance-page">
+    <Link className="back-link" to="/incidencias"><ArrowLeft aria-hidden="true" />Volver a incidencias</Link>
+    {error && <div className="page-error" role="alert">{error}<button type="button" className="text-button" onClick={() => { setLoading(true); load(); }}>Reintentar</button></div>}
+    {loading ? <div className="loading-page" role="status" aria-busy="true">Cargando incidencia…</div> : !error && incident && <>
+      <div className="detail-heading"><div><p className="eyebrow">Detalle de incidencia</p><h1>{incident.code}</h1><div className="detail-badges"><StatusBadge value={incident.status} /><StatusBadge value={incident.priority} urgency /><span className="helper">Registrada el {formatDate(incident.created_at)}</span></div></div><div className="detail-actions">{!closed && <><button type="button" className="secondary-button" disabled={Boolean(busy)} onClick={() => openDialog('edit')}><Edit3 aria-hidden="true" />Editar</button>{incident.status === 'ASSIGNED' && <button type="button" className="primary-button" disabled={Boolean(busy)} onClick={() => openDialog('close')}><CheckCircle2 aria-hidden="true" />Registrar solución</button>}</>}</div></div>
+      {closed && <div className="detail-closed-note"><ShieldCheck aria-hidden="true" />Solución verificada y registrada. Esta incidencia conserva su historial completo.</div>}
+      {actionError && !dialog && <div className="page-error" role="alert">{actionError}</div>}
+      <div className="detail-grid"><div className="detail-main">
+        <section className="panel"><h2 className="detail-section-title"><Wrench aria-hidden="true" />Información de la incidencia</h2><dl className="detail-facts"><div><dt>Espacio / ubicación</dt><dd>{incident.space_name}{incident.space_zone && <><br /><span className="helper">{incident.space_zone}</span></>}</dd></div><div><dt>Tipo de problema</dt><dd>{problemLabel(incident.problem_type)}</dd></div><div><dt>Registrada por</dt><dd>{incident.created_by_name}</dd></div><div><dt>Fecha de registro</dt><dd>{formatDate(incident.created_at, true)}</dd></div></dl><span className="detail-label">Descripción</span><p className="detail-description">{incident.description}</p></section>
+        <section className="panel"><h2 className="detail-section-title"><Image aria-hidden="true" />Evidencia inicial</h2><EvidenceList items={initialEvidence} onDownload={download} busy={busy} /></section>
+        {closed && <section className="panel resolution-panel"><h2 className="detail-section-title"><CheckCircle2 aria-hidden="true" />Solución registrada</h2><p className="detail-description">{incident.resolution_notes}</p><span className="resolution-date">Cerrada el {formatDate(incident.closed_at, true)}</span><hr className="form-divider" /><h3 className="detail-section-title"><Image aria-hidden="true" />Evidencia final</h3><EvidenceList items={finalEvidence} onDownload={download} busy={busy} /></section>}
+      </div><aside className="detail-side">
+        <section className="panel"><h2 className="detail-section-title"><UserRound aria-hidden="true" />Responsable</h2>{incident.assigned_person_name ? <div className="assignee-box"><span className="person-avatar"><UserRound aria-hidden="true" /></span><div><strong>{incident.assigned_person_name}</strong><p>{(closed ? incident.assigned_person_phone : incident.assigned_person_current_phone || incident.assigned_person_phone) || 'Sin teléfono registrado'}</p></div></div> : <p className="assignee-empty">Esta incidencia está pendiente de asignación. Selecciona a una persona del equipo para comenzar.</p>}
+          {!closed && <>{incident.assigned_person_id && <><button className="primary-button" type="button" onClick={notify} disabled={Boolean(busy)}><MessageCircle aria-hidden="true" />{busy === 'whatsapp' ? 'Preparando mensaje…' : 'Notificar por WhatsApp'}</button><p className="whatsapp-help">Se abre un mensaje preparado. Tú decides cuándo enviarlo en WhatsApp.</p>{whatsapp && <a className="text-button" href={whatsapp.url} target="_blank" rel="noopener noreferrer">Abrir mensaje<Download size={13} aria-hidden="true" /></a>}</>}<button className={incident.assigned_person_id ? 'secondary-button' : 'primary-button'} type="button" onClick={() => openDialog('assign')} disabled={Boolean(busy)}><UserRound aria-hidden="true" />{incident.assigned_person_id ? 'Cambiar responsable' : 'Asignar responsable'}</button></>}
+          {incident.assigned_at && <p className="whatsapp-help">Asignada el {formatDate(incident.assigned_at, true)}</p>}
+        </section>
+        <section className="panel"><h2 className="detail-section-title"><Clock3 aria-hidden="true" />Historial</h2>{data.history?.length ? <ol className="timeline">{data.history.map((event) => <li key={event.id}><strong>{HISTORY_LABELS[event.event_type] || 'Actualización de incidencia'}</strong>{event.comment && <p>{event.comment}</p>}<p>{event.user_name || 'Administrador'}</p><time dateTime={event.created_at}>{formatDate(event.created_at, true)}</time></li>)}</ol> : <p className="no-evidence">Aún no hay eventos registrados.</p>}</section>
+      </aside></div>
+    </>}
+    {dialog && <Modal key={dialog} as="form" className="modal catalog-form maintenance-form" labelledBy="incident-dialog-title" onClose={dismiss} onSubmit={dialog === 'assign' ? assign : dialog === 'edit' ? edit : dialog === 'confirm-close' ? closeIncident : submitResolution}>
+      <div className="modal-head"><div><p className="eyebrow">{incident?.code}</p><h2 id="incident-dialog-title">{dialog === 'assign' ? 'Asignar responsable' : dialog === 'edit' ? 'Editar incidencia' : dialog === 'confirm-close' ? 'Confirmar cierre' : 'Registrar solución'}</h2></div><button className="icon-button" type="button" onClick={dismiss} disabled={Boolean(busy)} aria-label="Cerrar diálogo"><X size={20} /></button></div>
+      {actionError && <div className="page-error" role="alert">{actionError}</div>}
+      {(dialog === 'assign' || dialog === 'edit') && catalogLoading && <p className="helper" role="status">Cargando espacios y personal…</p>}
+      {(dialog === 'assign' || dialog === 'edit') && catalogError && <div className="page-error" role="alert">{catalogError}<button type="button" className="secondary-button" onClick={() => setCatalogRetry((value) => value + 1)}>Reintentar</button></div>}
+      {dialog === 'assign' && !catalogLoading && !catalogError && (availablePersonnel.length ? <label>Persona del equipo<select data-autofocus value={assignedId} onChange={(e) => setAssignedId(e.target.value)} required disabled={Boolean(busy)}><option value="">Selecciona un responsable</option>{availablePersonnel.map((p) => <option key={p.id} value={p.id}>{p.name}{p.specialty ? ` · ${p.specialty}` : ''}</option>)}</select><small className="helper">El personal recibe la asignación por WhatsApp y no necesita una cuenta de acceso.</small></label> : <EmptyState title="No hay personal activo" text="Registra o activa a una persona del equipo antes de asignar esta incidencia." action={<Link className="secondary-button" to="/personal" onClick={dismiss}>Ir a personal</Link>} />)}
+      {dialog === 'edit' && !catalogLoading && !catalogError && <div className="form-grid"><label>Espacio / ubicación<select data-autofocus value={editForm.space_id} onChange={(e) => setEditForm((f) => ({ ...f, space_id: e.target.value }))} required disabled={Boolean(busy)}>{spaces.filter((s) => activeRecord(s) || String(s.id) === String(incident.space_id)).map((s) => <option key={s.id} value={s.id}>{spaceLabel(s)}{!activeRecord(s) ? ' (archivado)' : ''}</option>)}</select></label><label>Tipo de problema<select value={editForm.problem_type} onChange={(e) => setEditForm((f) => ({ ...f, problem_type: e.target.value }))} required disabled={Boolean(busy)}>{PROBLEM_TYPES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label>Prioridad<select value={editForm.priority} onChange={(e) => setEditForm((f) => ({ ...f, priority: e.target.value }))} disabled={Boolean(busy)}>{PRIORITIES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label className="full">Descripción<textarea value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} required minLength={10} maxLength={4000} disabled={Boolean(busy)} /></label></div>}
+      {dialog === 'close' && <div className="form-grid"><div className="form-intro full"><ShieldCheck aria-hidden="true" /><p>Verifica la reparación y registra la evidencia antes de cerrar la incidencia.</p></div><label className="full">¿Cómo se solucionó?<textarea data-autofocus value={resolution} onChange={(e) => setResolution(e.target.value)} placeholder="Describe el trabajo realizado y la solución verificada." required minLength={10} maxLength={4000} disabled={Boolean(busy)} /></label><div className="full"><EvidenceUpload files={files} onChange={setFiles} requiredPhoto label="Evidencia final" disabled={Boolean(busy)} /></div></div>}
+      {dialog === 'confirm-close' && <><p className="close-note">Vas a cerrar <strong>{incident?.code}</strong>. La solución y {files.length} {files.length === 1 ? 'archivo' : 'archivos'} de evidencia quedarán en su historial. La incidencia cerrada no podrá editarse.</p><p className="detail-description">{resolution}</p><label className="confirm-checkbox"><input data-autofocus type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} required disabled={Boolean(busy)} />Confirmo que revisé la reparación y que el problema está solucionado.</label></>}
+      <div className="form-actions"><button type="button" className="secondary-button" onClick={dialog === 'confirm-close' ? () => { setDialog('close'); setActionError(''); } : dismiss} disabled={Boolean(busy)}>{dialog === 'confirm-close' ? 'Volver' : 'Cancelar'}</button>{(dialog !== 'assign' || availablePersonnel.length > 0) && <button type="submit" className="primary-button" disabled={Boolean(busy) || ((dialog === 'assign' || dialog === 'edit') && (catalogLoading || Boolean(catalogError))) || (dialog === 'confirm-close' && !confirmed)}>{busy ? 'Guardando…' : dialog === 'assign' ? 'Guardar asignación' : dialog === 'edit' ? 'Guardar cambios' : dialog === 'confirm-close' ? 'Cerrar incidencia' : 'Revisar y cerrar'}</button>}</div>
+    </Modal>}
+    <Toast toast={toast} onClose={() => setToast(null)} />
+  </div>;
 }
-function Step({ done, active, icon: Icon, label }) {
-  return (
-    <div
-      className={`progress-step ${done ? "done" : ""} ${active ? "active" : ""}`}
-      role="listitem"
-      aria-current={active ? "step" : undefined}
-      aria-label={`${label}: ${active ? "paso actual" : done ? "completado" : "pendiente"}`}
-    >
-      <span>
-        <Icon />
-      </span>
-      <b>{label}</b>
-    </div>
-  );
-}
-function Evidence({ item }) {
-  const isPdf = isPdfResource(item);
-  return (
-    <a
-      className="evidence-card"
-      href={fileUrl(item.file_url)}
-      target="_blank"
-      rel="noreferrer"
-    >
-      {isPdf ? (
-        <div className="pdf-preview">
-          <FileText />
-        </div>
-      ) : (
-        <img
-          src={fileUrl(item.file_url)}
-          alt={item.comment || item.file_name}
-        />
-      )}
-      <div>
-        <b>{item.file_name}</b>
-        <small>
-          {item.uploaded_by_name} ·{" "}
-          <time dateTime={item.created_at}>{formatDate(item.created_at)}</time>
-        </small>
-        {item.comment && <span>{item.comment}</span>}
-      </div>
-      <ExternalLink />
-    </a>
-  );
-}
-function ActionIntro({ icon: Icon, title, text, button, onClick, busy }) {
-  return (
-    <div className="action-intro">
-      <span>
-        <Icon />
-      </span>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      <button
-        className="primary-button wide"
-        onClick={onClick}
-        disabled={Boolean(busy)}
-      >
-        {button}
-      </button>
-    </div>
-  );
-}
+
+
+
+
+

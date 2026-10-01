@@ -1,161 +1,118 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import request from 'supertest';
-import { createMemoryPool } from '../src/db.js';
-import { createApp } from '../src/app.js';
-import { seedDatabase } from '../src/seed.js';
-import { config } from '../src/config.js';
+import { closeIncident, createIncident, fixture } from './helpers.js';
 
-let pool;
-let app;
-let admin;
+let context;
+beforeAll(async () => { context = await fixture(); });
+afterAll(async () => context?.pool.end());
 
-beforeAll(async () => {
-  config.nodeEnv = 'test';
-  pool = await createMemoryPool();
-  await seedDatabase(pool);
-  app = createApp(pool);
-  admin = request.agent(app);
-  await admin.post('/api/auth/login').send({
-    username: 'admin@rutasegura.test',
-    password: 'RutaSegura2026!'
-  }).expect(200);
-});
+describe('integridad de asignación y catálogos', () => {
+  it('rechaza responsables y espacios inexistentes o inactivos y conserva los registros históricos', async () => {
+    const { admin, spaces } = context;
+    const worker = (await admin.post('/api/personnel').send({ name: 'Técnico histórico', phone: '+57 300 500 1234', specialty: 'Plomería', active: true }).expect(201)).body.person;
+    const space = (await admin.post('/api/spaces').send({ name: 'Baño archivo', zone: 'Bloque C', active: true }).expect(201)).body.space;
+    const incident = (await createIncident(admin, space.id, { assigned_person_id: worker.id }).expect(201)).body.incident;
+    await closeIncident(admin, incident.id).expect(200);
+    await admin.patch(`/api/personnel/${worker.id}`).send({ active: false }).expect(200);
+    await admin.patch(`/api/spaces/${space.id}`).send({ active: false }).expect(200);
 
-afterAll(async () => pool.end());
+    await createIncident(admin, space.id).expect(409);
+    await createIncident(admin, spaces[0].id, { assigned_person_id: worker.id }).expect(409);
+    const pending = (await createIncident(admin, spaces[0].id).expect(201)).body.incident;
+    await admin.post(`/api/incidents/${pending.id}/assign`).send({ assigned_person_id: worker.id }).expect(409);
+    await admin.post(`/api/incidents/${pending.id}/assign`).send({ assigned_person_id: 999999 }).expect(404);
+    await createIncident(admin, 999999).expect(404);
 
-async function createDriver(suffix, status = 'ACTIVO') {
-  const response = await admin.post('/api/users').send({
-    name: `Conductor ${suffix}`,
-    identification: `CC-${suffix}`,
-    username: `conductor.${suffix.toLowerCase()}@rutasegura.test`,
-    phone: '3000000000',
-    password: 'RutaSegura2026!',
-    role: 'CONDUCTOR',
-    status
-  }).expect(201);
-  return response.body.user;
-}
-
-async function createBus(suffix, driverId, currentStatus = 'OPERATIVO') {
-  const response = await admin.post('/api/buses').send({
-    reference: `Bus ${suffix}`,
-    plate: `QA${suffix}99`,
-    brand: 'Mercedes-Benz',
-    model: 'Sprinter',
-    route: `Ruta QA ${suffix}`,
-    capacity: 20,
-    current_status: currentStatus,
-    driver_id: driverId
-  });
-  return response;
-}
-
-describe('integridad de asignaciones de conductores', () => {
-  it('sólo permite asignar usuarios CONDUCTOR activos', async () => {
-    const inactiveDriver = await createDriver('INACTIVO', 'INACTIVO');
-    const adminUser = (await pool.query("SELECT id FROM users WHERE role='ADMIN' LIMIT 1")).rows[0];
-    const freeBus = (await pool.query("SELECT id FROM buses WHERE reference='Bus 09'")).rows[0];
-
-    const inactiveAssignment = await admin.patch(`/api/buses/${freeBus.id}`).send({ driver_id: inactiveDriver.id });
-    expect(inactiveAssignment.status).toBe(409);
-    expect(inactiveAssignment.body.message).toContain('CONDUCTOR');
-
-    const wrongRoleAssignment = await admin.patch(`/api/buses/${freeBus.id}`).send({ driver_id: adminUser.id });
-    expect(wrongRoleAssignment.status).toBe(409);
-    expect(wrongRoleAssignment.body.message).toContain('activo');
-
-    const invalidCreation = await createBus('81', inactiveDriver.id);
-    expect(invalidCreation.status).toBe(409);
+    const retained = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(retained.incident.assigned_person_name).toBe('Técnico histórico');
+    expect(retained.incident.space_name).toBe('Baño archivo');
+    expect(retained.incident.status).toBe('CLOSED');
+    expect(retained.evidences).toHaveLength(1);
+    expect(retained.history.some((event) => event.new_status === 'CLOSED')).toBe(true);
+    expect((await admin.get(`/api/incidents/${pending.id}`).expect(200)).body.incident.status).toBe('PENDING');
   });
 
-  it('bloquea reasignar o inactivar responsables con novedades abiertas', async () => {
-    const carlos = (await pool.query("SELECT id FROM users WHERE username='carlos@rutasegura.test'")).rows[0];
-    const bus = (await pool.query("SELECT id FROM buses WHERE reference='Bus 04'")).rows[0];
-
-    const unassign = await admin.patch(`/api/buses/${bus.id}`).send({ driver_id: null });
-    expect(unassign.status).toBe(409);
-    expect(unassign.body.message).toContain('novedades abiertas');
-
-    const inactivate = await admin.patch(`/api/users/${carlos.id}`).send({ status: 'INACTIVO' });
-    expect(inactivate.status).toBe(409);
-    expect(inactivate.body.message).toContain('novedades abiertas');
+  it('no genera cuentas de autenticación para el personal', async () => {
+    const { admin, pool } = context;
+    const before = (await pool.query('SELECT COUNT(*) AS count FROM users')).rows[0].count;
+    await admin.post('/api/personnel').send({ name: 'Sin credenciales', phone: '3005558899', specialty: 'General', active: true }).expect(201);
+    const after = (await pool.query('SELECT COUNT(*) AS count FROM users')).rows[0].count;
+    expect(Number(after)).toBe(Number(before));
   });
 
-  it('exige retirar un bus sin novedades antes de inactivar a su conductor', async () => {
-    const driver = await createDriver('LIBRE');
-    const createdBus = await createBus('82', driver.id);
-    expect(createdBus.status).toBe(201);
-
-    const assignedInactivation = await admin.patch(`/api/users/${driver.id}`).send({ status: 'INACTIVO' });
-    expect(assignedInactivation.status).toBe(409);
-    expect(assignedInactivation.body.message).toContain('Retira o reasigna');
-
-    await admin.patch(`/api/buses/${createdBus.body.bus.id}`).send({ driver_id: null }).expect(200);
-    await admin.patch(`/api/users/${driver.id}`).send({ status: 'INACTIVO' }).expect(200);
-
-    const reassignment = await admin.patch(`/api/buses/${createdBus.body.bus.id}`).send({ driver_id: driver.id });
-    expect(reassignment.status).toBe(409);
+  it('permite editar incidencias activas y rechaza datos fuera de los catálogos', async () => {
+    const { admin, spaces } = context;
+    const created = (await createIncident(admin, spaces[0].id).expect(201)).body.incident;
+    const edited = await admin.patch(`/api/incidents/${created.id}`).send({ description: 'Fuga en tubería bajo el lavamanos principal', priority: 'MEDIA' }).expect(200);
+    expect(edited.body.incident).toMatchObject({ description: 'Fuga en tubería bajo el lavamanos principal', priority: 'MEDIA', status: 'PENDING' });
+    await admin.patch(`/api/incidents/${created.id}`).send({ priority: 'URGENTE' }).expect(400);
+    await createIncident(admin, spaces[0].id, { problem_type: 'MOTOR' }).expect(400);
+    await createIncident(admin, spaces[0].id, { description: 'corto' }).expect(400);
   });
 });
 
-describe('integridad entre novedades y estado operativo del bus', () => {
-  it('mantiene el comportamiento derivado para buses operativos', async () => {
-    const driver = await createDriver('DERIVADO');
-    const createdBus = await createBus('84', driver.id, 'OPERATIVO');
-    expect(createdBus.status).toBe(201);
-
-    const incident = await admin.post('/api/incidents')
-      .field('bus_id', String(createdBus.body.bus.id))
-      .field('damage_type', 'LUCES_ELECTRICO')
-      .field('description', 'Prueba de regresión del estado automático asociado a novedades abiertas.')
-      .field('urgency', 'BAJA');
-    expect(incident.status).toBe(201);
-
-    let storedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [createdBus.body.bus.id])).rows[0];
-    expect(storedBus.current_status).toBe('CON_NOVEDADES');
-
-    await pool.query("UPDATE incidents SET status='PENDIENTE_VALIDACION' WHERE id=$1", [incident.body.incident.id]);
-    await admin.post(`/api/incidents/${incident.body.incident.id}/approve`).send({ comment: 'Cierre automático.' }).expect(200);
-
-    storedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [createdBus.body.bus.id])).rows[0];
-    expect(storedBus.current_status).toBe('OPERATIVO');
+describe('cierre irreversible ordinario', () => {
+  it('requiere asignación, notas, evidencia y confirmación explícita', async () => {
+    const { admin, spaces, personnel } = context;
+    const incident = (await createIncident(admin, spaces[0].id).expect(201)).body.incident;
+    await closeIncident(admin, incident.id).expect(409);
+    await admin.post(`/api/incidents/${incident.id}/assign`).send({ assigned_person_id: personnel[0].id }).expect(200);
+    const missingEvidence = await closeIncident(admin, incident.id, { evidence: false }).expect(400);
+    expect(missingEvidence.body.message).toMatch(/evidencia|archivo|imagen/i);
+    await closeIncident(admin, incident.id, { confirmed: 'false' }).expect(400);
+    await closeIncident(admin, incident.id, { resolution_notes: 'Listo' }).expect(400);
+    const untouched = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(untouched.incident.status).toBe('ASSIGNED');
+    expect(untouched.incident.closed_at).toBeNull();
+    expect(untouched.evidences).toHaveLength(0);
   });
 
-  it('conserva estados manuales al crear y cerrar la última novedad', async () => {
-    const driver = await createDriver('MANUAL');
-    const createdBus = await createBus('83', driver.id, 'EN_MANTENIMIENTO');
-    expect(createdBus.status).toBe(201);
-
-    const incident = await admin.post('/api/incidents')
-      .field('bus_id', String(createdBus.body.bus.id))
-      .field('damage_type', 'MOTOR')
-      .field('description', 'Prueba de regresión para conservar el estado manual del vehículo.')
-      .field('urgency', 'MEDIA');
-    expect(incident.status).toBe(201);
-
-    let storedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [createdBus.body.bus.id])).rows[0];
-    expect(storedBus.current_status).toBe('EN_MANTENIMIENTO');
-
-    await admin.patch(`/api/buses/${createdBus.body.bus.id}`).send({ current_status: 'FUERA_DE_SERVICIO' }).expect(200);
-    await pool.query("UPDATE incidents SET status='PENDIENTE_VALIDACION' WHERE id=$1", [incident.body.incident.id]);
-    await admin.post(`/api/incidents/${incident.body.incident.id}/approve`).send({ comment: 'Cierre de prueba.' }).expect(200);
-
-    storedBus = (await pool.query('SELECT current_status FROM buses WHERE id=$1', [createdBus.body.bus.id])).rows[0];
-    expect(storedBus.current_status).toBe('FUERA_DE_SERVICIO');
+  it('bloquea segundo cierre, edición y reasignación también para SUPER_ADMIN', async () => {
+    const { admin, superAdmin, spaces, personnel } = context;
+    const incident = (await createIncident(admin, spaces[0].id, { assigned_person_id: personnel[0].id }).expect(201)).body.incident;
+    await closeIncident(admin, incident.id).expect(200);
+    const before = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    for (const actor of [admin, superAdmin]) {
+      await closeIncident(actor, incident.id).expect(409);
+      await actor.patch(`/api/incidents/${incident.id}`).send({ description: 'Edición posterior al cierre.' }).expect(409);
+      await actor.post(`/api/incidents/${incident.id}/assign`).send({ assigned_person_id: personnel[1].id }).expect(409);
+    }
+    const after = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(after.incident.closed_at).toBe(before.incident.closed_at);
+    expect(after.incident.resolution_notes).toBe(before.incident.resolution_notes);
+    expect(after.evidences).toEqual(before.evidences);
+    expect(after.history).toEqual(before.history);
   });
 
-  it('rechaza crear novedades si una asignación heredada apunta a un conductor inactivo', async () => {
-    const inactiveDriver = await createDriver('HEREDADO', 'INACTIVO');
-    const freeBus = (await pool.query("SELECT id FROM buses WHERE reference='Bus 09'")).rows[0];
-    await pool.query('UPDATE buses SET driver_id=$1 WHERE id=$2', [inactiveDriver.id, freeBus.id]);
+  it('rechaza el lanzamiento de WhatsApp sin asignación o con teléfono inválido', async () => {
+    const { admin, spaces, personnel, pool } = context;
+    const incident = (await createIncident(admin, spaces[0].id).expect(201)).body.incident;
+    await admin.get(`/api/incidents/${incident.id}/whatsapp`).expect(409);
+    await admin.post(`/api/incidents/${incident.id}/assign`).send({ assigned_person_id: personnel[0].id }).expect(200);
+    // Simula un dato mal formado heredado, aunque las escrituras actuales lo validen.
+    await pool.query('UPDATE maintenance_personnel SET phone=$1 WHERE id=$2', ['sin teléfono', personnel[0].id]);
+    const invalid = await admin.get(`/api/incidents/${incident.id}/whatsapp`).expect(400);
+    expect(invalid.body.message).toMatch(/teléfono|número/i);
+    expect(invalid.body.url).toBeUndefined();
+  });
 
-    const response = await admin.post('/api/incidents')
-      .field('bus_id', String(freeBus.id))
-      .field('damage_type', 'FRENOS')
-      .field('description', 'Esta novedad no debe asignarse a una cuenta que no puede iniciar sesión.')
-      .field('urgency', 'ALTA');
+  it('usa el teléfono corregido para WhatsApp y conserva el teléfono histórico de asignación', async () => {
+    const { admin, spaces } = context;
+    const person = (await admin.post('/api/personnel').send({ name: 'Responsable con cambio', phone: '+57 300 555 1122', specialty: 'General', active: true }).expect(201)).body.person;
+    const incident = (await createIncident(admin, spaces[0].id, { assigned_person_id: person.id }).expect(201)).body.incident;
+    await admin.patch(`/api/personnel/${person.id}`).send({ phone: '+57 300 555 6677' }).expect(200);
+    const whatsapp = (await admin.get(`/api/incidents/${incident.id}/whatsapp`).expect(200)).body;
+    expect(new URL(whatsapp.url).pathname).toBe('/573005556677');
+    const detail = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(detail.incident.assigned_person_phone).toBe('+57 300 555 1122');
+  });
 
-    expect(response.status).toBe(409);
-    expect(response.body.message).toContain('activo');
+  it('serializa dos cierres simultáneos para conservar una sola solución', async () => {
+    const { admin, spaces, personnel } = context;
+    const incident = (await createIncident(admin, spaces[0].id, { assigned_person_id: personnel[0].id }).expect(201)).body.incident;
+    const outcomes = await Promise.all([closeIncident(admin, incident.id), closeIncident(admin, incident.id)]);
+    expect(outcomes.map((result) => result.status).sort()).toEqual([200, 409]);
+    const detail = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(detail.evidences.filter((item) => item.category === 'FINAL')).toHaveLength(1);
+    expect(detail.history.filter((event) => event.new_status === 'CLOSED')).toHaveLength(1);
   });
 });

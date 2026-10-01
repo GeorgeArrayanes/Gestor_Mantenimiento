@@ -1,126 +1,72 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Bell, BusFront, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, PlusCircle, ShieldCheck, Users, X } from 'lucide-react';
+import { ArrowUpRight, Building2, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, ShieldCheck, UsersRound, Wrench, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { api } from '../api.js';
-import logo from '../img/b1df3d2e-30b9-49e5-b316-773184b30cb2.png';
-import { isAdminRole, isSuperAdminRole } from '../utils/roles.js';
+import { isSuperAdminRole } from '../utils/roles.js';
 
+export function Brand({ inverse = false }) {
+  return <div className={`brand ${inverse ? 'brand-inverse' : ''}`}><span className="brand-mark"><Wrench size={25} strokeWidth={2.2} aria-hidden="true" /><span className="brand-gear">✦</span></span><div className="brand-copy"><strong>Gestor<br />Mantenimiento</strong><small>Gimnasio Los Arrayanes</small></div></div>;
+}
+const operation = [['/', 'Dashboard', LayoutDashboard], ['/incidencias/nueva', 'Nueva incidencia', Plus], ['/incidencias', 'Incidencias', ClipboardList]];
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.localStorage.getItem('gestor-rutas-sidebar-collapsed') === 'true';
-  });
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.matchMedia('(max-width: 920px)').matches);
-  const [unread, setUnread] = useState(0);
+  const [collapsed, setCollapsed] = useState(() => { try { return window.localStorage.getItem('mantenimiento-sidebar-collapsed') === 'true'; } catch { return false; } });
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 920px)').matches);
+  const [signingOut, setSigningOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
   const drawerRef = useRef(null);
-  const drawerCloseRef = useRef(null);
-  const menuButtonRef = useRef(null);
+  const closeRef = useRef(null);
+  const menuRef = useRef(null);
   const mainRef = useRef(null);
-  const openRef = useRef(false);
-  const returnFocusRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
-  useEffect(() => { api('/notifications').then((d) => setUnread(d.unread)).catch(() => {}); }, [location.pathname]);
+  const year = new Date().toLocaleDateString('en', { timeZone: 'America/Bogota', year: 'numeric' });
+  const management = [['/personal', 'Personal', UsersRound], ['/espacios', 'Espacios', Building2], ...(isSuperAdminRole(user.role) ? [['/administradores', 'Administradores', ShieldCheck]] : [])];
+  const section = location.pathname === '/incidencias/nueva' ? 'Nueva incidencia' : location.pathname.startsWith('/incidencias/') ? 'Detalle de incidencia' : [...operation, ...management].find(([path]) => path === location.pathname)?.[1] || 'Dashboard';
+  useEffect(() => { setOpen(false); }, [location.pathname]);
   useEffect(() => {
     const media = window.matchMedia('(max-width: 920px)');
-    const handleChange = (event) => {
-      setIsMobile(event.matches);
-      if (!event.matches && openRef.current) {
-        openRef.current = false;
-        mainRef.current?.focus({ preventScroll: true });
-        setOpen(false);
-      }
-    };
-    setIsMobile(media.matches);
-    if (media.addEventListener) media.addEventListener('change', handleChange);
-    else media.addListener(handleChange);
-    return () => {
-      if (media.removeEventListener) media.removeEventListener('change', handleChange);
-      else media.removeListener(handleChange);
-    };
+    const update = event => { setIsMobile(event.matches); if (!event.matches) setOpen(false); };
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
   }, []);
-  useEffect(() => { openRef.current = false; setOpen(false); }, [location.pathname]);
+  useEffect(() => { try { window.localStorage.setItem('mantenimiento-sidebar-collapsed', String(collapsed)); } catch { /* Storage is optional. */ } }, [collapsed]);
   useEffect(() => {
-    window.localStorage.setItem('gestor-rutas-sidebar-collapsed', String(collapsed));
-  }, [collapsed]);
-  useEffect(() => {
-    if (!open || !isMobile) return undefined;
-    const previousOverflow = document.body.style.overflow;
+    if (!open || !isMobile) return;
+    const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    const focusDrawer = window.requestAnimationFrame(() => drawerCloseRef.current?.focus());
-    const handleKeyDown = (event) => {
-      const drawer = drawerRef.current;
-      if (!drawer) return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        closeDrawer();
-        return;
-      }
+    closeRef.current?.focus();
+    function trap(event) {
+      if (event.key === 'Escape') { setOpen(false); menuRef.current?.focus(); return; }
       if (event.key !== 'Tab') return;
-      const focusable = Array.from(drawer.querySelectorAll('button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'))
-        .filter((element) => element.getClientRects().length > 0);
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && (document.activeElement === first || !drawer.contains(document.activeElement))) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && (document.activeElement === last || !drawer.contains(document.activeElement))) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.cancelAnimationFrame(focusDrawer);
-      document.body.style.overflow = previousOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-    };
+      const elements = [...drawerRef.current.querySelectorAll('button:not([disabled]),a[href]')].filter(el => el.getClientRects().length);
+      const first = elements[0], last = elements.at(-1);
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+      if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+    }
+    document.addEventListener('keydown', trap);
+    return () => { document.body.style.overflow = previous; document.removeEventListener('keydown', trap); };
   }, [open, isMobile]);
-  function openDrawer() {
-    if (!isMobile) return;
-    returnFocusRef.current = document.activeElement;
-    openRef.current = true;
-    setOpen(true);
+  async function signOut() {
+    setSigningOut(true); setLogoutError('');
+    try { await logout(); navigate('/login'); }
+    catch { setLogoutError('No se pudo cerrar la sesión. Intenta nuevamente.'); }
+    finally { setSigningOut(false); }
   }
-  function closeDrawer({ restoreFocus = true, focusMain = false } = {}) {
-    const returnTarget = focusMain ? mainRef.current : (returnFocusRef.current || menuButtonRef.current);
-    if ((restoreFocus || focusMain) && returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
-    openRef.current = false;
-    setOpen(false);
-  }
-  const links = isAdminRole(user.role) ? [
-    ['/', 'Dashboard', LayoutDashboard], ['/reportar', 'Reportar daño', PlusCircle], ['/novedades', 'Novedades', ClipboardList], ['/conductores', 'Conductores', Users], ...(isSuperAdminRole(user.role) ? [['/administradores', 'Administradores', ShieldCheck]] : []), ['/buses', 'Buses', BusFront]
-  ] : [['/', 'Mi resumen', LayoutDashboard], ['/reportar', 'Reportar daño', PlusCircle], ['/novedades', 'Mis novedades', ClipboardList], ['/buses', 'Mi bus', BusFront]];
-  const section = location.pathname.startsWith('/novedades') ? 'Novedades' : location.pathname.startsWith('/buses') ? 'Flota' : location.pathname.startsWith('/conductores') ? 'Conductores' : location.pathname.startsWith('/administradores') ? 'Administradores' : location.pathname.startsWith('/reportar') ? 'Nuevo reporte' : location.pathname.startsWith('/notificaciones') ? 'Notificaciones' : 'Dashboard';
-  async function signOut() { await logout(); navigate('/login'); }
-  const compactSidebar = !isMobile && collapsed;
-  return <div className={`app-shell ${compactSidebar ? 'sidebar-collapsed' : ''}`}>
+  const compact = collapsed && !isMobile;
+  const navLink = ([path, label, Icon]) => <NavLink key={path} to={path} className={({ isActive }) => isActive || (path === '/incidencias' && /^\/incidencias\/\d+$/.test(location.pathname)) ? 'active' : ''} end={path === '/' || path === '/incidencias'} title={compact ? label : undefined} aria-label={compact ? label : undefined} onClick={() => { setOpen(false); mainRef.current?.focus(); }}><Icon size={19} aria-hidden="true" /><span>{label}</span>{path === '/incidencias/nueva' && !compact && <ArrowUpRight className="nav-trailing" size={15} aria-hidden="true" />}</NavLink>;
+  return <div className={`app-shell ${compact ? 'sidebar-collapsed' : ''}`}>
     <a className="skip-link" href="#main-content">Saltar al contenido</a>
-    {isMobile&&open&&<button type="button" className="sidebar-backdrop" onClick={()=>closeDrawer()} aria-label="Cerrar menú"/>}
-    <aside id="primary-navigation-drawer" ref={drawerRef} className={`sidebar ${open ? 'open' : ''} ${compactSidebar ? 'collapsed' : ''}`} aria-label="Navegación y cuenta" aria-hidden={isMobile ? !open : undefined} inert={isMobile && !open}>
-      <button ref={drawerCloseRef} type="button" className="mobile-close" onClick={() => closeDrawer()} aria-label="Cerrar menú"><X aria-hidden="true"/></button>
-      <div className="sidebar-head">
-        <div className="brand"><span><img src={logo} alt=""/></span><div className="brand-copy"><strong>Gestor Rutas</strong><small>Gimnasio Los Arrayanes</small></div></div>
-      </div>
-      <nav aria-label="Navegación principal">
-        <div className="nav-heading">
-          <p className="nav-label">Operación</p>
-          <button type="button" className="sidebar-collapse-button" onClick={() => setCollapsed((value) => !value)} aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'} aria-pressed={collapsed} title={collapsed ? 'Expandir menú' : 'Contraer menú'}>
-            {collapsed ? <PanelLeftOpen aria-hidden="true"/> : <PanelLeftClose aria-hidden="true"/>}
-          </button>
-        </div>
-        {links.map(([to,label,Icon]) => <NavLink key={to} to={to} end={to==='/'} title={compactSidebar ? label : undefined} aria-label={compactSidebar ? label : undefined} onClick={()=>closeDrawer({restoreFocus:false,focusMain:true})}><Icon aria-hidden="true"/><span>{label}</span></NavLink>)}
-      </nav>
-      <div className="system-status" aria-label="Sistema operativo, año escolar 2026" title={compactSidebar ? 'Sistema operativo · 2026' : undefined}><i/><span className="system-copy">Sistema operativo</span><span className="system-year">2026</span></div>
-      <div className="profile-card"><div className="avatar" title={compactSidebar ? user.name : undefined}>{user.name.split(' ').map(n=>n[0]).slice(0,2).join('')}</div><div className="profile-copy"><strong>{user.name}</strong><small>{isSuperAdminRole(user.role) ? 'Superadministrador' : isAdminRole(user.role) ? 'Administrador de flota' : 'Conductor'}</small></div><button onClick={signOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={19}/></button></div>
+    {isMobile && open && <button className="sidebar-backdrop" onClick={() => { setOpen(false); menuRef.current?.focus(); }} aria-label="Cerrar menú" />}
+    <aside id="navigation-drawer" ref={drawerRef} className={`sidebar ${open ? 'open' : ''} ${compact ? 'collapsed' : ''}`} aria-label="Navegación y cuenta" role={isMobile ? 'dialog' : undefined} aria-modal={isMobile && open ? true : undefined} aria-hidden={isMobile ? !open : undefined} inert={isMobile && !open}>
+      <button ref={closeRef} className="mobile-close icon-button" onClick={() => { setOpen(false); menuRef.current?.focus(); }} aria-label="Cerrar menú"><X /></button>
+      <div className="sidebar-head"><Brand /></div>
+      <nav aria-label="Navegación principal"><div className="nav-heading"><p className="nav-label">Operación</p><button className="sidebar-collapse-button icon-button" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'} aria-pressed={collapsed}>{collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}</button></div>{operation.map(navLink)}<div className="nav-heading management-heading"><p className="nav-label">Gestión</p></div>{management.map(navLink)}</nav>
+      <div className="sidebar-bottom">{logoutError && <p className="logout-error" role="alert">{logoutError}</p>}<div className="system-status"><i /><span>Sistema operativo</span><small>{year}</small></div><div className="profile-card"><div className="avatar">{user.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</div><div className="profile-copy"><strong>{user.name}</strong><small>{isSuperAdminRole(user.role) ? 'Superadministrador' : 'Administrador'}</small></div><button className="icon-button" onClick={signOut} disabled={signingOut} title="Cerrar sesión" aria-label="Cerrar sesión"><LogOut size={18} /></button></div></div>
     </aside>
-    <div className="app-main">
-      <header className="topbar"><button ref={menuButtonRef} type="button" className="menu-button" onClick={openDrawer} aria-label="Abrir menú" aria-expanded={open} aria-controls="primary-navigation-drawer"><Menu aria-hidden="true"/></button><div className="topbar-context"><span>Espacio de trabajo</span><strong>{section}</strong></div><div className="topbar-spacer"/><NavLink to="/reportar" className="topbar-action"><PlusCircle aria-hidden="true"/><span>Crear reporte</span></NavLink><NavLink to="/notificaciones" className="notification-button" aria-label={`${unread} notificaciones sin leer`}><Bell aria-hidden="true"/>{unread>0&&<b aria-hidden="true">{unread}</b>}</NavLink><span className="period"><i/>Año escolar 2026</span></header>
-      <main id="main-content" ref={mainRef} tabIndex={-1}><Outlet context={{ setUnread }}/></main>
-    </div>
+    <div className="app-main" inert={isMobile && open}><header className="topbar"><button ref={menuRef} className="menu-button icon-button" onClick={() => setOpen(true)} aria-label="Abrir menú" aria-expanded={open} aria-controls="navigation-drawer"><Menu /></button><div className="topbar-context"><span>Centro de mantenimiento</span><strong>{section}</strong></div><div className="topbar-spacer" /><NavLink to="/incidencias/nueva" className="topbar-action"><Plus size={15} /><span>Nueva incidencia</span></NavLink><span className="period"><i />Año escolar {year}</span></header><main id="main-content" ref={mainRef} tabIndex={-1}><Outlet /></main><footer className="workspace-footer"><span>Gimnasio Los Arrayanes</span><span>Cuidamos los espacios donde crecen.</span></footer></div>
   </div>;
 }
+
+

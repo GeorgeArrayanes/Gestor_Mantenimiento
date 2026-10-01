@@ -1,306 +1,61 @@
-import { useEffect, useMemo, useState } from "react";
-import { BusFront, FileImage, LockKeyhole, Send, UploadCloud, X } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { api } from "../api.js";
-import { useAuth } from "../context/AuthContext.jsx";
-
-const damageTypes = [
-  ["CARROCERIA", "Carrocería"],
-  ["LLANTAS", "Llantas"],
-  ["LUCES_ELECTRICO", "Luces / sistema eléctrico"],
-  ["MOTOR", "Motor"],
-  ["FRENOS", "Frenos"],
-  ["INTERIOR", "Interior"],
-  ["VIDRIOS", "Vidrios"],
-  ["PUERTAS", "Puertas"],
-  ["OTRO", "Otro"],
-];
-const MAX_FILES = 5;
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_FILE_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+import { useCallback, useEffect, useState } from 'react';
+import { AlertTriangle, ArrowLeft, Clock3, Info, Minus, Send } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { api } from '../api.js';
+import EvidenceUpload from '../components/EvidenceUpload.jsx';
+import EmptyState from '../components/EmptyState.jsx';
+import { activeRecord, evidenceError, PRIORITIES, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
+import usePageLifecycle from './usePageLifecycle.js';
+import './maintenance-pages.css';
 
 export default function ReportIncidentPage() {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isDriver = user.role === "CONDUCTOR";
-  const [buses, setBuses] = useState([]);
-  const [form, setForm] = useState({
-    bus_id: isDriver ? "" : searchParams.get("bus_id") || "",
-    damage_type: "",
-    other_damage_type: "",
-    urgency: "",
-    description: "",
-  });
+  const { mounted, startRequest } = usePageLifecycle();
+  const [spaces, setSpaces] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
+  const [form, setForm] = useState({ space_id: '', problem_type: '', priority: 'MEDIA', description: '', assigned_person_id: '' });
   const [files, setFiles] = useState([]);
-  const [error, setError] = useState("");
-  const [loadError, setLoadError] = useState("");
-  const [fileError, setFileError] = useState("");
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [loadingBuses, setLoadingBuses] = useState(true);
-  const [loadKey, setLoadKey] = useState(0);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    setLoadingBuses(true);
-    setLoadError("");
-    api("/buses")
-      .then((d) => {
-        setBuses(d.buses);
-        if (isDriver) {
-          setForm((current) => ({ ...current, bus_id: d.buses[0] ? String(d.buses[0].id) : "" }));
-        }
-      })
-      .catch((e) => {
-        setBuses([]);
-        if (isDriver) setForm((current) => ({ ...current, bus_id: "" }));
-        setLoadError(e.message);
-      })
-      .finally(() => setLoadingBuses(false));
-  }, [isDriver, loadKey]);
-  const bus = useMemo(
-    () => buses.find((b) => String(b.id) === String(form.bus_id)),
-    [buses, form.bus_id],
-  );
-  function addFiles(event) {
-    const selected = [...event.target.files];
-    const invalid = selected.filter((file) => !ALLOWED_FILE_TYPES.includes(file.type) || file.size > MAX_FILE_SIZE);
-    const valid = selected.filter((file) => ALLOWED_FILE_TYPES.includes(file.type) && file.size <= MAX_FILE_SIZE);
-    const unique = valid.filter((file) => !files.some((current) => current.name === file.name && current.size === file.size && current.lastModified === file.lastModified));
-    const available = Math.max(0, MAX_FILES - files.length);
-    const accepted = unique.slice(0, available);
-    const messages = [];
-    if (invalid.length) messages.push(`${invalid.length} archivo(s) no cumplen el formato o el máximo de 5 MB.`);
-    if (unique.length > available) messages.push(`Solo puedes adjuntar ${MAX_FILES} archivos; no se añadieron ${unique.length - available}.`);
-    setFileError(messages.join(" "));
-    setFiles((prev) => [...prev, ...accepted]);
-    event.target.value = "";
-  }
-  function validate() {
-    const next = {};
-    if (!form.bus_id) next.bus_id = isDriver ? "No tienes un bus asignado." : "Selecciona un bus.";
-    if (!form.damage_type) next.damage_type = "Selecciona el tipo de daño.";
-    if (form.damage_type === "OTRO" && !form.other_damage_type.trim()) next.other_damage_type = "Describe el tipo de daño.";
-    if (!form.urgency) next.urgency = "Selecciona un nivel de urgencia.";
-    if (form.description.trim().length < 10) next.description = "La descripción debe tener al menos 10 caracteres útiles.";
-    setFieldErrors(next);
-    const first = Object.keys(next)[0];
-    if (first) window.requestAnimationFrame(() => document.getElementById(first === "urgency" ? "report-urgency-ALTA" : `report-${first}`)?.focus());
-    return !first;
-  }
-  async function submit(e) {
-    e.preventDefault();
-    if (!validate()) return;
-    setError("");
-    setBusy(true);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [loadError, setLoadError] = useState('');
+  const load = useCallback(async () => {
+    const signal = startRequest();
+    setLoading(true); setLoadError('');
+    try { const [s, p] = await Promise.all([api('/spaces', { signal }), api('/personnel', { signal })]); if (!signal.aborted) { setSpaces(s.spaces.filter(activeRecord)); setPersonnel(p.personnel.filter(activeRecord)); } } catch (e) { if (!signal.aborted) setLoadError(e.message); } finally { if (!signal.aborted) setLoading(false); }
+  }, [startRequest]);
+  useEffect(() => { load(); }, [load]);
+  function change(field, value) { setForm((current) => ({ ...current, [field]: value })); setError(''); }
+  async function save(event) {
+    event.preventDefault(); if (saving) return;
+    const validation = evidenceError(files);
+    if (validation) { setError(validation); return; }
+    if (form.description.trim().length < 10) { setError('Describe el problema con al menos 10 caracteres.'); return; }
+    setSaving(true); setError('');
     try {
       const body = new FormData();
-      Object.entries(form).forEach(([k, v]) => body.append(k, typeof v === "string" ? v.trim() : v));
-      files.forEach((f) => body.append("files", f));
-      const d = await api("/incidents", { method: "POST", body });
-      navigate(`/novedades/${d.incident.id}`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
+      Object.entries(form).forEach(([key, value]) => { if (value) body.append(key, value.trim()); });
+      files.forEach((file) => body.append('files', file));
+      const result = await api('/incidents', { method: 'POST', body });
+      if (!mounted.current) return;
+      navigate(`/incidencias/${result.incident.id}`, { state: { success: 'Incidencia registrada correctamente.' } });
+    } catch (e) { if (mounted.current) setError(e.message); } finally { if (mounted.current) setSaving(false); }
   }
-  const dirty = Boolean((!isDriver && form.bus_id) || form.damage_type || form.urgency || form.description || form.other_damage_type || files.length);
-  function cancel() {
-    if (dirty && !window.confirm("Hay información sin guardar. ¿Quieres salir del reporte?")) return;
-    navigate("/");
-  }
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">{isDriver ? "Reporte del conductor" : "Registro administrativo"}</p>
-          <h1>{isDriver ? "Reportar daño de mi bus" : "Generar nuevo reporte de daño"}</h1>
-          <p>{isDriver ? "Registra la novedad de tu unidad asignada y adjunta la evidencia inicial." : "Completa los detalles técnicos y adjunta la evidencia inicial."}</p>
-        </div>
+  return <div className="maintenance-page">
+    <div className="page-heading"><div><p className="eyebrow">Incidencias y mantenimiento</p><h1>Registrar nueva incidencia</h1><p>Completa los detalles para registrar una incidencia en las instalaciones.</p></div></div>
+    {loadError && <div className="page-error" role="alert">{loadError}<button type="button" className="text-button" onClick={load}>Reintentar</button></div>}
+    {loading ? <div className="loading-page" role="status" aria-busy="true">Cargando espacios y personal…</div> : !loadError && (spaces.length ? <form className="panel maintenance-form" onSubmit={save} aria-busy={saving}>
+      {error && <div className="page-error" role="alert">{error}</div>}
+      <div className="form-grid">
+        <label>Espacio / ubicación<select value={form.space_id} onChange={(e) => change('space_id', e.target.value)} required disabled={saving}><option value="">Selecciona un espacio</option>{spaces.map((space) => <option key={space.id} value={space.id}>{spaceLabel(space)}</option>)}</select></label>
+        <label>Tipo de problema<select value={form.problem_type} onChange={(e) => change('problem_type', e.target.value)} required disabled={saving}><option value="">Selecciona un tipo</option>{PROBLEM_TYPES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+        <fieldset><legend>Prioridad</legend><div className="priority-picker">{PRIORITIES.map(([value, label]) => { const Icon = value === 'ALTA' ? AlertTriangle : value === 'MEDIA' ? Clock3 : Minus; return <label className="priority-option" key={value}><input type="radio" name="priority" value={value} checked={form.priority === value} onChange={() => change('priority', value)} disabled={saving} /><Icon aria-hidden="true" />{label}</label>; })}</div></fieldset>
+        <label>Asignar a (opcional)<select value={form.assigned_person_id} onChange={(e) => change('assigned_person_id', e.target.value)} disabled={saving}><option value="">Asignar más adelante</option>{personnel.map((person) => <option key={person.id} value={person.id}>{person.name}{person.specialty ? ` · ${person.specialty}` : ''}</option>)}</select>{!personnel.length && <small className="helper">Puedes <Link to="/personal">registrar personal</Link> y asignarlo después.</small>}</label>
+        <label className="full">Descripción detallada<textarea value={form.description} onChange={(e) => change('description', e.target.value)} placeholder="Describe qué ocurrió, dónde y qué está afectando." required minLength={10} maxLength={4000} disabled={saving} /><small className="helper">Incluye el componente afectado y cualquier riesgo que deba conocer el equipo.</small></label>
+        <div className="full"><EvidenceUpload files={files} onChange={setFiles} disabled={saving} /></div>
       </div>
-      <form className="panel form-card" onSubmit={submit} noValidate>
-        {loadError && <div className="page-error" role="alert">{loadError} <button type="button" onClick={() => setLoadKey((value) => value + 1)}>Reintentar carga</button></div>}
-        {error && <div className="page-error" role="alert">{error}</div>}
-        {loadingBuses && <div className="loading-page compact" role="status">Cargando buses disponibles…</div>}
-        {!loadingBuses && !loadError && !buses.length && <div className="page-notice" role="status">{isDriver ? "No tienes un bus asignado. Solicita a un administrador que vincule tu cuenta con una unidad antes de reportar." : "No hay buses registrados. Registra una unidad antes de crear una novedad."}</div>}
-        <div className="form-grid">
-          {isDriver ? (
-            <div className="full report-assigned-bus">
-              <span className="field-label" id="report-assigned-bus-label">Bus asignado</span>
-              {bus && (
-                <div className="assigned-bus-summary" aria-labelledby="report-assigned-bus-label">
-                  <span className="assigned-bus-icon"><BusFront aria-hidden="true" /></span>
-                  <span className="assigned-bus-copy">
-                    <strong>{bus.reference} · {bus.plate}</strong>
-                    <small>{bus.brand} {bus.model}{bus.route ? ` · ${bus.route}` : ""}</small>
-                  </span>
-                  <span className="assigned-bus-lock"><LockKeyhole aria-hidden="true" />Unidad asignada</span>
-                </div>
-              )}
-              {fieldErrors.bus_id && <small className="field-error" id="report-bus_id-error">{fieldErrors.bus_id}</small>}
-              {bus && <small className="helper">El reporte se vinculará automáticamente a esta unidad y no puede asignarse a otro bus.</small>}
-            </div>
-          ) : (
-            <label className="full">
-              Seleccionar vehículo / bus
-              <select
-                id="report-bus_id"
-                value={form.bus_id}
-                onChange={(e) => { setForm({ ...form, bus_id: e.target.value }); setFieldErrors((current) => ({ ...current, bus_id: "" })); }}
-                aria-invalid={Boolean(fieldErrors.bus_id)}
-                aria-describedby={fieldErrors.bus_id ? "report-bus_id-error" : undefined}
-                disabled={loadingBuses}
-                required
-              >
-                <option value="">Selecciona un bus</option>
-                {buses.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.reference} ({b.plate}) — {b.driver_name || "Sin conductor"}
-                  </option>
-                ))}
-              </select>
-              {fieldErrors.bus_id && <small className="field-error" id="report-bus_id-error">{fieldErrors.bus_id}</small>}
-              {bus && (
-                <small className={bus.driver_id ? "helper" : "helper danger"}>
-                  {bus.driver_id
-                    ? `Conductor asociado: ${bus.driver_name}`
-                    : "Este bus no tiene conductor asignado."}
-                </small>
-              )}
-            </label>
-          )}
-          <label>
-            Tipo de daño
-            <select
-              id="report-damage_type"
-              value={form.damage_type}
-              onChange={(e) =>
-                { setForm({ ...form, damage_type: e.target.value }); setFieldErrors((current) => ({ ...current, damage_type: "" })); }
-              }
-              aria-invalid={Boolean(fieldErrors.damage_type)}
-              aria-describedby={fieldErrors.damage_type ? "report-damage_type-error" : undefined}
-              required
-            >
-              <option value="">Selecciona un tipo</option>
-              {damageTypes.map(([v, l]) => (
-                <option value={v} key={v}>
-                  {l}
-                </option>
-              ))}
-            </select>
-            {fieldErrors.damage_type && <small className="field-error" id="report-damage_type-error">{fieldErrors.damage_type}</small>}
-          </label>
-          <fieldset aria-invalid={Boolean(fieldErrors.urgency)} aria-describedby={fieldErrors.urgency ? "report-urgency-error" : undefined}>
-            <legend>Nivel de urgencia</legend>
-            <div className="urgency-options">
-              {["ALTA", "MEDIA", "BAJA"].map((u) => (
-                <label key={u} className={form.urgency === u ? "selected" : ""}>
-                  <input
-                    id={`report-urgency-${u}`}
-                    type="radio"
-                    name="urgency"
-                    value={u}
-                    checked={form.urgency === u}
-                    onChange={(e) =>
-                      { setForm({ ...form, urgency: e.target.value }); setFieldErrors((current) => ({ ...current, urgency: "" })); }
-                    }
-                    required
-                  />
-                  <i /> {u[0] + u.slice(1).toLowerCase()}
-                </label>
-              ))}
-            </div>
-            {fieldErrors.urgency && <small className="field-error" id="report-urgency-error">{fieldErrors.urgency}</small>}
-          </fieldset>
-          {form.damage_type === "OTRO" && (
-            <label className="full">
-              Otro tipo de daño
-              <input
-                id="report-other_damage_type"
-                value={form.other_damage_type}
-                onChange={(e) =>
-                  { setForm({ ...form, other_damage_type: e.target.value }); setFieldErrors((current) => ({ ...current, other_damage_type: "" })); }
-                }
-                aria-invalid={Boolean(fieldErrors.other_damage_type)}
-                aria-describedby={fieldErrors.other_damage_type ? "report-other_damage_type-error" : undefined}
-                required
-                maxLength={120}
-              />
-              {fieldErrors.other_damage_type && <small className="field-error" id="report-other_damage_type-error">{fieldErrors.other_damage_type}</small>}
-            </label>
-          )}
-          <label className="full">
-            Descripción detallada del daño
-            <textarea
-              id="report-description"
-              rows="5"
-              minLength="10"
-              value={form.description}
-              onChange={(e) =>
-                { setForm({ ...form, description: e.target.value }); setFieldErrors((current) => ({ ...current, description: "" })); }
-              }
-              aria-invalid={Boolean(fieldErrors.description)}
-              aria-describedby={fieldErrors.description ? "report-description-help report-description-error" : "report-description-help"}
-              placeholder="Describe qué ocurrió, qué parte está afectada y cualquier riesgo operativo…"
-              required
-            />
-            <small className="helper" id="report-description-help">Incluye ubicación, síntoma y riesgo operativo.</small>
-            {fieldErrors.description && <small className="field-error" id="report-description-error">{fieldErrors.description}</small>}
-          </label>
-          <div className="full">
-            <span className="field-label">
-              Evidencia fotográfica o documental
-            </span>
-            <label className="upload-zone">
-              <UploadCloud />
-              <strong>Seleccionar archivos</strong>
-              <span>JPG, PNG, WEBP o PDF · máximo 5 MB por archivo</span>
-              <input
-                type="file"
-                multiple
-                accept=".jpg,.jpeg,.png,.webp,.pdf"
-                onChange={addFiles}
-              />
-            </label>
-            {fileError && <p className="field-error" role="alert">{fileError}</p>}
-            <p className="helper" aria-live="polite">{files.length} de {MAX_FILES} archivos seleccionados.</p>
-            <div className="file-chips">
-              {files.map((f, i) => (
-                <span key={`${f.name}-${i}`}>
-                  <FileImage />
-                  {f.name}
-                  <button
-                    type="button"
-                    onClick={() => { setFiles(files.filter((_, n) => n !== i)); setFileError(""); }}
-                    aria-label={`Quitar ${f.name}`}
-                  >
-                    <X />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-        <div className="form-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={cancel}
-          >
-            Cancelar
-          </button>
-          <button className="primary-button" disabled={busy || loadingBuses || Boolean(loadError) || !buses.length || Boolean(form.bus_id && !bus?.driver_id)}>
-            {busy ? (
-              "Enviando…"
-            ) : (
-              <>
-                <Send />
-                Enviar reporte
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </>
-  );
+      <div className="form-actions"><button className="secondary-button" type="button" onClick={() => navigate('/incidencias')} disabled={saving}><ArrowLeft aria-hidden="true" />Cancelar</button><button className="primary-button" type="submit" disabled={saving}><Send aria-hidden="true" />{saving ? 'Registrando…' : 'Registrar incidencia'}</button></div>
+      <p className="whatsapp-help"><Info size={12} aria-hidden="true" /> La asignación queda registrada. Puedes abrir WhatsApp desde el detalle para avisarle al responsable.</p>
+    </form> : <section className="panel"><EmptyState title="Registra el primer espacio" text="Necesitas una ubicación activa para crear una incidencia." action={<Link className="primary-button" to="/espacios">Ir a espacios</Link>} /></section>)}
+  </div>;
 }

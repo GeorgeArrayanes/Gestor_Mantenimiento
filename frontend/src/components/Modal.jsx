@@ -17,7 +17,7 @@ function getFocusable(container) {
 }
 
 /**
- * Accessible overlay shared by the fleet forms.
+ * Accessible overlay shared by administrative forms.
  * It owns focus while open, restores it on close and keeps the document behind it still.
  * Backdrop clicks are ignored by default so an accidental click cannot discard form data.
  */
@@ -44,6 +44,9 @@ export default function Modal({
     returnFocusRef.current = document.activeElement;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const appRoot = document.getElementById('root');
+    const previousInert = appRoot?.inert;
+    if (appRoot) appRoot.inert = true;
 
     const focusInitialElement = window.requestAnimationFrame(() => {
       const dialog = dialogRef.current;
@@ -86,6 +89,7 @@ export default function Modal({
       window.cancelAnimationFrame(focusInitialElement);
       document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = previousOverflow;
+      if (appRoot) appRoot.inert = previousInert;
       const returnTarget = returnFocusRef.current;
       window.requestAnimationFrame(() => {
         if (returnTarget?.isConnected) returnTarget.focus();

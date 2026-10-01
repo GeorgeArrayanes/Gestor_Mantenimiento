@@ -1,17 +1,24 @@
 {
-  "name": "rutasegura",
+  "name": "gestor-mantenimiento",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["frontend", "backend"],
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
   "scripts": {
     "dev": "concurrently -n API,WEB -c blue,green \"npm run dev -w backend\" \"npm run dev -w frontend\"",
     "build": "npm run build -w frontend",
     "test": "npm run test -w backend && npm run test -w frontend",
     "db:migrate": "npm run db:migrate -w backend",
     "db:seed": "npm run db:seed -w backend",
-    "db:bootstrap-super-admin": "npm run db:bootstrap-super-admin -w backend"
+    "db:bootstrap-super-admin": "npm run db:bootstrap-super-admin -w backend",
+    "lint": "eslint frontend backend"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^17.13.0"
   }
 }

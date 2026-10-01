@@ -4,253 +4,136 @@ import { z } from 'zod';
 import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { config } from '../config.js';
-import { resolveFileUrl, saveFile } from '../services/storage.js';
-import { assertTransition, eventNames } from '../services/incident-service.js';
-import { externalNotifications } from '../services/external-notifications.js';
-import { assertActiveDriver } from '../services/driver-assignment.js';
+import { validateUploads } from '../services/storage.js';
+import { activePerson, activeSpace, addHistory, assertOpen, getIncident, incidentSelect, lockIncident, persistEvidence, publicIncident, transaction } from '../services/incident-service.js';
+import { buildWhatsApp, httpError, INCIDENT_STATUSES, parseId, PRIORITIES, PROBLEM_TYPES } from '../utils/maintenance.js';
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxFileSize, files: 5 } });
+router.use(requireRole('ADMIN'));
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: config.maxFileSize, files: config.maxFiles, fields: 10, parts: 15 } });
 const incidentSchema = z.object({
-  bus_id: z.coerce.number().int().positive(),
-  damage_type: z.enum(['CARROCERIA','LLANTAS','LUCES_ELECTRICO','MOTOR','FRENOS','INTERIOR','VIDRIOS','PUERTAS','OTRO']),
-  other_damage_type: z.string().trim().max(120).optional(),
+  space_id: z.coerce.number().int().positive(),
+  problem_type: z.enum(PROBLEM_TYPES), priority: z.enum(PRIORITIES),
   description: z.string().trim().min(10).max(4000),
-  urgency: z.enum(['BAJA','MEDIA','ALTA'])
-}).refine((data) => data.damage_type !== 'OTRO' || data.other_damage_type?.length, { message: 'Describe el otro tipo de daño.' });
-
-const incidentStatusSchema = z.object({
-  status: z.enum(['REPORTADO', 'EN_PROCESO', 'PENDIENTE_VALIDACION', 'REQUIERE_CORRECCION', 'RESUELTO']),
-  reason: z.string().trim().min(8).max(500)
-});
-
-async function getIncident(db, id) {
-  const { rows } = await db.query(`SELECT i.*,b.reference,b.plate,b.brand,b.model,b.route,b.capacity,
-    driver.name AS driver_name,driver.phone AS driver_phone,reporter.name AS reporter_name
-    FROM incidents i JOIN buses b ON b.id=i.bus_id
-    LEFT JOIN users driver ON driver.id=i.responsible_driver_id
-    JOIN users reporter ON reporter.id=i.reported_by WHERE i.id=$1`, [id]);
-  return rows[0];
-}
-
-function assertCanView(incident, user) {
-  if (!incident) { const e = new Error('Novedad inexistente.'); e.status = 404; throw e; }
-  if (user.role === 'CONDUCTOR' && incident.responsible_driver_id !== user.id) {
-    const e = new Error('No tienes acceso a esta novedad.'); e.status = 403; throw e;
-  }
+  assigned_person_id: z.preprocess((v) => v === '' || v === null ? undefined : v, z.coerce.number().int().positive().optional())
+}).strict();
+function parse(schema, body, message) {
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) throw httpError(400, message);
+  return parsed.data;
 }
 
 router.get('/', asyncHandler(async (req, res) => {
   const conditions = [];
   const values = [];
   const add = (sql, value) => { values.push(value); conditions.push(sql.replace('?', `$${values.length}`)); };
-  if (req.user.role === 'CONDUCTOR') add('i.responsible_driver_id=?', req.user.id);
-  if (req.query.status) add('i.status=?', req.query.status);
-  if (req.query.urgency) add('i.urgency=?', req.query.urgency);
-  if (req.query.bus_id) add('i.bus_id=?', Number(req.query.bus_id));
-  if (req.query.search) add(`(CAST(i.id AS TEXT) ILIKE ? OR b.reference ILIKE ? OR b.plate ILIKE ? OR i.description ILIKE ?)`, `%${req.query.search}%`);
-  // The search condition has four placeholders and is handled separately.
+  if (req.query.status) {
+    if (!INCIDENT_STATUSES.includes(req.query.status)) throw httpError(400, 'Estado inválido.');
+    add('i.status=?', req.query.status);
+  }
+  if (req.query.priority) {
+    if (!PRIORITIES.includes(req.query.priority)) throw httpError(400, 'Prioridad inválida.');
+    add('i.priority=?', req.query.priority);
+  }
+  if (req.query.assigned_person_id) add('i.assigned_person_id=?', parseId(req.query.assigned_person_id));
+  if (req.query.space_id) add('i.space_id=?', parseId(req.query.space_id));
+  for (const [key, comparison] of [['date_from','>='],['date_to','<']]) {
+    if (!req.query[key]) continue;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(req.query[key]) || Number.isNaN(Date.parse(req.query[key]))) throw httpError(400, 'Fecha de filtro inválida.');
+    const date = new Date(`${req.query[key]}T00:00:00-05:00`);
+    if (key === 'date_to') date.setUTCDate(date.getUTCDate() + 1);
+    add(`i.created_at${comparison}?`, date);
+  }
   if (req.query.search) {
-    conditions.pop(); values.pop();
-    const q = `%${req.query.search}%`;
+    if (typeof req.query.search !== 'string' || req.query.search.length > 200) throw httpError(400, 'Búsqueda inválida.');
+    const q = `%${req.query.search.trim()}%`;
     const start = values.length + 1;
-    values.push(q,q,q,q);
-    conditions.push(`(CAST(i.id AS TEXT) ILIKE $${start} OR b.reference ILIKE $${start+1} OR b.plate ILIKE $${start+2} OR i.description ILIKE $${start+3})`);
+    values.push(q,q,q,q,q);
+    conditions.push(`(i.code ILIKE $${start} OR i.description ILIKE $${start+1} OR i.space_name_snapshot ILIKE $${start+2} OR i.space_zone_snapshot ILIKE $${start+3} OR i.assigned_person_name_snapshot ILIKE $${start+4})`);
   }
   const order = req.query.order === 'oldest' ? 'ASC' : 'DESC';
-  const { rows } = await req.app.locals.db.query(`SELECT i.*,b.reference,b.plate,b.brand,b.model,u.name AS driver_name
-    FROM incidents i JOIN buses b ON b.id=i.bus_id LEFT JOIN users u ON u.id=i.responsible_driver_id
-    ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''} ORDER BY i.reported_at ${order}`, values);
-  res.json({ incidents: rows });
+  const { rows } = await req.app.locals.db.query(`${incidentSelect} ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
+    ORDER BY CASE WHEN i.status='CLOSED' THEN 1 ELSE 0 END, CASE i.priority WHEN 'ALTA' THEN 0 WHEN 'MEDIA' THEN 1 ELSE 2 END,i.created_at ${order},i.id ${order}`, values);
+  res.json({ incidents: rows.map(publicIncident) });
 }));
 
-router.post('/', requireRole('ADMIN', 'CONDUCTOR'), upload.array('files', 5), asyncHandler(async (req, res) => {
-  const parsed = incidentSchema.safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ message: parsed.error.issues[0]?.message || 'Revisa los datos obligatorios.' });
-  const client = await req.app.locals.db.connect();
-  try {
-    await client.query('BEGIN');
-    const busResult = await client.query('SELECT * FROM buses WHERE id=$1 FOR UPDATE', [parsed.data.bus_id]);
-    const bus = busResult.rows[0];
-    if (!bus) { const e = new Error('Bus inexistente.'); e.status = 404; throw e; }
-    if (req.user.role === 'CONDUCTOR' && Number(bus.driver_id) !== Number(req.user.id)) {
-      const e = new Error('Sólo puedes reportar daños del bus que tienes asignado.');
-      e.status = 403;
-      throw e;
-    }
-    if (!bus.driver_id) { const e = new Error('Asigna un conductor al bus antes de crear la novedad.'); e.status = 409; throw e; }
-    await assertActiveDriver(client, bus.driver_id, { lock: true });
-    const d = parsed.data;
-    const created = await client.query(`INSERT INTO incidents(bus_id,reported_by,responsible_driver_id,damage_type,other_damage_type,description,urgency)
-      VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`, [d.bus_id,req.user.id,bus.driver_id,d.damage_type,d.damage_type==='OTRO'?d.other_damage_type:null,d.description,d.urgency]);
-    const incident = created.rows[0];
-    for (const file of req.files || []) {
-      const url = await saveFile(file, incident.id);
-      await client.query(`INSERT INTO evidences(incident_id,file_url,file_name,file_type,category,uploaded_by) VALUES($1,$2,$3,$4,'REPORTE',$5)`, [incident.id,url,file.originalname,file.mimetype,req.user.id]);
-    }
-    await client.query(`INSERT INTO incident_history(incident_id,user_id,event_type,new_status,comment) VALUES($1,$2,'NOVEDAD_CREADA','REPORTADO',$3)`, [incident.id,req.user.id,d.description]);
-    if (req.user.role === 'CONDUCTOR') {
-      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
-        SELECT id,$1,'NUEVA_NOVEDAD',$2 FROM users
-        WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVO'`, [
-        `${req.user.name} reportó una novedad en ${bus.reference}.`,
-        `/novedades/${incident.id}`
-      ]);
-    } else {
-      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url) VALUES($1,$2,'NUEVA_NOVEDAD',$3)`, [bus.driver_id,`Nueva novedad asignada a ${bus.reference}.`,`/novedades/${incident.id}`]);
-    }
-    await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW()
-      WHERE id=$1 AND current_status='OPERATIVO'`, [bus.id]);
-    await client.query('COMMIT');
-    await externalNotifications.sendIncidentAssigned({ incident, bus });
-    res.status(201).json({ incident: await getIncident(req.app.locals.db, incident.id) });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally { client.release(); }
+router.post('/', upload.array('files', config.maxFiles), asyncHandler(async (req, res) => {
+  const d = parse(incidentSchema, req.body, 'Selecciona espacio, tipo y prioridad e ingresa una descripción de al menos 10 caracteres.');
+  validateUploads(req.files);
+  const id = await transaction(req.app.locals.db, async (client, savedKeys) => {
+    const space = await activeSpace(client, d.space_id);
+    const person = d.assigned_person_id ? await activePerson(client, d.assigned_person_id) : null;
+    const status = person ? 'ASSIGNED' : 'PENDING';
+    const now = new Date();
+    const { rows } = await client.query(`INSERT INTO maintenance_incidents(space_id,space_name_snapshot,space_zone_snapshot,problem_type,priority,description,assigned_person_id,assigned_person_name_snapshot,assigned_person_phone_snapshot,status,created_by,assigned_at)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`, [space.id,space.name,space.zone,d.problem_type,d.priority,d.description,person?.id || null,person?.name || null,person?.phone || null,status,req.user.id,person ? now : null]);
+    const incident = rows[0];
+    const year = new Intl.DateTimeFormat('en', { timeZone: 'America/Bogota', year: 'numeric' }).format(new Date(incident.created_at));
+    const code = `MT-${year}-${String(incident.id).padStart(3, '0')}`;
+    await client.query('UPDATE maintenance_incidents SET code=$1 WHERE id=$2', [code,incident.id]);
+    await persistEvidence(client, req.files, incident.id, req.user.id, 'INITIAL', savedKeys);
+    await addHistory(client, { id: incident.id, status: null }, req.user.id, 'INCIDENCIA_CREADA', 'PENDING', d.description);
+    if (person) await addHistory(client, { id: incident.id, status: 'PENDING' }, req.user.id, 'RESPONSABLE_ASIGNADO', 'ASSIGNED', `Asignada a ${person.name}.`);
+    return incident.id;
+  });
+  res.status(201).json({ incident: await getIncident(req.app.locals.db, id) });
 }));
 
 router.get('/:id', asyncHandler(async (req, res) => {
   const incident = await getIncident(req.app.locals.db, req.params.id);
-  assertCanView(incident, req.user);
   const [evidences, history] = await Promise.all([
-    req.app.locals.db.query(`SELECT e.*,u.name AS uploaded_by_name FROM evidences e JOIN users u ON u.id=e.uploaded_by WHERE incident_id=$1 ORDER BY e.created_at`, [incident.id]),
-    req.app.locals.db.query(`SELECT h.*,u.name AS user_name,u.role AS user_role FROM incident_history h JOIN users u ON u.id=h.user_id WHERE incident_id=$1 ORDER BY h.created_at`, [incident.id])
+    req.app.locals.db.query(`SELECT e.id,e.incident_id,e.file_name,e.file_type,e.file_size,e.category,e.uploaded_by,e.created_at,u.name AS uploaded_by_name FROM maintenance_evidences e JOIN users u ON u.id=e.uploaded_by WHERE e.incident_id=$1 ORDER BY e.created_at,e.id`, [incident.id]),
+    req.app.locals.db.query(`SELECT h.*,u.name AS user_name,u.role AS user_role FROM maintenance_history h JOIN users u ON u.id=h.user_id WHERE h.incident_id=$1 ORDER BY h.created_at,h.id`, [incident.id])
   ]);
-  const resolvedEvidences = await Promise.all(evidences.rows.map(async (item) => ({ ...item, file_url: await resolveFileUrl(item.file_url) })));
-  res.json({ incident, evidences: resolvedEvidences, history: history.rows });
+  res.json({ incident, evidences: evidences.rows.map((e) => ({ ...e, file_url: `/api/evidences/${e.id}/download` })), history: history.rows });
 }));
 
-router.post('/:id/evidences', upload.array('files', 5), asyncHandler(async (req, res) => {
-  const incident = await getIncident(req.app.locals.db, req.params.id);
-  assertCanView(incident, req.user);
-  if (req.user.role !== 'CONDUCTOR' || incident.status !== 'EN_PROCESO') return res.status(409).json({ message: 'Sólo puedes agregar evidencia durante una reparación activa.' });
-  if (!req.files?.length) return res.status(400).json({ message: 'Selecciona al menos un archivo.' });
-  const rejection = await req.app.locals.db.query(`SELECT 1 FROM incident_history WHERE incident_id=$1 AND event_type='REPARACION_RECHAZADA' LIMIT 1`, [incident.id]);
-  const category = rejection.rowCount ? 'CORRECCION' : 'SOLUCION';
-  const saved = [];
-  for (const file of req.files) {
-    const url = await saveFile(file, incident.id);
-    const { rows } = await req.app.locals.db.query(`INSERT INTO evidences(incident_id,file_url,file_name,file_type,category,uploaded_by,comment) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-      [incident.id,url,file.originalname,file.mimetype,category,req.user.id,req.body.comment?.trim()||null]);
-    saved.push(rows[0]);
-  }
-  await req.app.locals.db.query(`INSERT INTO incident_history(incident_id,user_id,event_type,new_status,comment) VALUES($1,$2,'EVIDENCIA_AGREGADA',$3,$4)`, [incident.id,req.user.id,incident.status,req.body.comment?.trim()||`${saved.length} archivo(s)`]);
-  res.status(201).json({ evidences: saved });
+router.patch('/:id', asyncHandler(async (req, res) => {
+  const d = parse(incidentSchema.omit({ assigned_person_id: true }).partial(), req.body, 'Datos de incidencia inválidos.');
+  if (!Object.keys(d).length) throw httpError(400, 'Indica los datos que deseas actualizar.');
+  const id = await transaction(req.app.locals.db, async (client) => {
+    const current = await lockIncident(client, req.params.id);
+    assertOpen(current);
+    const space = d.space_id && d.space_id !== current.space_id ? await activeSpace(client, d.space_id) : null;
+    const changed = { ...current, ...d };
+    await client.query(`UPDATE maintenance_incidents SET space_id=$1,space_name_snapshot=$2,space_zone_snapshot=$3,problem_type=$4,priority=$5,description=$6,updated_at=NOW() WHERE id=$7`, [changed.space_id,space?.name || current.space_name_snapshot,space?.zone || current.space_zone_snapshot,changed.problem_type,changed.priority,changed.description,current.id]);
+    await addHistory(client, current, req.user.id, 'INCIDENCIA_EDITADA', current.status, 'Datos de la incidencia actualizados.');
+    return current.id;
+  });
+  res.json({ incident: await getIncident(req.app.locals.db, id) });
 }));
 
-router.patch('/:id/status', requireRole('SUPER_ADMIN'), asyncHandler(async (req, res) => {
-  const parsed = incidentStatusSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ message: 'Selecciona un estado e indica un motivo de al menos 8 caracteres.' });
-  }
-
-  const client = await req.app.locals.db.connect();
-  try {
-    await client.query('BEGIN');
-    const locked = await client.query('SELECT * FROM incidents WHERE id=$1 FOR UPDATE', [req.params.id]);
-    const incident = locked.rows[0];
-    assertCanView(incident, req.user);
-
-    if (incident.status === parsed.data.status) {
-      const error = new Error('La novedad ya se encuentra en ese estado.');
-      error.status = 409;
-      throw error;
-    }
-
-    const nextStatus = parsed.data.status;
-    const { rows } = await client.query(`UPDATE incidents SET status=$1::varchar,
-      attention_started_at=CASE
-        WHEN $1::varchar='REPORTADO' THEN NULL
-        WHEN $1::varchar<>'REPORTADO' THEN COALESCE(attention_started_at,NOW())
-        ELSE attention_started_at
-      END,
-      last_solution_at=CASE
-        WHEN $1::varchar='REPORTADO' THEN NULL
-        WHEN $1::varchar='PENDIENTE_VALIDACION' THEN COALESCE(last_solution_at,NOW())
-        ELSE last_solution_at
-      END,
-      resolved_at=CASE WHEN $1::varchar='RESUELTO' THEN NOW() ELSE NULL END,
-      updated_at=NOW()
-      WHERE id=$2 RETURNING *`, [nextStatus, incident.id]);
-
-    await client.query(`INSERT INTO incident_history
-      (incident_id,user_id,event_type,previous_status,new_status,comment)
-      VALUES($1,$2,'ESTADO_AJUSTADO_SUPER_ADMIN',$3,$4,$5)`,
-    [incident.id, req.user.id, incident.status, nextStatus, parsed.data.reason]);
-
-    if (incident.responsible_driver_id) {
-      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
-        VALUES($1,$2,'ESTADO_AJUSTADO',$3)`, [
-        incident.responsible_driver_id,
-        `El estado de la novedad #${incident.id} cambió a ${nextStatus.replaceAll('_', ' ')}.`,
-        `/novedades/${incident.id}`
-      ]);
-    }
-
-    const open = await client.query(`SELECT 1 FROM incidents
-      WHERE bus_id=$1 AND status<>'RESUELTO' LIMIT 1`, [incident.bus_id]);
-    if (open.rowCount) {
-      await client.query(`UPDATE buses SET current_status='CON_NOVEDADES',updated_at=NOW()
-        WHERE id=$1 AND current_status='OPERATIVO'`, [incident.bus_id]);
-    } else {
-      await client.query(`UPDATE buses SET current_status='OPERATIVO',updated_at=NOW()
-        WHERE id=$1 AND current_status='CON_NOVEDADES'`, [incident.bus_id]);
-    }
-
-    await client.query('COMMIT');
-    res.json({ incident: await getIncident(req.app.locals.db, rows[0].id) });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally {
-    client.release();
-  }
+router.post('/:id/assign', asyncHandler(async (req, res) => {
+  const d = parse(z.object({ assigned_person_id: z.coerce.number().int().positive() }).strict(), req.body, 'Selecciona un responsable válido.');
+  const id = await transaction(req.app.locals.db, async (client) => {
+    const current = await lockIncident(client, req.params.id);
+    assertOpen(current);
+    const person = await activePerson(client, d.assigned_person_id);
+    if (current.assigned_person_id === person.id) throw httpError(409, 'Esta persona ya es responsable de la incidencia.');
+    await client.query(`UPDATE maintenance_incidents SET assigned_person_id=$1,assigned_person_name_snapshot=$2,assigned_person_phone_snapshot=$3,status='ASSIGNED',assigned_at=NOW(),updated_at=NOW() WHERE id=$4`, [person.id,person.name,person.phone,current.id]);
+    await addHistory(client, current, req.user.id, current.assigned_person_id ? 'RESPONSABLE_CAMBIADO' : 'RESPONSABLE_ASIGNADO', 'ASSIGNED', current.assigned_person_id ? `Responsable cambiado de ${current.assigned_person_name_snapshot} a ${person.name}.` : `Asignada a ${person.name}.`);
+    return current.id;
+  });
+  res.json({ incident: await getIncident(req.app.locals.db, id) });
 }));
 
-router.post('/:id/:action', asyncHandler(async (req, res) => {
-  const { action } = req.params;
-  if (!['start', 'submit', 'approve', 'reject'].includes(action)) return res.status(404).json({ message: 'Acción inexistente.' });
-  const client = await req.app.locals.db.connect();
-  try {
-    await client.query('BEGIN');
-    const locked = await client.query('SELECT * FROM incidents WHERE id=$1 FOR UPDATE', [req.params.id]);
-    const incident = locked.rows[0];
-    assertCanView(incident, req.user);
-    const nextStatus = assertTransition(action, incident, req.user);
-    if (action === 'reject' && !req.body.reason?.trim()) { const e = new Error('El motivo del rechazo es obligatorio.'); e.status = 400; throw e; }
-    if (action === 'submit') {
-      const lastStart = await client.query(`SELECT created_at FROM incident_history WHERE incident_id=$1 AND event_type='REPARACION_INICIADA' ORDER BY created_at DESC LIMIT 1`, [incident.id]);
-      const evidence = lastStart.rows[0]
-        ? await client.query(`SELECT 1 FROM evidences WHERE incident_id=$1 AND category IN ('SOLUCION','CORRECCION') AND created_at >= $2 LIMIT 1`, [incident.id,lastStart.rows[0].created_at])
-        : { rowCount: 0 };
-      if (!evidence.rowCount) { const e = new Error('Adjunta evidencia de la reparación antes de enviarla.'); e.status = 400; throw e; }
-    }
-    const comment = req.body.comment?.trim() || req.body.reason?.trim() || null;
-    await client.query(`UPDATE incidents SET status=$1,
-      attention_started_at=CASE WHEN $2='start' THEN COALESCE(attention_started_at,NOW()) ELSE attention_started_at END,
-      last_solution_at=CASE WHEN $2='submit' THEN NOW() ELSE last_solution_at END,
-      resolved_at=CASE WHEN $2='approve' THEN NOW() ELSE resolved_at END, updated_at=NOW() WHERE id=$3`, [nextStatus,action,incident.id]);
-    await client.query(`INSERT INTO incident_history(incident_id,user_id,event_type,previous_status,new_status,comment) VALUES($1,$2,$3,$4,$5,$6)`, [incident.id,req.user.id,eventNames[action],incident.status,nextStatus,comment]);
-    if (action === 'submit') {
-      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url)
-        SELECT id,$1,'REVISION_PENDIENTE',$2 FROM users WHERE role IN ('ADMIN','SUPER_ADMIN') AND status='ACTIVO'`, [`La novedad #${incident.id} espera validación.`,`/novedades/${incident.id}`]);
-    }
-    if (action === 'reject' || action === 'approve') {
-      const message = action === 'reject' ? `Tu reparación #${incident.id} fue rechazada: ${comment}` : `Tu reparación #${incident.id} fue aprobada.`;
-      await client.query(`INSERT INTO notifications(user_id,message,type,reference_url) VALUES($1,$2,$3,$4)`, [incident.responsible_driver_id,message,action==='reject'?'CORRECCION_REQUERIDA':'REPARACION_APROBADA',`/novedades/${incident.id}`]);
-    }
-    if (action === 'approve') {
-      const open = await client.query(`SELECT 1 FROM incidents WHERE bus_id=$1 AND id<>$2 AND status<>'RESUELTO' LIMIT 1`, [incident.bus_id,incident.id]);
-      if (!open.rowCount) await client.query(`UPDATE buses SET current_status='OPERATIVO',updated_at=NOW()
-        WHERE id=$1 AND current_status='CON_NOVEDADES'`, [incident.bus_id]);
-    }
-    await client.query('COMMIT');
-    res.json({ incident: await getIncident(req.app.locals.db, incident.id) });
-  } catch (error) {
-    await client.query('ROLLBACK');
-    throw error;
-  } finally { client.release(); }
+router.post('/:id/close', upload.array('files', config.maxFiles), asyncHandler(async (req, res) => {
+  const d = parse(z.object({ resolution_notes: z.string().trim().min(10).max(4000), confirmed: z.literal('true') }).strict(), req.body, 'Describe la solución (mínimo 10 caracteres) y confirma el cierre de la incidencia.');
+  validateUploads(req.files, { required: true });
+  const id = await transaction(req.app.locals.db, async (client, savedKeys) => {
+    const current = await lockIncident(client, req.params.id);
+    assertOpen(current);
+    if (current.status !== 'ASSIGNED') throw httpError(409, 'Asigna un responsable antes de registrar la solución.');
+    await persistEvidence(client, req.files, current.id, req.user.id, 'FINAL', savedKeys);
+    await addHistory(client, current, req.user.id, 'SOLUCION_REGISTRADA', current.status, d.resolution_notes);
+    await client.query(`UPDATE maintenance_incidents SET status='CLOSED',resolution_notes=$1,closed_at=NOW(),updated_at=NOW() WHERE id=$2`, [d.resolution_notes,current.id]);
+    await addHistory(client, current, req.user.id, 'INCIDENCIA_CERRADA', 'CLOSED', 'Solución verificada y cierre confirmado por el administrador.');
+    return current.id;
+  });
+  res.json({ incident: await getIncident(req.app.locals.db, id) });
 }));
 
+router.get('/:id/whatsapp', asyncHandler(async (req, res) => {
+  res.json(buildWhatsApp(await getIncident(req.app.locals.db, req.params.id)));
+}));
 export default router;

@@ -1,209 +1,50 @@
-import { useEffect, useState } from "react";
-import { Filter, Plus, Search } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
-import { api } from "../api.js";
-import { useAuth } from "../context/AuthContext.jsx";
-import StatusBadge from "../components/StatusBadge.jsx";
-import EmptyState from "../components/EmptyState.jsx";
-import { formatDamageType, formatDate } from "../utils/formatters.js";
-import { isAdminRole } from "../utils/roles.js";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Plus, Search, SlidersHorizontal, Wrench } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { api } from '../api.js';
+import EmptyState from '../components/EmptyState.jsx';
+import { PRIORITIES, STATUSES, sortIncidents, spaceLabel } from '../utils/maintenance.js';
+import IncidentListView from './IncidentListView.jsx';
+import usePageLifecycle from './usePageLifecycle.js';
+import './maintenance-pages.css';
 
 export default function IncidentsPage() {
-  const { user } = useAuth();
-  const [searchParams] = useSearchParams();
-  const [items, setItems] = useState([]);
-  const [buses, setBuses] = useState([]);
-  const [busError, setBusError] = useState("");
+  const { startRequest } = usePageLifecycle();
+  const [params, setParams] = useSearchParams();
+  const [incidents, setIncidents] = useState([]);
+  const [spaces, setSpaces] = useState([]);
+  const [personnel, setPersonnel] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [reloadKey, setReloadKey] = useState(0);
-  const [filters, setFilters] = useState({
-    search: searchParams.get("search") || "",
-    status: searchParams.get("status") || "",
-    urgency: searchParams.get("urgency") || "",
-    bus_id: searchParams.get("bus_id") || "",
-    order: searchParams.get("order") || "newest",
-  });
-  useEffect(() => {
-    setBusError("");
-    api("/buses")
-      .then((d) => setBuses(d.buses))
-      .catch(() => setBusError("No pudimos cargar la lista de buses. El resto de filtros sigue disponible."));
-  }, [reloadKey]);
-  useEffect(() => {
-    const controller = new AbortController();
-    let active = true;
-    const timer = setTimeout(() => {
-      setLoading(true);
-      setError("");
-      const q = new URLSearchParams(
-        Object.entries(filters).filter(([, v]) => v),
-      );
-      api(`/incidents?${q}`, { signal: controller.signal })
-        .then((d) => {
-          if (active) setItems(d.incidents);
-        })
-        .catch((e) => {
-          if (active && e.name !== "AbortError") setError(e.message);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }, 180);
-    return () => {
-      clearTimeout(timer);
-      active = false;
-      controller.abort();
-    };
-  }, [filters, reloadKey]);
-  const hasFilters = Boolean(
-    filters.search || filters.status || filters.urgency || filters.bus_id || filters.order !== "newest",
-  );
-  function clearFilters() {
-    setFilters({ search: "", status: "", urgency: "", bus_id: "", order: "newest" });
-  }
-  return (
-    <>
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">Seguimiento</p>
-          <h1>
-            {isAdminRole(user.role) ? "Novedades de la flota" : "Mis novedades"}
-          </h1>
-          <p>Consulta el estado, la urgencia y el historial de cada reporte.</p>
-        </div>
-        <Link to="/reportar" className="primary-button">
-          <Plus />
-          Nuevo reporte
-        </Link>
-      </div>
-      <section className="panel" aria-busy={loading}>
-        <div className="filter-bar">
-          <label className="search-box">
-            <Search />
-            <input
-              aria-label="Buscar novedades"
-              placeholder="Buscar por ID, bus, placa o descripción"
-              value={filters.search}
-              onChange={(e) =>
-                setFilters({ ...filters, search: e.target.value })
-              }
-            />
-          </label>
-          <div className="filter-select">
-            <Filter />
-            <select
-              aria-label="Filtrar por estado"
-              value={filters.status}
-              onChange={(e) =>
-                setFilters({ ...filters, status: e.target.value })
-              }
-            >
-              <option value="">Todos los estados</option>
-              <option value="REPORTADO">Reportado</option>
-              <option value="EN_PROCESO">En proceso</option>
-              <option value="PENDIENTE_VALIDACION">Por validar</option>
-              <option value="REQUIERE_CORRECCION">Requiere corrección</option>
-              <option value="RESUELTO">Resuelto</option>
-            </select>
-          </div>
-          <select
-            aria-label="Filtrar por urgencia"
-            value={filters.urgency}
-            onChange={(e) =>
-              setFilters({ ...filters, urgency: e.target.value })
-            }
-          >
-            <option value="">Toda urgencia</option>
-            <option value="ALTA">Alta</option>
-            <option value="MEDIA">Media</option>
-            <option value="BAJA">Baja</option>
-          </select>
-          <select
-            aria-label="Filtrar por bus"
-            value={filters.bus_id}
-            onChange={(e) => setFilters({ ...filters, bus_id: e.target.value })}
-          >
-            <option value="">Todos los buses</option>
-            {buses.map((b) => (
-              <option key={b.id} value={b.id}>
-                {b.reference} · {b.plate}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Ordenar novedades"
-            value={filters.order}
-            onChange={(e) => setFilters({ ...filters, order: e.target.value })}
-          >
-            <option value="newest">Más recientes</option>
-            <option value="oldest">Más antiguas</option>
-          </select>
-        </div>
-        <div className="filter-summary" aria-live="polite">
-          <span>{loading ? "Actualizando resultados…" : `${items.length} ${items.length === 1 ? "resultado" : "resultados"}`}</span>
-          {hasFilters && <button type="button" className="text-button" onClick={clearFilters}>Limpiar filtros</button>}
-        </div>
-        {busError && <div className="page-notice" role="status">{busError}</div>}
-        {error && <div className="page-error" role="alert">{error} <button type="button" onClick={() => setReloadKey((value) => value + 1)}>Reintentar</button></div>}
-        {loading ? (
-          <div className="loading-page compact" role="status">Cargando novedades…</div>
-        ) : items.length ? (
-          <div className="table-wrap" role="region" aria-label="Listado de novedades" tabIndex="0">
-            <table>
-              <caption className="sr-only">Novedades filtradas de la flota</caption>
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Bus / placa</th>
-                  <th scope="col">Tipo de daño</th>
-                  <th scope="col">Urgencia</th>
-                  <th scope="col">Estado</th>
-                  <th scope="col">Conductor</th>
-                  <th scope="col">Fecha</th>
-                  <th scope="col"><span className="sr-only">Acciones</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((i) => (
-                  <tr key={i.id}>
-                    <td data-label="ID">
-                      <b>#{i.id}</b>
-                    </td>
-                    <td data-label="Bus / placa">
-                      <b>{i.reference}</b>
-                      <small>{i.plate}</small>
-                    </td>
-                    <td data-label="Tipo de daño">{formatDamageType(i.damage_type, i.other_damage_type)}</td>
-                    <td data-label="Urgencia">
-                      <StatusBadge value={i.urgency} urgency />
-                    </td>
-                    <td data-label="Estado">
-                      <StatusBadge value={i.status} />
-                    </td>
-                    <td data-label="Conductor">{i.driver_name || "Sin asignar"}</td>
-                    <td data-label="Fecha">
-                      <time dateTime={i.reported_at}>{formatDate(i.reported_at, {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}</time>
-                    </td>
-                    <td data-label="Acciones">
-                      <Link to={`/novedades/${i.id}`}>Ver detalle</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <EmptyState
-            title="No encontramos novedades"
-            text="Prueba cambiando los filtros de búsqueda."
-          />
-        )}
-      </section>
-    </>
-  );
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [priority, setPriority] = useState('');
+  const [person, setPerson] = useState('');
+  const [space, setSpace] = useState('');
+  const status = STATUSES.some(([key]) => key === params.get('estado')) ? params.get('estado') : '';
+  const load = useCallback(async () => {
+    const signal = startRequest();
+    setLoading(true); setError('');
+    try { const [i, s, p] = await Promise.all([api('/incidents', { signal }), api('/spaces', { signal }), api('/personnel', { signal })]); if (!signal.aborted) { setIncidents(sortIncidents(i.incidents)); setSpaces(s.spaces); setPersonnel(p.personnel); } } catch (e) { if (!signal.aborted) setError(e.message); } finally { if (!signal.aborted) setLoading(false); }
+  }, [startRequest]);
+  useEffect(() => { load(); }, [load]);
+  const visible = useMemo(() => {
+    const query = search.trim().toLocaleLowerCase('es');
+    return incidents.filter((i) => (!status || i.status === status) && (!priority || i.priority === priority) && (!person || String(i.assigned_person_id || '') === person) && (!space || String(i.space_id) === space) && (!query || [i.code, i.description, i.space_name, i.space_zone, i.assigned_person_name].filter(Boolean).join(' ').toLocaleLowerCase('es').includes(query)));
+  }, [incidents, search, status, priority, person, space]);
+  const filtered = Boolean(search || status || priority || person || space);
+  function clear() { setSearch(''); setParams({}, { replace: true }); setPriority(''); setPerson(''); setSpace(''); }
+  return <div className="maintenance-page">
+    <div className="page-heading"><div><p className="eyebrow">Operación diaria</p><h1>Incidencias</h1><p>Cada incidencia, su responsable y el avance de su solución.</p></div><Link className="primary-button" to="/incidencias/nueva"><Plus aria-hidden="true" />Nueva incidencia</Link></div>
+    <section className="panel" aria-label="Buscar y filtrar incidencias"><div className="filter-bar">
+      <label>Buscar incidencia<span className="search-field"><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Código, descripción, ubicación…" /></span></label>
+      <label>Estado<select value={status} onChange={(e) => setParams(e.target.value ? { estado: e.target.value } : {}, { replace: true })}><option value="">Todos</option>{STATUSES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      <label>Prioridad<select value={priority} onChange={(e) => setPriority(e.target.value)}><option value="">Todas</option>{PRIORITIES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      <label>Responsable<select value={person} onChange={(e) => setPerson(e.target.value)}><option value="">Todos</option>{personnel.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
+      <label>Espacio<select value={space} onChange={(e) => setSpace(e.target.value)}><option value="">Todos</option>{spaces.map((s) => <option key={s.id} value={s.id}>{spaceLabel(s)}</option>)}</select></label>
+    </div><div className="filter-summary"><span aria-live="polite">{loading ? 'Cargando incidencias…' : `${visible.length} ${visible.length === 1 ? 'incidencia' : 'incidencias'}`}</span>{filtered && <button className="text-button" type="button" onClick={clear}><SlidersHorizontal size={13} aria-hidden="true" />Limpiar filtros</button>}</div></section>
+    {error && <div className="page-error" role="alert">{error}<button className="text-button" type="button" onClick={load}>Reintentar</button></div>}
+    <section className="panel" aria-label="Listado de incidencias">{loading ? <div className="loading-page" role="status" aria-busy="true">Cargando incidencias…</div> : !error && (visible.length ? <IncidentListView incidents={visible} /> : <EmptyState icon={Wrench} title={filtered ? 'No encontramos coincidencias' : 'Todo al día'} text={filtered ? 'Prueba otra búsqueda o ajusta los filtros.' : 'No hay incidencias registradas. Registra una incidencia para comenzar.'} action={filtered ? <button className="secondary-button" type="button" onClick={clear}>Limpiar filtros</button> : <Link className="secondary-button" to="/incidencias/nueva">Registrar incidencia</Link>} />)}</section>
+  </div>;
 }
+
+

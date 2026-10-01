@@ -1,10 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Edit3, Mail, Phone, Plus, ShieldCheck } from 'lucide-react';
 import { api } from '../api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Toast from '../components/Toast.jsx';
 import Modal from '../components/Modal.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import usePageLifecycle from './usePageLifecycle.js';
+import './maintenance-pages.css';
 
 const empty = {
   name: '',
@@ -16,6 +19,8 @@ const empty = {
 };
 
 export default function AdminsPage() {
+  const { user } = useAuth();
+  const { mounted, startRequest } = usePageLifecycle();
   const [items, setItems] = useState([]);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
@@ -24,21 +29,24 @@ export default function AdminsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
+    const signal = startRequest();
     setLoading(true);
     setError('');
-    return api('/users?role=ADMIN')
-      .then((data) => setItems(data.users))
+    return api('/users?role=ADMIN', { signal })
+      .then((data) => { if (!signal.aborted) setItems(data.users); })
       .catch((requestError) => {
+        if (signal.aborted) return;
         setItems([]);
         setError(requestError.message);
       })
-      .finally(() => setLoading(false));
-  };
+      .finally(() => { if (!signal.aborted) setLoading(false); });
+  }, [startRequest]);
 
   useEffect(() => {
-    load();
-  }, []);
+    if (user?.role === 'SUPER_ADMIN') load();
+    else setLoading(false);
+  }, [user?.role, load]);
 
   function open(item = null) {
     setEditing(item?.id || 'new');
@@ -87,23 +95,26 @@ export default function AdminsPage() {
         method: editing === 'new' ? 'POST' : 'PATCH',
         body: JSON.stringify(body),
       });
+      if (!mounted.current) return;
       setEditing(null);
       setToast({ message: editing === 'new' ? 'Administrador creado correctamente.' : 'Administrador actualizado correctamente.' });
       await load();
     } catch (requestError) {
-      setError(requestError.message);
+      if (mounted.current) setError(requestError.message);
     } finally {
-      setSaving(false);
+      if (mounted.current) setSaving(false);
     }
   }
 
+  if (user?.role !== 'SUPER_ADMIN') return <div className="maintenance-page"><div className="panel"><EmptyState title="Acceso reservado" text="Solo el superadministrador puede gestionar las cuentas administrativas." /></div></div>;
+
   return (
-    <>
+    <div className="maintenance-page">
       <div className="page-heading">
         <div>
           <p className="eyebrow">Gobierno de acceso</p>
           <h1>Administradores</h1>
-          <p>Crea y controla las cuentas que pueden gestionar toda la operación.</p>
+          <p>Gestiona las cuentas autorizadas para operar el mantenimiento del colegio.</p>
         </div>
         <button type="button" className="primary-button" onClick={() => open()}>
           <Plus aria-hidden="true" />
@@ -115,7 +126,7 @@ export default function AdminsPage() {
         <span><ShieldCheck aria-hidden="true" /></span>
         <div>
           <strong>Acceso exclusivo del superadministrador</strong>
-          <p>Los administradores creados aquí podrán operar la flota, pero no podrán ver ni gestionar este apartado.</p>
+          <p>Estas cuentas gestionan incidencias, personal y espacios. La gestión de administradores queda reservada al superadministrador.</p>
         </div>
       </section>
 
@@ -137,7 +148,7 @@ export default function AdminsPage() {
               <div className="person-info">
                 <span><Mail aria-hidden="true" />{admin.username}</span>
                 <span><Phone aria-hidden="true" />{admin.phone || 'Sin celular'}</span>
-                <small>Administrador de flota</small>
+                <small>Administrador de mantenimiento</small>
               </div>
               <button type="button" onClick={() => open(admin)} aria-label={`Editar administrador ${admin.name}`}>
                 <Edit3 aria-hidden="true" />
@@ -155,6 +166,7 @@ export default function AdminsPage() {
       {editing && (
         <Modal
           as="form"
+          className="modal catalog-form"
           onSubmit={save}
           onClose={close}
           labelledBy="admin-modal-title"
@@ -171,28 +183,28 @@ export default function AdminsPage() {
           <div className="form-grid">
             <label className="full">
               Nombre completo
-              <input data-autofocus value={form.name} onChange={(event) => update('name', event.target.value)} required />
+              <input data-autofocus value={form.name} onChange={(event) => update('name', event.target.value)} required minLength={3} maxLength={120} disabled={saving} />
             </label>
             <label>
               Identificación
-              <input value={form.identification} onChange={(event) => update('identification', event.target.value)} required />
+              <input value={form.identification} onChange={(event) => update('identification', event.target.value)} required minLength={3} maxLength={40} disabled={saving} />
             </label>
             <label>
               Celular
-              <input value={form.phone} onChange={(event) => update('phone', event.target.value)} />
+              <input type="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} maxLength={40} disabled={saving} />
             </label>
             <label className="full">
               Correo o usuario
-              <input type="email" autoComplete="email" value={form.username} onChange={(event) => update('username', event.target.value)} required />
+              <input type="text" autoComplete="username" value={form.username} onChange={(event) => update('username', event.target.value)} required minLength={3} maxLength={120} disabled={saving} />
             </label>
             <label>
               {editing === 'new' ? 'Contraseña temporal' : 'Nueva contraseña (opcional)'}
-              <input type="password" autoComplete="new-password" value={form.password} onChange={(event) => update('password', event.target.value)} required={editing === 'new'} minLength="12" />
+              <input type="password" autoComplete="new-password" value={form.password} onChange={(event) => update('password', event.target.value)} required={editing === 'new'} minLength="12" maxLength={128} disabled={saving} />
               <small id="admin-password-help" className="helper">Mínimo 12 caracteres.</small>
             </label>
             <label>
               Estado
-              <select value={form.status} onChange={(event) => update('status', event.target.value)}>
+              <select value={form.status} onChange={(event) => update('status', event.target.value)} disabled={saving}>
                 <option value="ACTIVO">Activo</option>
                 <option value="INACTIVO">Inactivo</option>
               </select>
@@ -205,6 +217,6 @@ export default function AdminsPage() {
         </Modal>
       )}
       <Toast toast={toast} onClose={() => setToast(null)} />
-    </>
+    </div>
   );
 }

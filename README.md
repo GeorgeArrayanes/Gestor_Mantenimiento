@@ -1,166 +1,94 @@
-# RutaSegura
+# Gestor Mantenimiento
 
-RutaSegura es un MVP funcional para gestionar buses escolares, conductores, daños, reparaciones, evidencias, validaciones e historial. Tiene tres perfiles protegidos: **SUPER_ADMIN**, **ADMIN** y **CONDUCTOR**.
+Aplicación para el Jefe de Mantenimiento y administradores del Gimnasio Los Arrayanes. El personal es un catálogo de responsables sin usuarios ni contraseñas. Las asignaciones de incidencias se comunican mediante una apertura manual de WhatsApp.
 
-## Arquitectura
+## Arquitectura y alcance
 
-```text
-frontend/   React + Vite + React Router + CSS
-backend/    Node.js + Express + JWT + bcrypt + API REST
-database/   migración SQL reproducible para PostgreSQL/Supabase
-```
+- `frontend/`: React, React Router, Vite y CSS; identidad verde petróleo y menta.
+- `backend/`: Express, PostgreSQL, JWT en cookie httpOnly y bcrypt; autorización en servidor.
+- `database/`: migraciones SQL versionadas. La V1 usa tablas de mantenimiento independientes.
 
-El frontend nunca decide por sí solo si una acción está autorizada. La API vuelve a comprobar rol, conductor responsable, bus asignado y transición de estado. Las evidencias se almacenan en Supabase Storage (o en `backend/uploads` durante desarrollo local) y PostgreSQL conserva únicamente la referencia del archivo.
+Módulos: Dashboard, Nueva incidencia, Incidencias, Personal, Espacios y Administradores. Sólo SUPER_ADMIN gestiona las cuentas administrativas. ADMIN opera incidencias y catálogos. No existen accesos del personal, inventario, órdenes de trabajo independientes, programación ni mensajería automática.
 
-## Funcionalidades terminadas
+## Inicio local
 
-- Inicio y cierre de sesión mediante cookie JWT `httpOnly`; contraseñas bcrypt.
-- Dashboard administrativo con métricas calculadas desde la base de datos.
-- Portal responsive del conductor con sus novedades y su bus asignado.
-- CRUD de buses y conductores, asignación de conductor y estados operativos.
-- Registro separado de daños preexistentes por bus.
-- Creación, búsqueda y filtros de novedades.
-- Carga acumulativa de JPG, JPEG, PNG, WEBP y PDF (máximo configurable, 5 MB por defecto).
-- Flujo controlado: `REPORTADO → EN_PROCESO → PENDIENTE_VALIDACION → RESUELTO`.
-- Rechazo obligatorio con motivo y ciclo `REQUIERE_CORRECCION → EN_PROCESO → PENDIENTE_VALIDACION`.
-- Historial inmutable y múltiples evidencias clasificadas como reporte, solución o corrección.
-- Notificaciones internas con contador de no leídas.
-- Adaptador preparado para WhatsApp sin simular envíos.
-- Mensajes de error comprensibles, estados de carga y confirmaciones para aprobar/rechazar.
+Requiere Node.js 22 o superior y PostgreSQL 15/16 para datos persistentes.
 
-## Requisitos
-
-- Node.js 22 o superior.
-- PostgreSQL 15/16, una base Supabase, o Docker para el entorno local persistente.
-
-## Instalación rápida
-
-```bash
-npm install
-cp .env.example .env
+```powershell
+npm ci
+Copy-Item .env.example .env
+# Configure POSTGRES_PASSWORD, DATABASE_URL, JWT_SECRET y SUPER_ADMIN_PASSWORD en .env.
 docker compose up -d
 npm run db:migrate
-npm run db:seed
+npm run db:bootstrap-super-admin
 npm run dev
 ```
 
-En Windows PowerShell, copie el entorno con `Copy-Item .env.example .env`.
+Frontend: http://localhost:5173. API: http://localhost:4000/api. Use una **base dedicada a Mantenimiento**, nunca la conexión de la aplicación original. Docker utiliza la base `mantenimiento` y un volumen propio. No se ha ejecutado ninguna migración sobre servicios externos.
 
-Abra `http://localhost:5173`. La API se ejecuta en `http://localhost:4000`.
+Para la demostración temporal, configure `DEV_MEMORY_DB=true` y ejecute `npm run dev`. Se cargan catálogos de ejemplo en una base aislada en memoria; sus cambios desaparecen al detener el servidor. No habilite esta opción en producción. Las cuentas `admin@mantenimiento.test` y `superadmin@mantenimiento.test` usan `Mantenimiento2026!` **sólo en esa demostración**; si establece `SUPER_ADMIN_EMAIL`, ese correo sustituye al superadministrador demo. Las cuentas persistentes requieren contraseña por variable de entorno y no usan ese respaldo.
 
-### Demostración sin PostgreSQL instalado
+## Flujo de incidencias
 
-Para una demostración efímera, defina `DEV_MEMORY_DB=true` en `.env` y ejecute `npm run dev`. Se usa PostgreSQL compatible en memoria y se carga el seed al iniciar. Los cambios duran mientras el proceso del backend continúe activo. Para el producto real utilice PostgreSQL/Supabase.
+1. Registre espacio activo, tipo, prioridad, descripción y evidencia inicial opcional.
+2. Sin responsable queda `PENDING`. Con personal activo queda `ASSIGNED`.
+3. Asigne o cambie al responsable desde el detalle; se conserva el historial.
+4. Pulse **Notificar por WhatsApp**. Revise el texto y envíelo manualmente en WhatsApp.
+5. Registre notas de solución, al menos una imagen final y confirme **Cerrar incidencia**.
+6. Queda `CLOSED`; no se permiten nuevos cambios ni cierres duplicados.
 
-## PostgreSQL y Supabase
+Códigos `MT-año-secuencia` se generan en el servidor. El dashboard calcula pendientes, asignadas, cierres del mes y tiempo de solución desde los registros reales. Las fechas se presentan en `America/Bogota`. Personal y espacios se desactivan, conservando sus referencias históricas.
 
-1. Cree un proyecto Supabase o una base PostgreSQL vacía.
-2. Copie su conexión en `DATABASE_URL`. Para Supabase, use la URL del pooler o la conexión directa adecuada al entorno.
-3. Active `DATABASE_SSL=true` cuando el proveedor lo requiera.
-4. Defina `SUPER_ADMIN_PASSWORD` con al menos 12 caracteres.
-5. Ejecute `npm run db:migrate` y luego `npm run db:seed`.
+## WhatsApp
 
-Para una base ya desplegada, cree únicamente la cuenta maestra sin insertar datos de demostración:
+`backend/src/utils/maintenance.js` normaliza el teléfono, genera el mensaje con datos de la incidencia y construye `https://wa.me/<teléfono>?text=<mensaje codificado>`. Números locales colombianos usan +57; un código internacional existente se conserva. Los formatos inválidos reciben un error comprensible. Abrir el enlace no acredita un envío: no se muestra estado de entrega y no se usa ninguna API de WhatsApp.
 
-```bash
-npm run db:migrate
-# Configure SUPER_ADMIN_PASSWORD en el entorno antes del siguiente comando.
-npm run db:bootstrap-super-admin
+## Base de datos
+
+Consulte `database/MIGRATION_PLAN.md` antes del despliegue. `001_init.sql` y `002_super_admin.sql` se conservan como historial original. `003_maintenance.sql` añade el dominio nuevo sin renombrar ni eliminar tablas históricas, sin convertir registros de transporte ni promover usuarios. El ejecutor registra las migraciones aplicadas y las ejecuta en transacciones. No use `db:push`.
+
+Las tablas históricas de transporte no tienen endpoints ni pantallas activas. Las cuentas heredadas no administrativas no pueden iniciar sesión en esta aplicación. Los administradores reutilizan la infraestructura original y las contraseñas existentes.
+
+## Evidencias y seguridad
+
+- JPEG, PNG, WEBP y PDF, hasta 5 archivos por operación y 5 MB por archivo por defecto.
+- El servidor comprueba tamaño, MIME y firma del contenido; no confía en el nombre del archivo.
+- Descarga autenticada mediante `/api/evidences/:id/download`; el almacenamiento local no es público.
+- Nombres aleatorios de almacenamiento; rutas internas y credenciales no se envían al cliente.
+- Supabase debe configurarse con un bucket privado; su clave service role permanece exclusivamente en servidor.
+- Las mutaciones validan administrador activo, relaciones, estado y catálogo; las operaciones críticas usan bloqueo de filas y transacción.
+- Un fallo de carga revierte la operación en la base de datos e intenta eliminar los archivos nuevos ya almacenados. Si el proveedor de almacenamiento falla también al eliminarlos, su limpieza requiere seguimiento operativo.
+- Todas las consultas de dominio parametrizan sus valores.
+
+## Configuración y despliegue
+
+Configure `NODE_ENV=production`, `DATABASE_URL`, `JWT_SECRET` aleatorio de al menos 32 caracteres, `FRONTEND_URL` exacto y `SUPER_ADMIN_PASSWORD` de al menos 12 caracteres para el bootstrap. Use HTTPS. Configure `DATABASE_SSL` según el proveedor.
+
+Para Supabase configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_STORAGE_BUCKET=mantenimiento-evidencias` con un bucket privado. Sin Supabase, el servicio necesita un disco persistente para los archivos locales. No use el seed de demostración con datos reales.
+
+El frontend utiliza `/api` por defecto. El hosting debe reenviar `/api` al backend y servir `index.html` para la navegación React. Para API en otro origen, configure `VITE_API_URL` al compilar y `FRONTEND_URL` en el servidor. La sesión mantiene el respaldo Bearer existente en sessionStorage cuando el navegador bloquea cookies entre sitios.
+
+## Verificación
+
+```powershell
+npm run lint
+npm test
+npm run build
+npm audit
 ```
 
-El bootstrap usa `Admin@gla.edu.co` por defecto, es idempotente y no promueve cuentas existentes automáticamente. La contraseña debe tener al menos 12 caracteres y nunca debe guardarse en el repositorio.
+El proyecto es JavaScript; no dispone de una compilación TypeScript. ESLint revisa referencias y sintaxis; Vite compila el frontend. Tras los ajustes de producto se verificaron 108 pruebas: 55 de backend y 53 de frontend. La validación inicial también pasó el backend contra PostgreSQL 16 desechable: 29 pruebas de integración usaron PostgreSQL real y 22 comprobaron utilidades o compatibilidad de migraciones.
 
-La migración [001_init.sql](database/migrations/001_init.sql) crea:
+Para repetir la integración PostgreSQL, configure `TEST_POSTGRES_URL` con una base exclusiva de pruebas y ejecute `npm run test -w backend`. Cada suite crea un esquema aleatorio, aplica las tres migraciones y elimina únicamente su esquema al terminar. Sin esa variable se usa la base aislada en memoria.
 
-- `users`
-- `buses`
-- `preexisting_damages`
-- `incidents`
-- `evidences`
-- `incident_history`
-- `notifications`
-- claves foráneas, restricciones únicas, checks e índices.
+Se inspeccionó la aplicación en navegador a 1440, 768 y 375 píxeles, incluyendo creación, asignación, WhatsApp, cierre confirmado con evidencias y catálogos. Los resultados y capturas están en `output/review/VERIFICATION.md`.
 
-### Supabase Storage
+La verificación local no sustituye una validación de despliegue con HTTPS y el bucket/disco elegidos. Ejecute ese control en staging antes de incorporar información real.
 
-1. Cree un bucket **privado** llamado `rutasegura-evidencias` (o cambie `SUPABASE_STORAGE_BUCKET`).
-2. Configure `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` sólo en el backend.
-3. Nunca exponga la service role key en variables `VITE_*`.
+## Roadmap de producto
 
-El backend genera nombres aleatorios, valida MIME/tamaño y entrega URLs firmadas de una hora. Sin credenciales Supabase, desarrollo guarda archivos en `backend/uploads`.
+El backlog futuro conserva inventario, mantenimiento preventivo, órdenes de trabajo, costos, proveedores, WhatsApp automático, reportes y calendario de mantenimiento. Son candidatos para versiones posteriores, pendientes de priorización; no están implementados en esta V1. Consulte `PROJECT_BACKLOG.md`.
 
-## Variables de entorno
+La arquitectura separa catálogos, incidencias, historial, almacenamiento y preparación de mensajes para permitir ese crecimiento.
 
-| Variable | Propósito |
-| --- | --- |
-| `PORT` | Puerto de Express, por defecto 4000. |
-| `DATABASE_URL` | Conexión PostgreSQL. |
-| `DATABASE_SSL` | `true` para proveedores con SSL. |
-| `JWT_SECRET` | Secreto aleatorio de al menos 32 caracteres. |
-| `JWT_EXPIRES_IN` | Duración del JWT. |
-| `FRONTEND_URL` | Origen permitido por CORS. |
-| `MAX_FILE_SIZE_MB` | Límite por archivo. |
-| `SUPABASE_URL` | URL del proyecto Supabase. |
-| `SUPABASE_SERVICE_ROLE_KEY` | Credencial privada del backend. |
-| `SUPABASE_STORAGE_BUCKET` | Bucket privado de evidencias. |
-| `SUPER_ADMIN_EMAIL` | Correo de la cuenta maestra; por defecto `Admin@gla.edu.co`. |
-| `SUPER_ADMIN_PASSWORD` | Contraseña inicial, obligatoria para crear la cuenta en una base persistente. |
-| `DEV_MEMORY_DB` | Base efímera sólo para demo/pruebas. |
-| `VITE_API_URL` | URL pública de la API para el frontend. |
-
-## Cuentas de desarrollo
-
-Todas usan la contraseña: `RutaSegura2026!`
-
-| Rol | Usuario |
-| --- | --- |
-| Administrador | `admin@rutasegura.test` |
-| Conductor Bus 04 | `carlos@rutasegura.test` |
-| Conductor Bus 12 | `roberto@rutasegura.test` |
-
-Son credenciales exclusivas del seed de desarrollo. Cámbielas o elimínelas antes de usar datos reales.
-
-En una base persistente, la cuenta `SUPER_ADMIN` usa exclusivamente la contraseña configurada en el entorno. Sólo la demostración efímera con `DEV_MEMORY_DB=true` utiliza la contraseña común de desarrollo. Esta cuenta es la única que puede listar, crear o editar administradores.
-
-## Comandos
-
-```bash
-npm run dev          # frontend y backend
-npm run build        # compilación de producción del frontend
-npm test             # pruebas de reglas críticas y UI
-npm run db:migrate   # aplica el esquema
-npm run db:seed      # carga datos de desarrollo de forma idempotente
-npm run db:bootstrap-super-admin # crea únicamente la cuenta maestra
-```
-
-## API principal
-
-- `/api/auth`: login, sesión y logout.
-- `/api/dashboard`: métricas administrativas.
-- `/api/users`: administración de conductores/usuarios.
-- `/api/buses`: flota y daños preexistentes.
-- `/api/incidents`: novedades, evidencia y transiciones.
-- `/api/notifications`: bandeja interna y lectura.
-
-## Pruebas
-
-La suite de integración recorre autenticación, autorización administrativa, aislamiento entre conductores, creación de novedad, evidencia, inicio, envío, rechazo con motivo, corrección, reenvío, aprobación, bloqueo de transiciones y conservación de historial/evidencias. Usa una base PostgreSQL compatible aislada por ejecución.
-
-## Despliegue
-
-1. Despliegue `backend/` en un servicio Node (Render, Railway, Fly.io, Cloud Run u otro) con las variables privadas.
-2. Ejecute la migración y `db:bootstrap-super-admin`; use el seed completo sólo si requiere datos demo.
-3. Compile `frontend/` con `VITE_API_URL=https://su-api.example.com/api` y publique `frontend/dist` en un host estático.
-4. Configure `FRONTEND_URL` con el origen exacto del frontend y HTTPS en ambos servicios.
-5. Para cookies entre dominios distintos, adapte `sameSite`/`secure` y use dominios propios del mismo sitio cuando sea posible.
-
-## Integración futura de WhatsApp
-
-La abstracción está en `backend/src/services/external-notifications.js`. Implemente allí un proveedor con WhatsApp Business Cloud API y credenciales de entorno. La lógica central ya llama al servicio al asignar una novedad, pero el adaptador actual devuelve `delivered: false`; no finge que un mensaje fue enviado. Las notificaciones internas mantienen todo el flujo operativo aun sin WhatsApp.
-
-## Decisiones y límites reales
-
-- La entrega no incluye credenciales reales de PostgreSQL, Supabase ni WhatsApp.
-- No se envían mensajes externos; sólo quedan preparados mediante un adaptador.
-- El seed trae tres buses, dos conductores, un administrador y novedades iniciales.
-- La alternativa en memoria es sólo una comodidad de desarrollo; producción debe usar PostgreSQL.
+No se han realizado operaciones de Git. La revisión de Producto/Arquitectura precede a cualquier despliegue.

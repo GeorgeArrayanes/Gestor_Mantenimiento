@@ -3,16 +3,16 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import StatusBadge from './StatusBadge.jsx';
 
-describe('StatusBadge', () => {
-  it('presenta estados y urgencias con texto comprensible', () => {
-    const status = renderToStaticMarkup(<StatusBadge value="PENDIENTE_VALIDACION" />);
-    expect(status).toContain('status-PENDIENTE_VALIDACION');
-    expect(status).toContain('Por validar');
-    const urgency = renderToStaticMarkup(<StatusBadge value="ALTA" urgency />);
-    expect(urgency).toContain('urgency-ALTA');
-    expect(urgency).toContain('ALTA');
-    const account = renderToStaticMarkup(<StatusBadge value="INACTIVO" />);
-    expect(account).toContain('status-INACTIVO');
-    expect(account).toContain('Inactivo');
+describe('estados accesibles de mantenimiento', () => {
+  it.each([['PENDING', 'Pendiente'], ['ASSIGNED', 'Asignada'], ['CLOSED', 'Cerrada'], ['INACTIVO', 'Inactivo']])('presenta %s mediante texto legible', (value, label) => {
+    const markup = renderToStaticMarkup(<StatusBadge value={value} />);
+    expect(markup).toContain(`status-${value}`);
+    expect(markup).toContain(label);
+  });
+
+  it.each([['ALTA', 'Alta'], ['MEDIA', 'Media'], ['BAJA', 'Baja']])('identifica prioridad %s sin depender sólo del color', (value, label) => {
+    const markup = renderToStaticMarkup(<StatusBadge value={value} urgency />);
+    expect(markup).toContain(`priority-${value}`);
+    expect(markup).toContain(label);
   });
 });

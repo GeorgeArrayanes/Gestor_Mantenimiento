@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, createSession, getSessionToken, onUnauthorized, setSessionToken } from './api.js';
+import { api, createSession, downloadEvidence, fileUrl, getSessionToken, onUnauthorized, setSessionToken } from './api.js';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -95,5 +95,51 @@ describe('cliente de API y expiración de sesión', () => {
     await expect(api('/solo-admin')).rejects.toMatchObject({ status: 403 });
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
+  });
+
+  it('envía evidencia multipart sin imponer Content-Type que rompa el límite del formulario', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 201, json: async () => ({ incident: { status: 'PENDING' } }) });
+    vi.stubGlobal('fetch', fetchMock);
+    const form = new FormData();
+    form.set('description', 'Fuga debajo del lavamanos');
+    await api('/incidents', { method: 'POST', body: form });
+    expect(fetchMock).toHaveBeenCalledWith('/api/incidents', expect.objectContaining({
+      credentials: 'include', body: form, headers: expect.not.objectContaining({ 'Content-Type': expect.anything() })
+    }));
+  });
+
+  it('descarga evidencias privadas con bearer y conserva el nombre del archivo', async () => {
+    const values = new Map();
+    const anchor = { click: vi.fn(), remove: vi.fn() };
+    vi.stubGlobal('window', {
+      sessionStorage: { getItem: (key) => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: (key) => values.delete(key) },
+      setTimeout: vi.fn((callback) => callback())
+    });
+    vi.stubGlobal('document', { createElement: vi.fn(() => anchor), body: { appendChild: vi.fn() } });
+    vi.stubGlobal('URL', { createObjectURL: vi.fn(() => 'blob:private-evidence'), revokeObjectURL: vi.fn() });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, blob: async () => new Blob(['evidence']) });
+    vi.stubGlobal('fetch', fetchMock);
+    setSessionToken('token-mantenimiento');
+    await downloadEvidence('/api/evidences/12/download', 'solucion.png');
+    expect(fetchMock).toHaveBeenCalledWith('/api/evidences/12/download', expect.objectContaining({
+      credentials: 'include', headers: { Authorization: 'Bearer token-mantenimiento' }
+    }));
+    expect(anchor.download).toBe('solucion.png');
+    expect(anchor.click).toHaveBeenCalledTimes(1);
+    expect(anchor.remove).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:private-evidence');
+  });
+
+  it('rechaza URLs de evidencia externas antes de adjuntar credenciales', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(downloadEvidence('https://untrusted.test/evidences/12/download')).rejects.toThrow('enlace válido');
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(fileUrl('/api/evidences/1/download')).toBe('/api/evidences/1/download');
+  });
+
+  it('presenta un error útil si el servidor devuelve contenido ilegible', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 502, json: async () => { throw new Error('Unexpected token'); } }));
+    await expect(api('/incidents')).rejects.toMatchObject({ status: 502, message: 'No fue posible completar la operación.' });
   });
 });

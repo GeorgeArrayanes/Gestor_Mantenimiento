@@ -1,162 +1,105 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import { createMemoryPool } from '../src/db.js';
-import { createApp } from '../src/app.js';
-import { seedDatabase } from '../src/seed.js';
 import { config } from '../src/config.js';
+import { closeIncident, createIncident, DEMO_PASSWORD, fixture, login, PNG } from './helpers.js';
 
-let pool;
-let app;
-let admin;
-let driver;
-let foreignDriver;
+let context;
+beforeAll(async () => { context = await fixture(); });
+afterAll(async () => context?.pool.end());
 
-beforeAll(async () => {
-  config.nodeEnv = 'test';
-  pool = await createMemoryPool();
-  await seedDatabase(pool);
-  app = createApp(pool);
-  admin = request.agent(app);
-  driver = request.agent(app);
-  foreignDriver = request.agent(app);
-});
-
-afterAll(async () => pool.end());
-
-async function login(agent, username, password = 'RutaSegura2026!') {
-  return agent.post('/api/auth/login').send({ username, password });
-}
-
-describe('autenticación y autorización', () => {
-  it('rechaza credenciales incorrectas y autentica una contraseña hasheada', async () => {
-    await request(app).post('/api/auth/login').send({ username: 'admin@rutasegura.test', password: 'incorrecta' }).expect(401);
-    const response = await login(admin, 'admin@rutasegura.test');
-    expect(response.status).toBe(200);
+describe('autenticación administrativa', () => {
+  it('rechaza credenciales incorrectas y no expone contraseñas', async () => {
+    await request(context.app).post('/api/auth/login').send({ username: 'admin@mantenimiento.test', password: 'incorrecta' }).expect(401);
+    const response = await login(request.agent(context.app), 'admin@mantenimiento.test');
     expect(response.body.user.role).toBe('ADMIN');
     expect(response.body.user.password_hash).toBeUndefined();
-  });
-
-  it('entrega cookie particionada y token bearer para navegadores que bloquean cookies de terceros', async () => {
-    config.nodeEnv = 'production';
-    const response = await request(app)
-      .post('/api/auth/login')
-      .send({ username: 'admin@rutasegura.test', password: 'RutaSegura2026!' })
-      .expect(200);
-    config.nodeEnv = 'test';
-
+    expect(response.headers['set-cookie'][0]).toContain('mantenimiento_token=');
     expect(response.headers['set-cookie'][0]).toContain('HttpOnly');
-    expect(response.headers['set-cookie'][0]).toContain('Secure');
-    expect(response.headers['set-cookie'][0]).toContain('SameSite=None');
-    expect(response.headers['set-cookie'][0]).toContain('Partitioned');
-    expect(response.body.token).toEqual(expect.any(String));
+  });
 
-    const session = await request(app)
-      .get('/api/auth/me')
-      .set('Authorization', `Bearer ${response.body.token}`)
-      .expect(200);
+  it('permite cookie segura y respaldo bearer con la misma autorización', async () => {
+    let response;
+    config.nodeEnv = 'production';
+    try {
+      response = await request(context.app).post('/api/auth/login')
+        .send({ username: 'admin@mantenimiento.test', password: DEMO_PASSWORD }).expect(200);
+    } finally { config.nodeEnv = 'test'; }
+    const cookie = response.headers['set-cookie'][0];
+    expect(cookie).toContain('HttpOnly');
+    expect(cookie).toContain('Secure');
+    expect(cookie).toContain('SameSite=Lax');
+    expect(cookie).toContain('Path=/api');
+    const session = await request(context.app).get('/api/auth/me')
+      .set('Authorization', `Bearer ${response.body.token}`).expect(200);
     expect(session.body.user.role).toBe('ADMIN');
-  });
-
-  it('impide que un conductor use recursos administrativos', async () => {
-    await login(driver, 'carlos@rutasegura.test');
-    await driver.get('/api/users?role=CONDUCTOR').expect(403);
-    await login(foreignDriver, 'roberto@rutasegura.test');
-  });
-
-  it('permite al conductor reportar sólo sobre su bus asignado', async () => {
-    await login(admin, 'admin@rutasegura.test');
-    await login(driver, 'carlos@rutasegura.test');
-    const buses = await admin.get('/api/buses').expect(200);
-    const assignedBus = buses.body.buses.find((item) => item.reference === 'Bus 04');
-    const foreignBus = buses.body.buses.find((item) => item.reference === 'Bus 12');
-
-    const forbidden = await driver.post('/api/incidents')
-      .field('bus_id', String(foreignBus.id))
-      .field('damage_type', 'MOTOR')
-      .field('description', 'Intento de registrar una novedad en una unidad que pertenece a otro conductor.')
-      .field('urgency', 'MEDIA');
-    expect(forbidden.status).toBe(403);
-    expect(forbidden.body.message).toContain('bus que tienes asignado');
-
-    const created = await driver.post('/api/incidents')
-      .field('bus_id', String(assignedBus.id))
-      .field('damage_type', 'LLANTAS')
-      .field('description', 'La llanta delantera derecha presenta una pérdida constante de presión.')
-      .field('urgency', 'ALTA');
-    expect(created.status).toBe(201);
-    expect(created.body.incident.bus_id).toBe(assignedBus.id);
-    expect(created.body.incident.reported_by).toBe(created.body.incident.responsible_driver_id);
-    expect(created.body.incident.reporter_name).toBe('Carlos Mendoza');
-
-    const adminNotifications = await pool.query(`SELECT n.id FROM notifications n
-      JOIN users u ON u.id=n.user_id
-      WHERE n.reference_url=$1 AND u.role IN ('ADMIN','SUPER_ADMIN')`, [`/novedades/${created.body.incident.id}`]);
-    expect(adminNotifications.rowCount).toBeGreaterThan(0);
+    expect(session.body.user.password_hash).toBeUndefined();
   });
 });
 
-describe('flujo completo e historial inmutable', () => {
-  let incidentId;
+describe('flujo de mantenimiento aceptado', () => {
+  it('registra MT, conserva evidencia, asigna a Carlos, prepara WhatsApp y cierra con historial y métricas reales', async () => {
+    const { admin, spaces, personnel } = context;
+    const space = spaces.find((item) => item.name === 'Baño Bloque A');
+    const carlos = personnel.find((item) => item.name === 'Carlos Rodríguez');
+    const initialDashboard = await admin.get('/api/dashboard').expect(200);
+    expect(initialDashboard.body.stats).toMatchObject({ pending: 0, assigned: 0, closedThisMonth: 0 });
 
-  it('crea la novedad, asigna el conductor y actualiza el dashboard', async () => {
-    const buses = await admin.get('/api/buses').expect(200);
-    const bus = buses.body.buses.find((item) => item.reference === 'Bus 04');
-    const created = await admin.post('/api/incidents')
-      .field('bus_id', String(bus.id))
-      .field('damage_type', 'FRENOS')
-      .field('description', 'El pedal de freno tiene un recorrido excesivo y requiere revisión inmediata.')
-      .field('urgency', 'ALTA')
-      .attach('files', Buffer.from([0xff, 0xd8, 0xff, 0xd9]), { filename: 'freno.jpg', contentType: 'image/jpeg' });
-    expect(created.status).toBe(201);
-    incidentId = created.body.incident.id;
-    expect(created.body.incident.status).toBe('REPORTADO');
-    expect(created.body.incident.driver_name).toBe('Carlos Mendoza');
-    const dashboard = await admin.get('/api/dashboard').expect(200);
-    expect(dashboard.body.stats.open).toBeGreaterThanOrEqual(1);
+    const created = await createIncident(admin, space.id)
+      .attach('files', PNG, { filename: 'fuga.png', contentType: 'image/png' }).expect(201);
+    const incident = created.body.incident;
+    expect(incident.code).toBe(`MT-${new Date().getFullYear()}-001`);
+    expect(incident).toMatchObject({ space_id: space.id, status: 'PENDING', priority: 'ALTA', problem_type: 'PLOMERIA' });
+    expect(incident.assigned_person_id).toBeNull();
+
+    const pendingDashboard = await admin.get('/api/dashboard').expect(200);
+    expect(pendingDashboard.body.stats).toMatchObject({ pending: 1, assigned: 0, closedThisMonth: 0 });
+    const assigned = await admin.post(`/api/incidents/${incident.id}/assign`)
+      .send({ assigned_person_id: carlos.id }).expect(200);
+    expect(assigned.body.incident).toMatchObject({ status: 'ASSIGNED', assigned_person_id: carlos.id });
+    expect(assigned.body.incident.assigned_at).toBeTruthy();
+
+    const whatsapp = await admin.get(`/api/incidents/${incident.id}/whatsapp`).expect(200);
+    const destination = new URL(whatsapp.body.url);
+    expect(destination.origin).toBe('https://wa.me');
+    expect(destination.pathname).toBe('/573002223344');
+    const message = destination.searchParams.get('text');
+    expect(message).toBe(whatsapp.body.message);
+    expect(message.startsWith('🔧 Nueva incidencia de mantenimiento\n\n')).toBe(true);
+    for (const text of ['Carlos', 'Baño Bloque A', 'Fuga debajo del lavamanos', 'Alta', 'Gimnasio Los Arrayanes']) expect(message).toContain(text);
+    expect(message).not.toMatch(/password|token|supabase|http:\/\/localhost/i);
+
+    const assignedDashboard = await admin.get('/api/dashboard').expect(200);
+    expect(assignedDashboard.body.stats).toMatchObject({ pending: 0, assigned: 1, closedThisMonth: 0 });
+    const closed = await closeIncident(admin, incident.id).expect(200);
+    expect(closed.body.incident).toMatchObject({ status: 'CLOSED', resolution_notes: 'Se reemplazó la llave y se ajustó la tubería.' });
+    expect(closed.body.incident.closed_at).toBeTruthy();
+
+    const detail = (await admin.get(`/api/incidents/${incident.id}`).expect(200)).body;
+    expect(detail.evidences).toHaveLength(2);
+    expect(detail.evidences.map((item) => item.category)).toEqual(expect.arrayContaining(['INITIAL', 'FINAL']));
+    expect(detail.history.length).toBeGreaterThanOrEqual(3);
+    expect(detail.history.some((event) => event.new_status === 'PENDING')).toBe(true);
+    expect(detail.history.some((event) => event.new_status === 'ASSIGNED')).toBe(true);
+    expect(detail.history.some((event) => event.new_status === 'CLOSED')).toBe(true);
+    expect(detail.history.some((event) => String(event.comment || '').includes('Carlos'))).toBe(true);
+
+    const closedDashboard = await admin.get('/api/dashboard').expect(200);
+    expect(closedDashboard.body.stats).toMatchObject({ pending: 0, assigned: 0, closedThisMonth: 1 });
+    expect(Number(closedDashboard.body.stats.averageResolutionHours)).toBeGreaterThanOrEqual(0);
+    const closedList = await admin.get('/api/incidents?status=CLOSED').expect(200);
+    expect(closedList.body.incidents.some((item) => item.id === incident.id)).toBe(true);
+    const search = await admin.get('/api/incidents').query({ search: incident.code }).expect(200);
+    expect(search.body.incidents.map((item) => item.id)).toEqual([incident.id]);
   });
 
-  it('evita que otro conductor consulte o modifique la novedad', async () => {
-    await foreignDriver.get(`/api/incidents/${incidentId}`).expect(403);
-    await foreignDriver.post(`/api/incidents/${incidentId}/start`).send({}).expect(403);
-  });
-
-  it('permite iniciar, adjuntar y enviar la reparación', async () => {
-    const started = await driver.post(`/api/incidents/${incidentId}/start`).send({ comment: 'Inicio revisión de frenos.' }).expect(200);
-    expect(started.body.incident.status).toBe('EN_PROCESO');
-    const evidence = await driver.post(`/api/incidents/${incidentId}/evidences`)
-      .field('comment', 'Se purgó el sistema y se cambiaron las pastillas delanteras.')
-      .attach('files', Buffer.from([0xff, 0xd8, 0xff, 0xd9]), { filename: 'solucion.jpg', contentType: 'image/jpeg' });
-    expect(evidence.status).toBe(201);
-    expect(evidence.body.evidences[0].category).toBe('SOLUCION');
-    const submitted = await driver.post(`/api/incidents/${incidentId}/submit`).send({ comment: 'Trabajo finalizado.' }).expect(200);
-    expect(submitted.body.incident.status).toBe('PENDIENTE_VALIDACION');
-  });
-
-  it('exige un motivo al rechazar y conserva la primera solución', async () => {
-    await admin.post(`/api/incidents/${incidentId}/reject`).send({}).expect(400);
-    const rejected = await admin.post(`/api/incidents/${incidentId}/reject`).send({ reason: 'Falta evidencia del nivel final del líquido de frenos.' }).expect(200);
-    expect(rejected.body.incident.status).toBe('REQUIERE_CORRECCION');
-    const detail = await admin.get(`/api/incidents/${incidentId}`).expect(200);
-    expect(detail.body.evidences.some((evidence) => evidence.category === 'SOLUCION')).toBe(true);
-  });
-
-  it('permite corregir, reenviar, aprobar y preserva todas las evidencias', async () => {
-    await driver.post(`/api/incidents/${incidentId}/start`).send({}).expect(200);
-    await driver.post(`/api/incidents/${incidentId}/submit`).send({ comment: 'Intento sin evidencia nueva.' }).expect(400);
-    const correction = await driver.post(`/api/incidents/${incidentId}/evidences`)
-      .field('comment', 'Se adjunta nivel final y prueba de frenado.')
-      .attach('files', Buffer.from([0x89, 0x50, 0x4e, 0x47]), { filename: 'correccion.png', contentType: 'image/png' })
-      .expect(201);
-    expect(correction.body.evidences[0].category).toBe('CORRECCION');
-    await driver.post(`/api/incidents/${incidentId}/submit`).send({ comment: 'Corrección completada.' }).expect(200);
-    const approved = await admin.post(`/api/incidents/${incidentId}/approve`).send({ comment: 'Reparación verificada.' }).expect(200);
-    expect(approved.body.incident.status).toBe('RESUELTO');
-    await driver.post(`/api/incidents/${incidentId}/start`).send({}).expect(409);
-    const detail = await admin.get(`/api/incidents/${incidentId}`).expect(200);
-    expect(detail.body.evidences).toHaveLength(3);
-    expect(detail.body.history.map((event) => event.event_type)).toEqual(expect.arrayContaining([
-      'NOVEDAD_CREADA','REPARACION_INICIADA','EVIDENCIA_AGREGADA','SOLUCION_ENVIADA','REPARACION_RECHAZADA','REPARACION_APROBADA'
-    ]));
-    expect(detail.body.history.find((event) => event.event_type === 'REPARACION_RECHAZADA').comment).toContain('Falta evidencia');
+  it('crea directamente ASSIGNED cuando se selecciona responsable y admite reasignación', async () => {
+    const { admin, spaces, personnel } = context;
+    const created = await createIncident(admin, spaces[0].id, { assigned_person_id: personnel[0].id }).expect(201);
+    expect(created.body.incident.status).toBe('ASSIGNED');
+    const response = await admin.post(`/api/incidents/${created.body.incident.id}/assign`)
+      .send({ assigned_person_id: personnel[1].id }).expect(200);
+    expect(response.body.incident).toMatchObject({ status: 'ASSIGNED', assigned_person_id: personnel[1].id });
+    const detail = await admin.get(`/api/incidents/${created.body.incident.id}`).expect(200);
+    expect(detail.body.history.filter((event) => event.new_status === 'ASSIGNED').length).toBeGreaterThanOrEqual(2);
   });
 });

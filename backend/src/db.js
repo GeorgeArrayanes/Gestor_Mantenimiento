@@ -1,7 +1,7 @@
 import pg from 'pg';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { config } from './config.js';
+import { config, projectRoot } from './config.js';
 
 let sharedPool;
 
@@ -10,26 +10,64 @@ export async function createMemoryPool() {
   const memory = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memory.adapters.createPg();
   const pool = new adapter.Pool();
-  const schema = await fs.readFile(path.resolve(process.cwd(), '..', 'database', 'migrations', '001_init.sql'), 'utf8');
-  await pool.query(schema);
+  for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql']) {
+    await pool.query(await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8'));
+  }
+  // pg-mem ignores transactions: snapshots and serialization provide faithful
+  // rollback and concurrent transition behavior for ephemeral development/tests.
+  let tail = Promise.resolve();
+  async function acquire() {
+    const previous = tail;
+    let release;
+    tail = new Promise((resolve) => { release = resolve; });
+    await previous;
+    return release;
+  }
+  const rawQuery = pool.query.bind(pool);
+  pool.query = async (...args) => {
+    const release = await acquire();
+    try { return await rawQuery(...args); } finally { release(); }
+  };
+  pool.connect = async () => {
+    const client = new adapter.Client();
+    const query = client.query.bind(client);
+    const releaseClient = client.release.bind(client);
+    let unlock;
+    let backup;
+    client.query = async (sql, ...args) => {
+      const command = typeof sql === 'string' ? sql.trim().toUpperCase() : '';
+      if (command === 'BEGIN') {
+        unlock = await acquire();
+        backup = memory.backup();
+        return query(sql, ...args);
+      }
+      if (command === 'COMMIT' || command === 'ROLLBACK') {
+        try {
+          if (command === 'ROLLBACK' && backup) backup.restore();
+          return await query(sql, ...args);
+        } finally { backup = undefined; unlock?.(); unlock = undefined; }
+      }
+      if (unlock) return query(sql, ...args);
+      const release = await acquire();
+      try { return await query(sql, ...args); } finally { release(); }
+    };
+    client.release = () => { if (backup) backup.restore(); backup = undefined; unlock?.(); unlock = undefined; releaseClient(); };
+    return client;
+  };
   return pool;
 }
 
 export async function getPool() {
   if (sharedPool) return sharedPool;
   if (config.memoryDb) {
+    if (config.nodeEnv === 'production') throw new Error('El modo memoria no está permitido en producción.');
     sharedPool = await createMemoryPool();
-    return sharedPool;
+  } else {
+    if (!config.databaseUrl) throw new Error('DATABASE_URL no está configurada.');
+    sharedPool = new pg.Pool({ connectionString: config.databaseUrl, ssl: config.databaseSsl ? { rejectUnauthorized: true, ...(config.databaseSslCa ? { ca: config.databaseSslCa } : {}) } : false });
+    await sharedPool.query('SELECT 1');
   }
-  if (!config.databaseUrl) throw new Error('DATABASE_URL no está configurada.');
-  sharedPool = new pg.Pool({
-    connectionString: config.databaseUrl,
-    ssl: config.databaseSsl ? { rejectUnauthorized: false } : false
-  });
-  await sharedPool.query('SELECT 1');
   return sharedPool;
 }
 
-export function setPool(pool) {
-  sharedPool = pool;
-}
+export function setPool(pool) { sharedPool = pool; }

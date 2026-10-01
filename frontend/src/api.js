@@ -1,6 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL
-  || (import.meta.env.PROD ? 'https://gestor-danos-rutas.onrender.com/api' : '/api');
-const SESSION_TOKEN_KEY = 'rutasegura_session_token';
+const API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const SESSION_TOKEN_KEY = 'mantenimiento_session_token';
 
 const unauthorizedListeners = new Set();
 
@@ -48,7 +47,9 @@ export async function api(path, options = {}) {
   const { cookieOnly = false, ...requestOptions } = options;
   const isForm = requestOptions.body instanceof FormData;
   const token = cookieOnly ? '' : getSessionToken();
-  const response = await fetch(`${API_URL}${path}`, {
+  let response;
+  try {
+    response = await fetch(`${API_URL}${path}`, {
     credentials: 'include',
     ...requestOptions,
     headers: {
@@ -56,7 +57,11 @@ export async function api(path, options = {}) {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...requestOptions.headers
     }
-  });
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e intenta nuevamente.');
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error(data.message || 'No fue posible completar la operación.');
@@ -86,6 +91,35 @@ export async function createSession(credentials) {
 }
 
 export function fileUrl(url) {
-  if (!url || url.startsWith('http')) return url;
+  if (!url) return '';
+  if (url.startsWith('/api/')) return `${API_URL}${url.slice(4)}`;
   return url;
+}
+
+export async function downloadEvidence(url, filename = 'evidencia') {
+  const resolved = fileUrl(url);
+  const prefix = `${API_URL}/evidences/`;
+  if (!resolved.startsWith(prefix) || !/^[1-9]\d*\/download$/.test(resolved.slice(prefix.length))) throw new Error('La evidencia no tiene un enlace válido.');
+  const token = getSessionToken();
+  let response;
+  try {
+    response = await fetch(resolved, { credentials: 'include', headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch {
+    throw new Error('No se pudo conectar. Intenta descargar la evidencia nuevamente.');
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const error = new Error(data.message || 'No fue posible descargar la evidencia.');
+    error.status = response.status;
+    if (response.status === 401) notifyUnauthorized(error);
+    throw error;
+  }
+  const objectUrl = URL.createObjectURL(await response.blob());
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }

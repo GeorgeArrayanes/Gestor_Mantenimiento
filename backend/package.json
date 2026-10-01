@@ -1,5 +1,5 @@
 {
-  "name": "rutasegura-backend",
+  "name": "gestor-mantenimiento-backend",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -28,6 +28,6 @@
     "nodemon": "^3.1.10",
     "pg-mem": "^3.0.5",
     "supertest": "^7.1.4",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.3"
   }
 }
