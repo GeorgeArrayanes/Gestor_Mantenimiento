@@ -12,6 +12,7 @@ export const config = {
   nodeEnv,
   databaseUrl: process.env.DATABASE_URL,
   databaseSsl: process.env.DATABASE_SSL === 'true',
+  databaseSslRejectUnauthorized: process.env.DATABASE_SSL_REJECT_UNAUTHORIZED !== 'false',
   databaseSslCa: process.env.DATABASE_SSL_CA?.replaceAll('\\n', '\n'),
   jwtSecret: process.env.JWT_SECRET || (nodeEnv !== 'production' ? 'development-only-secret-change-me-32chars' : ''),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '8h',

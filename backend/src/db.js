@@ -64,7 +64,15 @@ export async function getPool() {
     sharedPool = await createMemoryPool();
   } else {
     if (!config.databaseUrl) throw new Error('DATABASE_URL no está configurada.');
-    sharedPool = new pg.Pool({ connectionString: config.databaseUrl, ssl: config.databaseSsl ? { rejectUnauthorized: true, ...(config.databaseSslCa ? { ca: config.databaseSslCa } : {}) } : false });
+    sharedPool = new pg.Pool({
+      connectionString: config.databaseUrl,
+      ssl: config.databaseSsl
+        ? {
+            rejectUnauthorized: config.databaseSslRejectUnauthorized,
+            ...(config.databaseSslCa ? { ca: config.databaseSslCa } : {})
+          }
+        : false
+    });
     await sharedPool.query('SELECT 1');
   }
   return sharedPool;
