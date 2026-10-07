@@ -7,9 +7,10 @@ import DashboardPage from './DashboardPage.jsx';
 vi.mock('../context/AuthContext.jsx', () => ({ useAuth: () => ({ user: { name: 'Administrador' } }) }));
 
 describe('cabecera del dashboard', () => {
-  it('mantiene la bienvenida sin repetir la acción Nueva incidencia del topbar', () => {
+  it('presenta el estado general y la bienvenida sin repetir Nueva incidencia del topbar', () => {
     const markup = renderToStaticMarkup(<MemoryRouter><DashboardPage /></MemoryRouter>);
     expect(markup).toContain('Hola, Administrador.');
+    expect(markup).toContain('Estado general del colegio');
     expect(markup).not.toContain('Nueva incidencia');
     expect(markup).not.toContain('href="/incidencias/nueva"');
   });

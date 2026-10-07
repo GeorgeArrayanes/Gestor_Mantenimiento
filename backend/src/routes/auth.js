@@ -16,7 +16,7 @@ function sessionCookieOptions() {
   return {
     httpOnly: true,
     secure: production,
-    sameSite: 'lax',
+    sameSite: production ? 'none' : 'lax',
     path: '/api'
   };
 }

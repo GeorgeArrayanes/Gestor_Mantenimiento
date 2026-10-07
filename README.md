@@ -60,6 +60,8 @@ Las tablas históricas de transporte no tienen endpoints ni pantallas activas. L
 - Un fallo de carga revierte la operación en la base de datos e intenta eliminar los archivos nuevos ya almacenados. Si el proveedor de almacenamiento falla también al eliminarlos, su limpieza requiere seguimiento operativo.
 - Todas las consultas de dominio parametrizan sus valores.
 
+Las evidencias de imagen se muestran en una galería privada con visor, navegación y acciones de archivo. Los PDF mantienen una tarjeta de documento. Las incidencias cerradas con fotografías iniciales y finales muestran Antes/Después, adaptable a móvil. El listado utiliza la primera imagen inicial real como miniatura y un símbolo de categoría cuando no existe fotografía; no se añaden imágenes ni personas ficticias. El cliente obtiene los archivos mediante peticiones autenticadas y URL Blob temporales. El único cambio del backend añade metadata segura de esa primera imagen al listado; no cambia el esquema, las cargas ni el ciclo de incidencias.
+
 ## Configuración y despliegue
 
 Configure `NODE_ENV=production`, `DATABASE_URL`, `JWT_SECRET` aleatorio de al menos 32 caracteres, `FRONTEND_URL` exacto y `SUPER_ADMIN_PASSWORD` de al menos 12 caracteres para el bootstrap. Use HTTPS. Configure `DATABASE_SSL` según el proveedor.
@@ -67,6 +69,19 @@ Configure `NODE_ENV=production`, `DATABASE_URL`, `JWT_SECRET` aleatorio de al me
 Para Supabase configure `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SUPABASE_STORAGE_BUCKET=mantenimiento-evidencias` con un bucket privado. Sin Supabase, el servicio necesita un disco persistente para los archivos locales. No use el seed de demostración con datos reales.
 
 El frontend utiliza `/api` por defecto. El hosting debe reenviar `/api` al backend y servir `index.html` para la navegación React. Para API en otro origen, configure `VITE_API_URL` al compilar y `FRONTEND_URL` en el servidor. La sesión mantiene el respaldo Bearer existente en sessionStorage cuando el navegador bloquea cookies entre sitios.
+
+### Render + Supabase
+
+El archivo `render.yaml` prepara dos servicios gratuitos: `gestor-mantenimiento-arrayanes` para el frontend estático y `gestor-mantenimiento-arrayanes-api` para Express. El backend aplica las migraciones pendientes, verifica el bucket privado y crea la cuenta principal antes de iniciar. Render genera `JWT_SECRET`; durante el primer despliegue solicita `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SUPER_ADMIN_PASSWORD` sin guardarlos en el repositorio.
+
+Use en `DATABASE_URL` la conexión **Session pooler** de Supabase, puerto 5432, con la contraseña codificada para URL. Esta modalidad funciona desde redes IPv4 y conserva el estado de sesión que requiere el bloqueo de migraciones. Cree el proyecto Supabase en una región cercana a los usuarios; el bucket `mantenimiento-evidencias` se crea privado desde el backend. La cuenta inicial usa `Admin@gla.edu.co` y una contraseña de producción de al menos 12 caracteres.
+
+Los nombres de servicio determinan estas direcciones esperadas:
+
+- Frontend: `https://gestor-mantenimiento-arrayanes.onrender.com`
+- API: `https://gestor-mantenimiento-arrayanes-api.onrender.com/api`
+
+Si Render ajusta alguno de los nombres por disponibilidad, actualice `FRONTEND_URL` en la API y `VITE_API_URL` en el sitio estático, y vuelva a desplegar ambos. El servicio gratuito de API se suspende tras un periodo sin tráfico y su primera apertura puede tardar cerca de un minuto; Supabase también puede pausar proyectos gratuitos por inactividad.
 
 ## Verificación
 
@@ -77,11 +92,13 @@ npm run build
 npm audit
 ```
 
-El proyecto es JavaScript; no dispone de una compilación TypeScript. ESLint revisa referencias y sintaxis; Vite compila el frontend. Tras los ajustes de producto se verificaron 108 pruebas: 55 de backend y 53 de frontend. La validación inicial también pasó el backend contra PostgreSQL 16 desechable: 29 pruebas de integración usaron PostgreSQL real y 22 comprobaron utilidades o compatibilidad de migraciones.
+El proyecto es JavaScript; no dispone de una compilación TypeScript. La verificación final del refinamiento del 2 de octubre de 2026 pasó 133 pruebas: 55 de backend y 78 de frontend, con base y evidencias en memoria y conexiones externas deshabilitadas. ESLint y la compilación final también pasaron. Vite procesó 1840 módulos; CSS 91,06 kB / 18,27 kB gzip y JavaScript 334,17 kB / 100,52 kB gzip. La validación inicial del 1 de octubre pasó el backend contra PostgreSQL 16 desechable: 29 pruebas de integración usaron PostgreSQL real y 22 comprobaron utilidades o compatibilidad de migraciones. Esa ejecución PostgreSQL no se repitió para este refinamiento visual.
+
+La iteración posterior de evidencias y tarjetas pasó **180 pruebas: 59 de backend y 121 de frontend**, el 2 de octubre. La revisión de navegador cubrió imágenes, PDF como documento, ausencia/fallo de evidencia, visor y Antes/Después a 1440, 768 y 375 px; el listado también se comprobó a 1600 px. Un recorrido aislado verificó creación, asignación, preparación manual de WhatsApp, solución con evidencia final y cierre, conservando los registros de la instancia principal. ESLint y la compilación se repitieron correctamente al cerrar el 7 de octubre: 1845 módulos, CSS 100,66 kB / 20,05 kB gzip y JavaScript 346,53 kB / 103,71 kB gzip. Consulte [EVIDENCE_EXPERIENCE.md](EVIDENCE_EXPERIENCE.md) para los cambios, capturas y los límites de inspección del lector PDF y de la descarga en el navegador. Los datos y servidores temporales de esa comprobación fueron retirados.
 
 Para repetir la integración PostgreSQL, configure `TEST_POSTGRES_URL` con una base exclusiva de pruebas y ejecute `npm run test -w backend`. Cada suite crea un esquema aleatorio, aplica las tres migraciones y elimina únicamente su esquema al terminar. Sin esa variable se usa la base aislada en memoria.
 
-Se inspeccionó la aplicación en navegador a 1440, 768 y 375 píxeles, incluyendo creación, asignación, WhatsApp, cierre confirmado con evidencias y catálogos. Los resultados y capturas están en `output/review/VERIFICATION.md`.
+El coordinador inspeccionó acceso, Dashboard, nueva incidencia, lista, personal, espacios, administradores y detalle a 1440, 768 y 375 píxeles, sin desbordamiento horizontal. Comprobó login/logout, filtros, menú móvil, foco/Escape y apertura/cancelación de formularios de edición sin guardar cambios; la consola no registró errores ni advertencias. Esa revisión de navegador conservó los registros existentes y no realizó un recorrido completo de mutaciones. El recorrido operativo nuevo de creación, asignación, filtros, evidencias privadas, preparación de WhatsApp, solución/cierre y CRUD con permisos se verificó mediante HTTP contra una instancia aislada en memoria. No se abrió WhatsApp ni se envió ningún mensaje en ese recorrido. Consulte los informes actuales de [verificación funcional](output/review/refinement-functional-verification.md) y [verificación de navegador](output/review/refinement-browser-verification.md). Los controles históricos de PostgreSQL y V1 se conservan separados en [VERIFICATION.md](output/review/VERIFICATION.md); los cambios por pantalla están en [VISUAL_REDESIGN.md](VISUAL_REDESIGN.md).
 
 La verificación local no sustituye una validación de despliegue con HTTPS y el bucket/disco elegidos. Ejecute ese control en staging antes de incorporar información real.
 

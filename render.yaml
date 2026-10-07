@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: gestor-mantenimiento-arrayanes-api
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci
+    startCommand: npm run db:migrate && npm run storage:ensure -w backend && npm run db:bootstrap-super-admin && npm run start -w backend
+    healthCheckPath: /api/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_SSL
+        value: "true"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 8h
+      - key: FRONTEND_URL
+        value: https://gestor-mantenimiento-arrayanes.onrender.com
+      - key: MAX_FILE_SIZE_MB
+        value: "5"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: mantenimiento-evidencias
+      - key: SUPER_ADMIN_EMAIL
+        value: Admin@gla.edu.co
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: DEV_MEMORY_DB
+        value: "false"
+      - key: ALLOW_DEMO_SEED
+        value: "false"
+
+  - type: web
+    name: gestor-mantenimiento-arrayanes
+    runtime: static
+    buildCommand: npm ci && npm run build -w frontend
+    staticPublishPath: ./frontend/dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        value: https://gestor-mantenimiento-arrayanes-api.onrender.com/api
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: X-Frame-Options
+        value: DENY

@@ -8,6 +8,7 @@
     "db:migrate": "node src/scripts/migrate.js",
     "db:seed": "node src/scripts/seed.js",
     "db:bootstrap-super-admin": "node src/scripts/bootstrap-super-admin.js",
+    "storage:ensure": "node src/scripts/ensure-storage.js",
     "test": "vitest run"
   },
   "dependencies": {

@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Edit3, Mail, Phone, Plus, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowUpRight, Edit3, Mail, Phone, Plus, ShieldCheck, X } from 'lucide-react';
 import { api } from '../api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Toast from '../components/Toast.jsx';
 import Modal from '../components/Modal.jsx';
+import { Avatar, FilterSelect, SearchInput, SectionPanel } from '../components/DesignSystem.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import usePageLifecycle from './usePageLifecycle.js';
 import './maintenance-pages.css';
+import './directory-pages.css';
 
 const empty = {
   name: '',
@@ -28,6 +30,9 @@ export default function AdminsPage() {
   const [toast, setToast] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
+  const [state, setState] = useState('all');
+  const visible = useMemo(() => items.filter((admin) => (state === 'all' || admin.status === state) && [admin.name, admin.identification, admin.username, admin.phone].filter(Boolean).join(' ').toLocaleLowerCase('es').includes(search.trim().toLocaleLowerCase('es'))), [items, search, state]);
 
   const load = useCallback(() => {
     const signal = startRequest();
@@ -106,15 +111,15 @@ export default function AdminsPage() {
     }
   }
 
-  if (user?.role !== 'SUPER_ADMIN') return <div className="maintenance-page"><div className="panel"><EmptyState title="Acceso reservado" text="Solo el superadministrador puede gestionar las cuentas administrativas." /></div></div>;
+  if (user?.role !== 'SUPER_ADMIN') return <div className="maintenance-page directory-page"><SectionPanel><EmptyState title="Acceso reservado" text="Solo el superadministrador puede gestionar las cuentas administrativas." /></SectionPanel></div>;
 
   return (
-    <div className="maintenance-page">
+    <div className="maintenance-page directory-page admins-directory">
       <div className="page-heading">
         <div>
-          <p className="eyebrow">Gobierno de acceso</p>
+          <p className="eyebrow">Control de acceso</p>
           <h1>Administradores</h1>
-          <p>Gestiona las cuentas autorizadas para operar el mantenimiento del colegio.</p>
+          <p>Las cuentas autorizadas para gestionar el mantenimiento.</p>
         </div>
         <button type="button" className="primary-button" onClick={() => open()}>
           <Plus aria-hidden="true" />
@@ -122,45 +127,33 @@ export default function AdminsPage() {
         </button>
       </div>
 
-      <section className="admin-access-note" aria-label="Protección del módulo">
-        <span><ShieldCheck aria-hidden="true" /></span>
+      <section className="directory-access-note" aria-label="Protección del módulo">
+        <span className="directory-access-icon"><ShieldCheck size={23} aria-hidden="true" /></span>
         <div>
           <strong>Acceso exclusivo del superadministrador</strong>
-          <p>Estas cuentas gestionan incidencias, personal y espacios. La gestión de administradores queda reservada al superadministrador.</p>
+          <p>Solo tú puedes crear y administrar las cuentas autorizadas.</p>
         </div>
       </section>
+
+      <SectionPanel className="directory-toolbar-panel"><div className="directory-controls"><SearchInput label="Buscar administradores" placeholder="Nombre, correo o identificación" value={search} onChange={(event) => setSearch(event.target.value)} /><FilterSelect label="Estado" value={state} onChange={(event) => setState(event.target.value)}><option value="all">Todos los estados</option><option value="ACTIVO">Activos</option><option value="INACTIVO">Inactivos</option></FilterSelect><span className="directory-counter" aria-live="polite"><strong>{visible.length}</strong>{visible.length === 1 ? 'cuenta' : 'cuentas'}</span></div></SectionPanel>
 
       {error && !editing && <div className="page-error" role="alert">{error} <button type="button" className="text-button" onClick={load}>Reintentar</button></div>}
       {loading ? (
         <div className="loading-page" role="status" aria-live="polite" aria-busy="true">Cargando administradores…</div>
-      ) : error ? null : items.length ? (
-        <div className="people-grid admin-grid">
-          {items.map((admin) => (
-            <article className="person-card admin-card" key={admin.id}>
-              <div className="person-head">
-                <div className="person-avatar admin-avatar"><ShieldCheck aria-hidden="true" /></div>
-                <div>
-                  <h2>{admin.name}</h2>
-                  <span className="person-identification">{admin.identification}</span>
-                </div>
-                <StatusBadge value={admin.status} />
-              </div>
-              <div className="person-info">
-                <span><Mail aria-hidden="true" />{admin.username}</span>
-                <span><Phone aria-hidden="true" />{admin.phone || 'Sin celular'}</span>
-                <small>Administrador de mantenimiento</small>
-              </div>
-              <button type="button" onClick={() => open(admin)} aria-label={`Editar administrador ${admin.name}`}>
-                <Edit3 aria-hidden="true" />
-                Editar administrador
-              </button>
-            </article>
-          ))}
-        </div>
+      ) : error ? null : visible.length ? (
+        <SectionPanel className="directory-admin-panel" title="Cuentas administrativas" subtitle="Acceso a incidencias, personal y espacios.">
+          <div className="directory-admin-table-wrap"><table className="directory-admin-table"><thead><tr><th scope="col">Administrador</th><th scope="col">Rol</th><th scope="col">Contacto</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead><tbody>{visible.map((admin) => <tr key={admin.id}>
+            <td><div className="directory-admin-identity"><Avatar name={admin.name} /><div><strong>{admin.name}</strong><small>ID {admin.identification}</small></div></div></td>
+            <td><span className={`directory-role${admin.role === 'SUPER_ADMIN' ? ' is-superadmin' : ''}`}><ShieldCheck size={14} aria-hidden="true" />{admin.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</span></td>
+            <td><div className="directory-admin-contact"><span><Mail size={14} aria-hidden="true" />{admin.username}</span><small><Phone size={12} aria-hidden="true" />{admin.phone || 'Sin teléfono'}</small></div></td>
+            <td><StatusBadge value={admin.status} /></td><td><button className="directory-edit-button" type="button" onClick={() => open(admin)} aria-label={`Editar administrador ${admin.name}`}><Edit3 size={15} aria-hidden="true" />Editar cuenta</button></td>
+          </tr>)}</tbody></table></div>
+          <div className="directory-admin-mobile">{visible.map((admin) => <article className="directory-admin-card" key={admin.id}><div className="directory-admin-mobile-head"><div className="directory-admin-identity"><Avatar name={admin.name} /><div><h2>{admin.name}</h2><small>ID {admin.identification}</small></div></div><StatusBadge value={admin.status} /></div><span className="directory-role"><ShieldCheck size={13} aria-hidden="true" />{admin.role === 'SUPER_ADMIN' ? 'Superadministrador' : 'Administrador'}</span><div className="directory-admin-contact"><span><Mail size={14} aria-hidden="true" />{admin.username}</span><small><Phone size={12} aria-hidden="true" />{admin.phone || 'Sin teléfono'}</small></div><button className="directory-edit-button" type="button" onClick={() => open(admin)} aria-label={`Editar administrador ${admin.name}`}><Edit3 size={15} aria-hidden="true" />Editar cuenta<ArrowUpRight size={13} aria-hidden="true" /></button></article>)}</div>
+        </SectionPanel>
       ) : (
-        <div className="panel">
-          <EmptyState title="Aún no hay administradores adicionales" text="Crea una cuenta cuando otra persona necesite gestionar la operación." />
-        </div>
+        <SectionPanel>
+          <EmptyState title={items.length ? 'No hay cuentas que coincidan' : 'Aún no hay administradores adicionales'} text={items.length ? 'Prueba otra búsqueda o cambia el estado seleccionado.' : 'Crea una cuenta cuando otra persona necesite gestionar la operación.'} />
+        </SectionPanel>
       )}
 
       {editing && (
@@ -177,7 +170,7 @@ export default function AdminsPage() {
               <p className="eyebrow">Cuenta administrativa</p>
               <h2 id="admin-modal-title">{editing === 'new' ? 'Nuevo administrador' : form.name}</h2>
             </div>
-            <button type="button" onClick={close} aria-label="Cerrar formulario de administrador" disabled={saving}>×</button>
+            <button className="icon-button" type="button" onClick={close} aria-label="Cerrar formulario de administrador" disabled={saving}><X size={20} /></button>
           </div>
           {error && <div id="admin-modal-error" className="page-error" role="alert">{error}</div>}
           <div className="form-grid">
@@ -187,11 +180,11 @@ export default function AdminsPage() {
             </label>
             <label>
               Identificación
-              <input value={form.identification} onChange={(event) => update('identification', event.target.value)} required minLength={3} maxLength={40} disabled={saving} />
+              <input value={form.identification} onChange={(event) => update('identification', event.target.value)} required minLength={3} maxLength={30} disabled={saving} />
             </label>
             <label>
               Celular
-              <input type="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} maxLength={40} disabled={saving} />
+              <input type="tel" value={form.phone} onChange={(event) => update('phone', event.target.value)} maxLength={30} disabled={saving} />
             </label>
             <label className="full">
               Correo o usuario

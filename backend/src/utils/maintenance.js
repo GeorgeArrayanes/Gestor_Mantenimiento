@@ -24,6 +24,20 @@ export function buildWhatsApp(incident) {
   if (incident.status !== 'ASSIGNED') throw httpError(409, 'La incidencia debe estar asignada y abierta para notificarla.');
   const phone = normalizePhone(incident.assigned_person_current_phone ?? incident.assigned_person_phone);
   const priority = { ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' }[incident.priority];
-  const message = `🔧 Nueva incidencia de mantenimiento\n\nHola, ${incident.assigned_person_name}.\n\nSe te ha asignado la incidencia ${incident.code}:\n\n📍 Ubicación: ${incident.space_name}${incident.space_zone ? ` · ${incident.space_zone}` : ''}\n🛠 Problema: ${incident.description}\n⚠️ Prioridad: ${priority}\n\nPor favor informa al Jefe de Mantenimiento cuando la reparación esté terminada.\n\nGimnasio Los Arrayanes`;
+  const message = [
+  '🔧 Nueva incidencia de mantenimiento',
+  '',
+  `Hola, ${incident.assigned_person_name}.`,
+  '',
+  `Se te ha asignado la incidencia ${incident.code}:`,
+  '',
+  `📍 Ubicación: ${incident.space_name}${incident.space_zone ? ` · ${incident.space_zone}` : ''}`,
+  `🛠 Problema: ${incident.description}`,
+  `⚠️ Prioridad: ${priority}`,
+  '',
+  'Por favor informa al Jefe de Mantenimiento cuando la reparación esté terminada.',
+  '',
+  'Gimnasio Los Arrayanes'
+].join('\n');
   return { url: `https://wa.me/${phone}?text=${encodeURIComponent(message)}`, message, phone };
 }

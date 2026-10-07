@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, ArrowLeft, Clock3, Info, Minus, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, Clock3, Info, MapPin, Minus, Send, UserRound } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api.js';
 import EvidenceUpload from '../components/EvidenceUpload.jsx';
 import EmptyState from '../components/EmptyState.jsx';
+import { FormSection } from '../components/DesignSystem.jsx';
 import { activeRecord, evidenceError, PRIORITIES, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
 import usePageLifecycle from './usePageLifecycle.js';
 import './maintenance-pages.css';
+import './report-incident.css';
 
 export default function ReportIncidentPage() {
   const navigate = useNavigate();
@@ -41,21 +43,23 @@ export default function ReportIncidentPage() {
       navigate(`/incidencias/${result.incident.id}`, { state: { success: 'Incidencia registrada correctamente.' } });
     } catch (e) { if (mounted.current) setError(e.message); } finally { if (mounted.current) setSaving(false); }
   }
-  return <div className="maintenance-page">
-    <div className="page-heading"><div><p className="eyebrow">Incidencias y mantenimiento</p><h1>Registrar nueva incidencia</h1><p>Completa los detalles para registrar una incidencia en las instalaciones.</p></div></div>
+  return <div className="maintenance-page report-page">
+    <div className="page-heading"><div><p className="eyebrow">Incidencias y mantenimiento</p><h1>Nueva incidencia</h1><p>Describe el problema para que el equipo pueda atenderlo.</p></div></div>
     {loadError && <div className="page-error" role="alert">{loadError}<button type="button" className="text-button" onClick={load}>Reintentar</button></div>}
-    {loading ? <div className="loading-page" role="status" aria-busy="true">Cargando espacios y personal…</div> : !loadError && (spaces.length ? <form className="panel maintenance-form" onSubmit={save} aria-busy={saving}>
+    {loading ? <div className="loading-page" role="status" aria-busy="true">Cargando espacios y personal…</div> : !loadError && (spaces.length ? <div className="report-layout"><form className="panel maintenance-form" onSubmit={save} aria-busy={saving}>
       {error && <div className="page-error" role="alert">{error}</div>}
-      <div className="form-grid">
+      <FormSection number="01" title="Ubica el problema" description="Selecciona el espacio y el tipo de atención."><div className="form-grid">
         <label>Espacio / ubicación<select value={form.space_id} onChange={(e) => change('space_id', e.target.value)} required disabled={saving}><option value="">Selecciona un espacio</option>{spaces.map((space) => <option key={space.id} value={space.id}>{spaceLabel(space)}</option>)}</select></label>
         <label>Tipo de problema<select value={form.problem_type} onChange={(e) => change('problem_type', e.target.value)} required disabled={saving}><option value="">Selecciona un tipo</option>{PROBLEM_TYPES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
+      </div></FormSection>
+      <FormSection number="02" title="Define la atención" description="Indica la prioridad y quién puede resolverlo."><div className="form-grid">
         <fieldset><legend>Prioridad</legend><div className="priority-picker">{PRIORITIES.map(([value, label]) => { const Icon = value === 'ALTA' ? AlertTriangle : value === 'MEDIA' ? Clock3 : Minus; return <label className="priority-option" key={value}><input type="radio" name="priority" value={value} checked={form.priority === value} onChange={() => change('priority', value)} disabled={saving} /><Icon aria-hidden="true" />{label}</label>; })}</div></fieldset>
         <label>Asignar a (opcional)<select value={form.assigned_person_id} onChange={(e) => change('assigned_person_id', e.target.value)} disabled={saving}><option value="">Asignar más adelante</option>{personnel.map((person) => <option key={person.id} value={person.id}>{person.name}{person.specialty ? ` · ${person.specialty}` : ''}</option>)}</select>{!personnel.length && <small className="helper">Puedes <Link to="/personal">registrar personal</Link> y asignarlo después.</small>}</label>
         <label className="full">Descripción detallada<textarea value={form.description} onChange={(e) => change('description', e.target.value)} placeholder="Describe qué ocurrió, dónde y qué está afectando." required minLength={10} maxLength={4000} disabled={saving} /><small className="helper">Incluye el componente afectado y cualquier riesgo que deba conocer el equipo.</small></label>
-        <div className="full"><EvidenceUpload files={files} onChange={setFiles} disabled={saving} /></div>
-      </div>
+      </div></FormSection>
+      <FormSection number="03" title="Adjunta evidencia" description="Una imagen ayuda al equipo a entender el problema."><EvidenceUpload files={files} onChange={setFiles} disabled={saving} /></FormSection>
       <div className="form-actions"><button className="secondary-button" type="button" onClick={() => navigate('/incidencias')} disabled={saving}><ArrowLeft aria-hidden="true" />Cancelar</button><button className="primary-button" type="submit" disabled={saving}><Send aria-hidden="true" />{saving ? 'Registrando…' : 'Registrar incidencia'}</button></div>
-      <p className="whatsapp-help"><Info size={12} aria-hidden="true" /> La asignación queda registrada. Puedes abrir WhatsApp desde el detalle para avisarle al responsable.</p>
-    </form> : <section className="panel"><EmptyState title="Registra el primer espacio" text="Necesitas una ubicación activa para crear una incidencia." action={<Link className="primary-button" to="/espacios">Ir a espacios</Link>} /></section>)}
+      <p className="whatsapp-help"><Info size={15} aria-hidden="true" /> Puedes abrir WhatsApp desde el detalle para avisar al responsable asignado.</p>
+    </form><aside className="report-guide" aria-label="Consejos para registrar una incidencia"><div className="report-guide-campus" aria-hidden="true" /><div className="report-guide-content"><p className="eyebrow">Cada detalle ayuda</p><h2>Una buena descripción.<br />Una mejor respuesta.</h2><p>Información clara para cuidar los espacios del colegio.</p><ol><li><MapPin size={18} aria-hidden="true" /><div><strong>Ubicación precisa</strong><span>Indica el espacio y el componente afectado.</span></div></li><li><UserRound size={18} aria-hidden="true" /><div><strong>Un responsable</strong><span>Asígnalo ahora o cuando el equipo esté definido.</span></div></li><li><CheckCircle2 size={18} aria-hidden="true" /><div><strong>Evidencia útil</strong><span>Una foto del problema facilita la atención.</span></div></li></ol><div className="report-priority-note"><AlertTriangle size={17} aria-hidden="true" /><p><strong>¿Hay un riesgo inmediato?</strong><span>Usa prioridad alta si afecta la seguridad o impide utilizar el espacio.</span></p></div></div></aside></div> : <section className="panel"><EmptyState title="Registra el primer espacio" text="Necesitas una ubicación activa para crear una incidencia." action={<Link className="primary-button" to="/espacios">Ir a espacios</Link>} /></section>)}
   </div>;
 }

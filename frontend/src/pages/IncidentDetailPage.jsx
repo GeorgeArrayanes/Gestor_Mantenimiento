@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, CheckCircle2, Clock3, Download, Edit3, FileText, Image, MessageCircle, ShieldCheck, UserRound, Wrench, X } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Clock3, Download, Edit3, Image, MessageCircle, ShieldCheck, UserRound, Wrench, X } from 'lucide-react';
 import { Link, useLocation, useParams } from 'react-router-dom';
-import { api, downloadEvidence } from '../api.js';
+import { api } from '../api.js';
 import StatusBadge from '../components/StatusBadge.jsx';
 import EvidenceUpload from '../components/EvidenceUpload.jsx';
+import EvidenceGallery from '../components/EvidenceGallery.jsx';
+import { isImageEvidence } from '../components/EvidenceImage.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Modal from '../components/Modal.jsx';
 import Toast from '../components/Toast.jsx';
 import { activeRecord, evidenceError, formatDate, HISTORY_LABELS, PRIORITIES, problemLabel, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
 import usePageLifecycle from './usePageLifecycle.js';
 import './maintenance-pages.css';
-
-function EvidenceList({ items, onDownload, busy }) {
-  if (!items.length) return <p className="no-evidence">No se adjuntaron archivos en esta etapa.</p>;
-  return <div className="evidence-list">{items.map((evidence) => <button className="evidence-file" type="button" key={evidence.id} onClick={() => onDownload(evidence)} disabled={busy === `file-${evidence.id}`} aria-label={`Descargar ${evidence.file_name}`}>
-    {evidence.file_type?.startsWith('image/') ? <Image aria-hidden="true" /> : <FileText aria-hidden="true" />}<span>{evidence.file_name}<small>{busy === `file-${evidence.id}` ? 'Descargando…' : `${(Number(evidence.file_size) / 1024 / 1024).toFixed(1)} MB · ${evidence.file_type === 'application/pdf' ? 'Documento PDF' : 'Fotografía'}`}</small></span><Download aria-hidden="true" />
-  </button>)}</div>;
-}
+import './detail-evidence.css';
 
 export default function IncidentDetailPage() {
   const { id } = useParams();
@@ -59,6 +55,7 @@ export default function IncidentDetailPage() {
   const availablePersonnel = personnel.filter(activeRecord);
   const initialEvidence = (data?.evidences || []).filter((item) => item.category === 'INITIAL');
   const finalEvidence = (data?.evidences || []).filter((item) => item.category === 'FINAL');
+  const compareEvidence = closed && initialEvidence.some(isImageEvidence) && finalEvidence.some(isImageEvidence);
   function openDialog(type) {
     setActionError(''); setConfirmed(false);
     if (type === 'assign') setAssignedId(String(incident.assigned_person_id || ''));
@@ -99,10 +96,6 @@ export default function IncidentDetailPage() {
       else setToast({ message: 'El navegador bloqueó la nueva ventana. Usa “Abrir mensaje” debajo del botón.' });
     } catch (e) { target?.close(); if (mounted.current && activeRoute.current === id) setActionError(e.message); } finally { if (mounted.current && activeRoute.current === id) setBusy(''); }
   }
-  async function download(evidence) {
-    if (busy) return; setBusy(`file-${evidence.id}`); setActionError('');
-    try { await downloadEvidence(evidence.file_url, evidence.file_name); } catch (e) { if (mounted.current) setActionError(e.message); } finally { if (mounted.current) setBusy(''); }
-  }
   return <div className="maintenance-page">
     <Link className="back-link" to="/incidencias"><ArrowLeft aria-hidden="true" />Volver a incidencias</Link>
     {error && <div className="page-error" role="alert">{error}<button type="button" className="text-button" onClick={() => { setLoading(true); load(); }}>Reintentar</button></div>}
@@ -112,8 +105,15 @@ export default function IncidentDetailPage() {
       {actionError && !dialog && <div className="page-error" role="alert">{actionError}</div>}
       <div className="detail-grid"><div className="detail-main">
         <section className="panel"><h2 className="detail-section-title"><Wrench aria-hidden="true" />Información de la incidencia</h2><dl className="detail-facts"><div><dt>Espacio / ubicación</dt><dd>{incident.space_name}{incident.space_zone && <><br /><span className="helper">{incident.space_zone}</span></>}</dd></div><div><dt>Tipo de problema</dt><dd>{problemLabel(incident.problem_type)}</dd></div><div><dt>Registrada por</dt><dd>{incident.created_by_name}</dd></div><div><dt>Fecha de registro</dt><dd>{formatDate(incident.created_at, true)}</dd></div></dl><span className="detail-label">Descripción</span><p className="detail-description">{incident.description}</p></section>
-        <section className="panel"><h2 className="detail-section-title"><Image aria-hidden="true" />Evidencia inicial</h2><EvidenceList items={initialEvidence} onDownload={download} busy={busy} /></section>
-        {closed && <section className="panel resolution-panel"><h2 className="detail-section-title"><CheckCircle2 aria-hidden="true" />Solución registrada</h2><p className="detail-description">{incident.resolution_notes}</p><span className="resolution-date">Cerrada el {formatDate(incident.closed_at, true)}</span><hr className="form-divider" /><h3 className="detail-section-title"><Image aria-hidden="true" />Evidencia final</h3><EvidenceList items={finalEvidence} onDownload={download} busy={busy} /></section>}
+        {compareEvidence ? <section className="panel evidence-comparison" aria-labelledby="comparison-heading">
+          <h2 className="detail-section-title" id="comparison-heading"><Image aria-hidden="true" />Evidencia de la reparación</h2>
+          <p className="evidence-comparison-intro">El problema registrado y la solución verificada.</p>
+          <div className="evidence-comparison-columns">
+            <section aria-labelledby="initial-evidence-heading"><div className="evidence-stage-heading"><span>Antes</span><h3 id="initial-evidence-heading">Evidencia inicial</h3></div><EvidenceGallery key={`${id}-initial`} items={initialEvidence} label="Evidencia inicial" emptyMessage="No se adjuntó evidencia inicial." /></section>
+            <section aria-labelledby="final-evidence-heading"><div className="evidence-stage-heading evidence-stage-heading--final"><span>Después</span><h3 id="final-evidence-heading">Evidencia de solución</h3></div><EvidenceGallery key={`${id}-final`} items={finalEvidence} label="Evidencia de solución" emptyMessage="No hay evidencia de solución." /></section>
+          </div>
+        </section> : <section className="panel"><h2 className="detail-section-title"><Image aria-hidden="true" />Evidencia inicial</h2><EvidenceGallery key={`${id}-initial`} items={initialEvidence} label="Evidencia inicial" emptyMessage="No se adjuntó evidencia inicial." /></section>}
+        {closed && <section className="panel resolution-panel"><h2 className="detail-section-title"><CheckCircle2 aria-hidden="true" />Solución registrada</h2><p className="detail-description">{incident.resolution_notes}</p><span className="resolution-date">Cerrada el {formatDate(incident.closed_at, true)}</span>{!compareEvidence && <><hr className="form-divider" /><h3 className="detail-section-title"><Image aria-hidden="true" />Evidencia de solución</h3><EvidenceGallery key={`${id}-final`} items={finalEvidence} label="Evidencia de solución" emptyMessage="No hay evidencia de solución." /></>}</section>}
       </div><aside className="detail-side">
         <section className="panel"><h2 className="detail-section-title"><UserRound aria-hidden="true" />Responsable</h2>{incident.assigned_person_name ? <div className="assignee-box"><span className="person-avatar"><UserRound aria-hidden="true" /></span><div><strong>{incident.assigned_person_name}</strong><p>{(closed ? incident.assigned_person_phone : incident.assigned_person_current_phone || incident.assigned_person_phone) || 'Sin teléfono registrado'}</p></div></div> : <p className="assignee-empty">Esta incidencia está pendiente de asignación. Selecciona a una persona del equipo para comenzar.</p>}
           {!closed && <>{incident.assigned_person_id && <><button className="primary-button" type="button" onClick={notify} disabled={Boolean(busy)}><MessageCircle aria-hidden="true" />{busy === 'whatsapp' ? 'Preparando mensaje…' : 'Notificar por WhatsApp'}</button><p className="whatsapp-help">Se abre un mensaje preparado. Tú decides cuándo enviarlo en WhatsApp.</p>{whatsapp && <a className="text-button" href={whatsapp.url} target="_blank" rel="noopener noreferrer">Abrir mensaje<Download size={13} aria-hidden="true" /></a>}</>}<button className={incident.assigned_person_id ? 'secondary-button' : 'primary-button'} type="button" onClick={() => openDialog('assign')} disabled={Boolean(busy)}><UserRound aria-hidden="true" />{incident.assigned_person_id ? 'Cambiar responsable' : 'Asignar responsable'}</button></>}

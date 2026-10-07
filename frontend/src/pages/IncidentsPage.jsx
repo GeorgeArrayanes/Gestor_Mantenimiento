@@ -1,12 +1,22 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Plus, Search, SlidersHorizontal, Wrench } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { CheckCircle2, Clock3, SlidersHorizontal, UserRound, Wrench } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../api.js';
 import EmptyState from '../components/EmptyState.jsx';
-import { PRIORITIES, STATUSES, sortIncidents, spaceLabel } from '../utils/maintenance.js';
-import IncidentListView from './IncidentListView.jsx';
+import { FilterSelect, KpiCard, SearchInput, SectionPanel } from '../components/DesignSystem.jsx';
+import IncidentCard from '../components/IncidentCard.jsx';
+import { PRIORITIES, STATUSES, problemLabel, sortIncidents, spaceLabel } from '../utils/maintenance.js';
 import usePageLifecycle from './usePageLifecycle.js';
 import './maintenance-pages.css';
+
+export function filterIncidents(incidents, { search = '', status = '', priority = '', person = '', space = '' } = {}) {
+  const query = search.trim().toLocaleLowerCase('es');
+  return incidents.filter((incident) => (!status || incident.status === status)
+    && (!priority || incident.priority === priority)
+    && (!person || String(incident.assigned_person_id || '') === String(person))
+    && (!space || String(incident.space_id) === String(space))
+    && (!query || [incident.code, problemLabel(incident.problem_type), incident.description, incident.space_name, incident.space_zone, incident.assigned_person_name].filter(Boolean).join(' ').toLocaleLowerCase('es').includes(query)));
+}
 
 export default function IncidentsPage() {
   const { startRequest } = usePageLifecycle();
@@ -16,10 +26,10 @@ export default function IncidentsPage() {
   const [personnel, setPersonnel] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
-  const [priority, setPriority] = useState('');
-  const [person, setPerson] = useState('');
-  const [space, setSpace] = useState('');
+  const search = params.get('buscar') || '';
+  const priority = PRIORITIES.some(([key]) => key === params.get('prioridad')) ? params.get('prioridad') : '';
+  const person = personnel.some((item) => String(item.id) === params.get('responsable')) ? params.get('responsable') : '';
+  const space = spaces.some((item) => String(item.id) === params.get('espacio')) ? params.get('espacio') : '';
   const status = STATUSES.some(([key]) => key === params.get('estado')) ? params.get('estado') : '';
   const load = useCallback(async () => {
     const signal = startRequest();
@@ -27,23 +37,28 @@ export default function IncidentsPage() {
     try { const [i, s, p] = await Promise.all([api('/incidents', { signal }), api('/spaces', { signal }), api('/personnel', { signal })]); if (!signal.aborted) { setIncidents(sortIncidents(i.incidents)); setSpaces(s.spaces); setPersonnel(p.personnel); } } catch (e) { if (!signal.aborted) setError(e.message); } finally { if (!signal.aborted) setLoading(false); }
   }, [startRequest]);
   useEffect(() => { load(); }, [load]);
-  const visible = useMemo(() => {
-    const query = search.trim().toLocaleLowerCase('es');
-    return incidents.filter((i) => (!status || i.status === status) && (!priority || i.priority === priority) && (!person || String(i.assigned_person_id || '') === person) && (!space || String(i.space_id) === space) && (!query || [i.code, i.description, i.space_name, i.space_zone, i.assigned_person_name].filter(Boolean).join(' ').toLocaleLowerCase('es').includes(query)));
-  }, [incidents, search, status, priority, person, space]);
+  const visible = useMemo(() => filterIncidents(incidents, { search, status, priority, person, space }), [incidents, search, status, priority, person, space]);
+  const counts = useMemo(() => incidents.reduce((summary, incident) => { if (Object.hasOwn(summary, incident.status)) summary[incident.status] += 1; return summary; }, { PENDING: 0, ASSIGNED: 0, CLOSED: 0 }), [incidents]);
   const filtered = Boolean(search || status || priority || person || space);
-  function clear() { setSearch(''); setParams({}, { replace: true }); setPriority(''); setPerson(''); setSpace(''); }
-  return <div className="maintenance-page">
-    <div className="page-heading"><div><p className="eyebrow">Operación diaria</p><h1>Incidencias</h1><p>Cada incidencia, su responsable y el avance de su solución.</p></div><Link className="primary-button" to="/incidencias/nueva"><Plus aria-hidden="true" />Nueva incidencia</Link></div>
-    <section className="panel" aria-label="Buscar y filtrar incidencias"><div className="filter-bar">
-      <label>Buscar incidencia<span className="search-field"><Search size={16} aria-hidden="true" /><input type="search" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Código, descripción, ubicación…" /></span></label>
-      <label>Estado<select value={status} onChange={(e) => setParams(e.target.value ? { estado: e.target.value } : {}, { replace: true })}><option value="">Todos</option>{STATUSES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <label>Prioridad<select value={priority} onChange={(e) => setPriority(e.target.value)}><option value="">Todas</option>{PRIORITIES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
-      <label>Responsable<select value={person} onChange={(e) => setPerson(e.target.value)}><option value="">Todos</option>{personnel.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
-      <label>Espacio<select value={space} onChange={(e) => setSpace(e.target.value)}><option value="">Todos</option>{spaces.map((s) => <option key={s.id} value={s.id}>{spaceLabel(s)}</option>)}</select></label>
-    </div><div className="filter-summary"><span aria-live="polite">{loading ? 'Cargando incidencias…' : `${visible.length} ${visible.length === 1 ? 'incidencia' : 'incidencias'}`}</span>{filtered && <button className="text-button" type="button" onClick={clear}><SlidersHorizontal size={13} aria-hidden="true" />Limpiar filtros</button>}</div></section>
+  function setFilter(name, value) { const next = new URLSearchParams(params); if (value) next.set(name, value); else next.delete(name); setParams(next, { replace: true }); }
+  function clear() { setParams({}, { replace: true }); }
+  return <div className="maintenance-page incidents-card-page">
+    <div className="page-heading"><div><p className="eyebrow">Operación diaria</p><h1>Incidencias</h1><p>Gestiona y da seguimiento a las incidencias del colegio.</p></div></div>
+    <section className="incident-state-summary" aria-label="Resumen de incidencias por estado">
+      <KpiCard label="Pendientes" value={loading || error ? '—' : counts.PENDING} detail="Por asignar a una persona" icon={Clock3} tone="rose" />
+      <KpiCard label="Asignadas" value={loading || error ? '—' : counts.ASSIGNED} detail="Con responsable del equipo" icon={UserRound} tone="blue" />
+      <KpiCard label="Cerradas" value={loading || error ? '—' : counts.CLOSED} detail="Soluciones registradas" icon={CheckCircle2} tone="mint" />
+    </section>
+    <SectionPanel className="incident-filter-panel" aria-label="Buscar y filtrar incidencias"><div className="incident-filter-grid">
+      <SearchInput label="Buscar incidencia" value={search} onChange={(e) => setFilter('buscar', e.target.value)} placeholder="Código, descripción, ubicación…" />
+      <FilterSelect label="Estado" value={status} onChange={(e) => setFilter('estado', e.target.value)}><option value="">Todos los estados</option>{STATUSES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</FilterSelect>
+      <FilterSelect label="Prioridad" value={priority} onChange={(e) => setFilter('prioridad', e.target.value)}><option value="">Todas</option>{PRIORITIES.map(([key, label]) => <option key={key} value={key}>{label}</option>)}</FilterSelect>
+      <FilterSelect label="Responsable" value={person} onChange={(e) => setFilter('responsable', e.target.value)}><option value="">Todo el equipo</option>{personnel.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</FilterSelect>
+      <FilterSelect label="Espacio" value={space} onChange={(e) => setFilter('espacio', e.target.value)}><option value="">Todos los espacios</option>{spaces.map((s) => <option key={s.id} value={s.id}>{spaceLabel(s)}</option>)}</FilterSelect>
+    </div><div className="incident-filter-summary"><span aria-live="polite">{loading ? 'Cargando incidencias…' : error ? 'Registro no disponible' : `${visible.length} de ${incidents.length} ${incidents.length === 1 ? 'incidencia' : 'incidencias'}`}</span>{filtered && <button className="text-button" type="button" onClick={clear}><SlidersHorizontal size={13} aria-hidden="true" />Limpiar filtros</button>}</div></SectionPanel>
     {error && <div className="page-error" role="alert">{error}<button className="text-button" type="button" onClick={load}>Reintentar</button></div>}
-    <section className="panel" aria-label="Listado de incidencias">{loading ? <div className="loading-page" role="status" aria-busy="true">Cargando incidencias…</div> : !error && (visible.length ? <IncidentListView incidents={visible} /> : <EmptyState icon={Wrench} title={filtered ? 'No encontramos coincidencias' : 'Todo al día'} text={filtered ? 'Prueba otra búsqueda o ajusta los filtros.' : 'No hay incidencias registradas. Registra una incidencia para comenzar.'} action={filtered ? <button className="secondary-button" type="button" onClick={clear}>Limpiar filtros</button> : <Link className="secondary-button" to="/incidencias/nueva">Registrar incidencia</Link>} />)}</section>
+    <div className="incident-results-heading"><div><h2>{filtered ? 'Resultados de tu búsqueda' : 'Registro de incidencias'}</h2><p>Primero las pendientes y de mayor prioridad.</p></div>{!loading && !error && <span className="incident-results-count">{visible.length} {visible.length === 1 ? 'incidencia' : 'incidencias'}</span>}</div>
+    <section aria-label="Listado de incidencias">{loading ? <div className="loading-page" role="status" aria-busy="true">Cargando incidencias…</div> : !error && (visible.length ? <div className="incident-card-grid">{visible.map((incident) => <IncidentCard key={incident.id} incident={incident} />)}</div> : <SectionPanel><EmptyState icon={Wrench} title={filtered ? 'No encontramos coincidencias' : 'Todo al día'} text={filtered ? 'Prueba otra búsqueda o ajusta los filtros.' : 'No hay incidencias registradas. Usa “Nueva incidencia” para comenzar.'} action={filtered ? <button className="secondary-button" type="button" onClick={clear}>Limpiar filtros</button> : undefined} /></SectionPanel>)}</section>
   </div>;
 }
 

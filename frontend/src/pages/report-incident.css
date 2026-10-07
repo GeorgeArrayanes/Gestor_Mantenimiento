@@ -1,0 +1,57 @@
+.report-layout{display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:22px;align-items:start}
+.report-page .maintenance-form{padding:25px;border-radius:18px}
+.report-page .ds-form-section{gap:18px;padding-bottom:23px;margin-bottom:23px;border-color:#e3e9df}
+.report-page .ds-form-section:last-of-type{margin-bottom:0;padding-bottom:22px}
+.report-page .ds-form-heading{gap:12px;align-items:center}
+.report-page .ds-form-heading>span{width:33px;height:33px;flex-shrink:0;border:1px solid #cbded0;border-radius:10px;background:#e6f0e5;color:#326954;font-size:12px;font-weight:750}
+.report-page .ds-form-heading h2{font-size:17px;letter-spacing:-.35px;margin:0 0 4px;color:#25463a}
+.report-page .ds-form-heading p{font-size:12px;color:#6b7f72;line-height:1.5}
+.report-page .form-grid{gap:19px 20px}
+.report-page .maintenance-form label,.report-page .maintenance-form legend{font-size:13px;color:#3c5848}
+.report-page .maintenance-form label{gap:8px}
+.report-page .maintenance-form input,.report-page .maintenance-form select,.report-page .maintenance-form textarea{min-height:45px;padding:11px 12px;font-size:14px;border-color:#d8e1d5;border-radius:9px;background:#fcfdf9;color:#243d32}
+.report-page .maintenance-form textarea{min-height:122px;line-height:1.6}
+.report-page .maintenance-form textarea::placeholder{color:#79897c}
+.report-page .maintenance-form .helper{font-size:12px;color:#6f8173;line-height:1.5}
+.report-page .helper a{color:var(--primary,#07565b);text-decoration:underline;text-underline-offset:3px}
+.report-page .maintenance-form .priority-picker{gap:8px}
+.report-page .maintenance-form .priority-option{gap:7px!important;background:#f7f9f3;border-color:#d9e2d5;border-radius:9px;font-size:13px!important;min-height:45px;padding:10px 8px;color:#61725b!important}
+.report-page .maintenance-form .priority-option input{width:14px;height:14px;min-height:0;padding:0;accent-color:#2c735e}
+.report-page .maintenance-form .priority-option:has(input:checked){background:#e5f1e5;border-color:#77a883;color:#28683b!important;box-shadow:inset 0 0 0 1px #77a883}
+.report-page .maintenance-form .priority-option:has(input[value=ALTA]:checked){background:#fae9e6;border-color:#c78b83;color:#a4453e!important;box-shadow:inset 0 0 0 1px #c78b83}
+.report-page .maintenance-form .priority-option:has(input[value=MEDIA]:checked){background:#faf0d7;border-color:#c5a76a;color:#8a641b!important;box-shadow:inset 0 0 0 1px #c5a76a}
+.report-page .maintenance-form .priority-option:focus-within{outline:3px solid #8dbdac;outline-offset:3px}
+.report-page .evidence-upload .field-label{font-size:13px;color:#3c5848;margin-bottom:9px}
+.report-page .upload-dropzone{padding:22px 16px;gap:9px;border-radius:11px;background:#f3f7ef;border-color:#a9bc9e;color:#547c56}
+.report-page .upload-dropzone>svg{color:#558b65}
+.report-page .maintenance-form .upload-picker{display:block;font-size:13px;color:#2a6347}
+.report-page .upload-dropzone small{font-size:12px;color:#6c8070;max-width:420px;line-height:1.5}
+.report-page .upload-count{font-size:12px;color:#738373;margin:9px 0 0}
+.report-page .upload-dropzone.dragging{background:#e5f1e1;border-color:#508565}
+.report-page .selected-files li{border-color:#dce4d6;background:#fbfcf8;font-size:13px;padding:10px 12px}
+.report-page .selected-files small{font-size:12px}
+.report-page .form-actions{margin-top:21px;padding-top:0;border:0}
+.report-page .form-actions .primary-button,.report-page .form-actions .secondary-button{font-size:13px;min-height:44px;border-radius:10px}
+.report-page .whatsapp-help{display:flex;gap:7px;align-items:flex-start;font-size:12px;color:#718073;line-height:1.6;margin:13px 0 0}
+.report-page .whatsapp-help svg{margin-top:2px;flex-shrink:0;color:#557860}
+.report-guide{position:sticky;top:24px;border:1px solid #d5e2d7;border-radius:18px;overflow:hidden;background:#eaf1e5;box-shadow:0 6px 22px #263f3005}
+.report-guide-campus{height:132px;background:linear-gradient(0deg,#eaf1e5,#eaf1e500 65%),url('/campus-maintenance.jpg') right center/cover}
+.report-guide-content{padding:5px 22px 23px}
+.report-page .report-guide-content .eyebrow{font-size:10px;letter-spacing:1.3px;color:#527350}
+.report-guide-content h2{font-size:25px;letter-spacing:-.85px;line-height:1.18;margin:12px 0;color:#214b3b}
+.report-guide-content>p:not(.eyebrow){font-size:13px;color:#67816a;line-height:1.65;margin:0 0 22px}
+.report-guide ol{list-style:none;display:grid;gap:19px;margin:0;padding:0}
+.report-guide li{display:flex;gap:10px;color:#3e7959}
+.report-guide li>svg{margin-top:2px;flex-shrink:0}
+.report-guide li>div{display:grid;gap:4px}
+.report-guide strong{font-size:13px;font-weight:700;color:#355b40}
+.report-guide li span{font-size:12px;line-height:1.6;color:#6a826a}
+.report-priority-note{display:flex;gap:9px;border-top:1px solid #cfdecc;margin-top:23px;padding-top:19px;color:#92723b}
+.report-priority-note>svg{margin-top:2px;flex-shrink:0}
+.report-priority-note p{display:grid;gap:6px;margin:0}
+.report-priority-note strong{font-size:12px;color:#6c623f}
+.report-priority-note span{font-size:12px;line-height:1.6;color:#78806a}
+@media(max-width:1180px){.report-layout{grid-template-columns:minmax(0,1fr) 241px;gap:18px}.report-guide-content{padding:4px 18px 21px}.report-page .maintenance-form{padding:22px}.report-guide-content h2{font-size:23px}}
+@media(max-width:1030px){.report-layout{grid-template-columns:1fr}.report-guide{display:none}}
+@media(max-width:580px){.report-page .maintenance-form{padding:21px 17px;border-radius:14px}.report-page .ds-form-section{gap:17px;padding-bottom:22px;margin-bottom:22px}.report-page .ds-form-heading{align-items:flex-start;gap:10px}.report-page .ds-form-heading h2{font-size:16px}.report-page .form-grid{gap:18px}.report-page .form-actions{gap:9px}.report-page .form-actions .primary-button{font-size:12px;padding:12px}.report-page .maintenance-form .priority-option{padding:11px 6px;font-size:12px!important;gap:5px!important}.report-page .priority-option svg{width:14px;height:14px}.report-page .upload-dropzone{padding:20px 13px}.report-page .upload-dropzone small{font-size:11px}.report-page .whatsapp-help{font-size:11px}}
+

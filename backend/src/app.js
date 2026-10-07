@@ -17,6 +17,7 @@ import evidenceRoutes from './routes/evidences.js';
 export function createApp(pool) {
   const app = express();
   app.locals.db = pool;
+  if (config.nodeEnv === 'production') app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use(helmet());
   app.use(cors({ origin: config.frontendUrl, credentials: true }));

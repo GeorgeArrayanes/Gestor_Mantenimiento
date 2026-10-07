@@ -54,7 +54,27 @@ router.get('/', asyncHandler(async (req, res) => {
   const order = req.query.order === 'oldest' ? 'ASC' : 'DESC';
   const { rows } = await req.app.locals.db.query(`${incidentSelect} ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
     ORDER BY CASE WHEN i.status='CLOSED' THEN 1 ELSE 0 END, CASE i.priority WHEN 'ALTA' THEN 0 WHEN 'MEDIA' THEN 1 ELSE 2 END,i.created_at ${order},i.id ${order}`, values);
-  res.json({ incidents: rows.map(publicIncident) });
+  const initialImages = new Map();
+  if (rows.length) {
+    // Select one image per returned incident in a single query. File bytes remain
+    // behind the existing authorized endpoint; storage keys never enter this API.
+    const ids = rows.map((incident) => incident.id);
+    const { rows: images } = await req.app.locals.db.query(`SELECT DISTINCT ON (incident_id)
+      id,incident_id,file_name,file_type,file_size,category
+      FROM maintenance_evidences
+      WHERE incident_id IN (${ids.map((_, index) => `$${index + 1}`).join(',')})
+        AND category='INITIAL' AND file_type IN ('image/jpeg','image/png','image/webp')
+      ORDER BY incident_id,created_at ASC,id ASC`, ids);
+    for (const image of images) initialImages.set(image.incident_id, {
+      id: image.id,
+      file_name: image.file_name,
+      file_type: image.file_type,
+      file_size: image.file_size,
+      category: image.category,
+      file_url: `/api/evidences/${image.id}/download`,
+    });
+  }
+  res.json({ incidents: rows.map((row) => ({ ...publicIncident(row), initial_evidence: initialImages.get(row.id) || null })) });
 }));
 
 router.post('/', upload.array('files', config.maxFiles), asyncHandler(async (req, res) => {
