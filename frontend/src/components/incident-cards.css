@@ -1,19 +1,19 @@
 .incident-card-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
-.incident-card{display:flex;flex-direction:column;min-width:0;background:var(--panel,#fff);border:1px solid #d9e4df;border-radius:17px;overflow:hidden;box-shadow:0 4px 16px #163e3505;transition:border-color .18s,box-shadow .18s}
-.incident-card:hover{border-color:#9bbfb4;box-shadow:0 8px 24px #163e3510}
-.incident-card-media{position:relative;display:block;height:112px;min-width:0;overflow:hidden;border-bottom:1px solid #e0e8e1;background:#edf3ec}
+.incident-card{display:flex;flex-direction:column;min-width:0;background:var(--panel,#fff);border:1px solid #dbdde2;border-radius:17px;overflow:hidden;box-shadow:0 4px 16px #181d3c05;transition:border-color .18s,box-shadow .18s}
+.incident-card:hover{border-color:#a1a7b9;box-shadow:0 8px 24px #181d3c10}
+.incident-card-media{position:relative;display:block;height:112px;min-width:0;overflow:hidden;border-bottom:1px solid #e1e3e7;background:#edeef2}
 .incident-card-preview{display:block;width:100%;height:100%}
-.incident-card-preview:focus-visible{outline:3px solid #4b9d8b;outline-offset:-3px}
+.incident-card-preview:focus-visible{outline:3px solid #566292;outline-offset:-3px}
 .incident-card-media .incident-card-evidence,.incident-card-media .incident-card-evidence-image{display:block;width:100%;height:100%}
 .incident-card-media .incident-card-evidence-image{object-fit:cover;transition:transform .2s ease}
 .incident-card-media:hover .incident-card-evidence-image{transform:scale(1.025)}
 .incident-card-media .incident-card-badges{position:absolute;left:14px;bottom:10px;margin:0;gap:6px;z-index:1;pointer-events:none}
-.incident-card-media .badge{box-shadow:0 1px 5px #163e3515;border:1px solid #ffffff85}
-.incident-card-placeholder{position:relative;display:grid;place-items:start center;isolation:isolate;overflow:hidden;width:100%;height:100%;padding-top:20px;color:#367766;background:linear-gradient(115deg,#e7f1e5,#f6f8ed)}
+.incident-card-media .badge{box-shadow:0 1px 5px #181d3c15;border:1px solid #ffffff85}
+.incident-card-placeholder{position:relative;display:grid;place-items:start center;isolation:isolate;overflow:hidden;width:100%;height:100%;padding-top:20px;color:#3f486e;background:linear-gradient(115deg,#e7e9ef,#f6f8ed)}
 .incident-card-placeholder:before,.incident-card-placeholder:after{content:'';position:absolute;z-index:-1;right:-12px;top:-52px;width:174px;height:174px;border:1px solid currentColor;border-radius:50%;opacity:.12}
 .incident-card-placeholder:after{right:10px;top:-30px;width:130px;height:130px}
 .incident-card-placeholder--electricidad,.incident-card-placeholder--iluminacion{background:linear-gradient(115deg,#f3ecd9,#faf7eb);color:#92763a}
-.incident-card-placeholder--plomeria{background:linear-gradient(115deg,#e3eef1,#f3f8f7);color:#3d7d90}
+.incident-card-placeholder--plomeria{background:linear-gradient(115deg,#e5e8ef,#f4f5f7);color:#495584}
 .incident-card-placeholder--carpinteria,.incident-card-placeholder--mobiliario{background:linear-gradient(115deg,#eee5d8,#f8f4ec);color:#8a6d49}
 .incident-card-placeholder--equipos,.incident-card-placeholder--cerrajeria{background:linear-gradient(115deg,#e5ecf1,#f5f8fa);color:#50728c}
 .incident-card-placeholder--pintura{background:linear-gradient(115deg,#eae4ef,#f8f5fa);color:#81668d}
@@ -21,7 +21,7 @@
 .incident-card:not(.incident-card--compact) .incident-card-content{padding:15px 16px 13px}
 .incident-card-content .incident-card-case-title{font-size:16px;line-height:1.4;margin:0 0 10px;min-height:45px;letter-spacing:-.25px}
 .incident-card-case-title a{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.incident-card-category{display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.4;color:#698176;margin-bottom:7px}
+.incident-card-category{display:flex;align-items:center;gap:6px;font-size:12px;line-height:1.4;color:#60688a;margin-bottom:7px}
 .incident-card-category svg{flex-shrink:0}
 .incident-card:not(.incident-card--compact) .incident-card-location{align-items:flex-start;gap:7px}
 .incident-card:not(.incident-card--compact) .incident-card-location span{display:block;line-height:1.4}
@@ -29,20 +29,20 @@
 .incident-card:not(.incident-card--compact) .incident-card-location small:before{content:'·';margin-right:6px}
 .incident-card:not(.incident-card--compact) .incident-card-person{padding:10px 16px;min-height:57px}
 .incident-card:not(.incident-card--compact) .incident-card-actions{padding:0 16px 14px}
-.incident-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 18px;border-bottom:1px solid #e7ece7;background:#f7f9f5}
-.incident-card-code{color:var(--primary,#07565b);font-size:12px;letter-spacing:.2px;font-weight:750}
-.incident-card-topline time{color:#62756e;font-size:12px;white-space:nowrap}
+.incident-card-topline{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 18px;border-bottom:1px solid #e8e9eb;background:#f6f6f8}
+.incident-card-code{color:var(--primary,#0c113b);font-size:12px;letter-spacing:.2px;font-weight:750}
+.incident-card-topline time{color:#58607f;font-size:12px;white-space:nowrap}
 .incident-card-content{padding:18px;flex:1;min-width:0}
 .incident-card-heading{display:flex;align-items:center;gap:11px;min-width:0;margin-bottom:12px}
-.incident-card-visual{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;background:#e6f2ec;border:1px solid #d3e8de;border-radius:12px;color:#267268}
+.incident-card-visual{display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;background:#e8eaf0;border:1px solid #d7dae4;border-radius:12px;color:#313c67}
 .incident-card-visual--electricidad,.incident-card-visual--iluminacion{background:#f8f0dc;border-color:#ede0bf;color:#937324}
-.incident-card-visual--plomeria{background:#e8f1f4;border-color:#d6e6ec;color:#32758a}
+.incident-card-visual--plomeria{background:#eaecf2;border-color:#dadde8;color:#3e4b7e}
 .incident-card-visual--carpinteria,.incident-card-visual--mobiliario{background:#f2ebdf;border-color:#e6dac9;color:#876945}
 .incident-card-visual--equipos,.incident-card-visual--cerrajeria{background:#e9eef3;border-color:#d8e2ec;color:#507496}
 .incident-card-visual--pintura{background:#f0eaf3;border-color:#e4d8ec;color:#81668d}
-.incident-card-content h3{font-size:17px;line-height:1.35;letter-spacing:-.35px;margin:0;font-weight:750;color:var(--text,#152f32);min-width:0;overflow-wrap:anywhere}
+.incident-card-content h3{font-size:17px;line-height:1.35;letter-spacing:-.35px;margin:0;font-weight:750;color:var(--text,#161931);min-width:0;overflow-wrap:anywhere}
 .incident-card-content h3 a:hover,.incident-card-code:hover{text-decoration:underline;text-underline-offset:3px}
-.incident-card-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:44px;margin:0 0 14px;color:#586e68;font-size:13.5px;line-height:1.6;overflow-wrap:anywhere}
+.incident-card-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:44px;margin:0 0 14px;color:#515875;font-size:13.5px;line-height:1.6;overflow-wrap:anywhere}
 .incident-card-badges{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin-bottom:15px}
 .incident-card .badge{font-size:12px;min-height:27px;padding:5px 9px;border-radius:7px}
 .incident-card .status-PENDING{background:#faf0d9;color:#8a651c}
@@ -50,26 +50,26 @@
 .incident-card .status-CLOSED{background:#e4f2e9;color:#287653}
 .incident-card .priority-ALTA{background:#fce9e7;color:#a94441}
 .incident-card .priority-MEDIA{background:#faf0d9;color:#8a651c}
-.incident-card .priority-BAJA{background:#eef2f2;color:#526e73}
-.incident-card-location{display:flex;align-items:flex-start;gap:8px;color:#698178;min-width:0}
+.incident-card .priority-BAJA{background:#efeff1;color:#515874}
+.incident-card-location{display:flex;align-items:flex-start;gap:8px;color:#60688a;min-width:0}
 .incident-card-location svg{margin-top:2px;flex-shrink:0}
 .incident-card-location span{min-width:0;display:grid;gap:3px}
-.incident-card-location strong{font-size:13px;line-height:1.4;font-weight:650;color:#35594f;overflow-wrap:anywhere}
-.incident-card-location small{font-size:12px;line-height:1.4;color:#71817a}
-.incident-card-person{display:flex;align-items:center;gap:10px;border-top:1px solid #e8ede7;padding:13px 18px;min-height:66px}
+.incident-card-location strong{font-size:13px;line-height:1.4;font-weight:650;color:#3a3f54;overflow-wrap:anywhere}
+.incident-card-location small{font-size:12px;line-height:1.4;color:#636c8f}
+.incident-card-person{display:flex;align-items:center;gap:10px;border-top:1px solid #e8e9ec;padding:13px 18px;min-height:66px}
 .incident-card-person>div{display:grid;gap:3px;min-width:0}
-.incident-card-person>div>span{font-size:11px;color:#71817a;line-height:1.2}
-.incident-card-person strong{font-size:12px;line-height:1.4;font-weight:650;overflow-wrap:anywhere;color:var(--text,#152f32)}
+.incident-card-person>div>span{font-size:11px;color:#636c8f;line-height:1.2}
+.incident-card-person strong{font-size:12px;line-height:1.4;font-weight:650;overflow-wrap:anywhere;color:var(--text,#161931)}
 .incident-card-person .ds-avatar-sm{width:34px;height:34px;font-size:11px}
 .incident-card-actions{display:flex;align-items:center;gap:8px;padding:0 18px 16px}
-.incident-card-detail{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-height:40px;padding:9px 12px;border:1px solid #dce7df;border-radius:9px;background:#eff5f0;color:var(--primary,#07565b);font-size:12px;font-weight:700}
-.incident-card-detail:hover{background:#e1efe7;border-color:#a9cbbb}
-.incident-card-contact{display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;border:1px solid #dce7df;border-radius:9px;color:#476f63;background:#fff}
-.incident-card-contact:hover{background:#eef5ef;color:var(--primary,#07565b)}
+.incident-card-detail{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:1;min-height:40px;padding:9px 12px;border:1px solid #dee0e5;border-radius:9px;background:#f0f1f4;color:var(--primary,#0c113b);font-size:12px;font-weight:700}
+.incident-card-detail:hover{background:#e3e6ed;border-color:#afb4c5}
+.incident-card-contact{display:grid;place-items:center;width:40px;height:40px;flex-shrink:0;border:1px solid #dee0e5;border-radius:9px;color:#4b516b;background:#fff}
+.incident-card-contact:hover{background:#eff0f4;color:var(--primary,#0c113b)}
 .incident-card-contact--whatsapp{background:#e6f2e9;border-color:#cfe5d6;color:#247350}
 .incident-card-contact--whatsapp:hover{background:#d4eadc}
-.incident-card-feedback{font-size:12px;line-height:1.6;margin:0 18px 16px;color:#62776e;overflow-wrap:anywhere}
-.incident-card-feedback a{color:var(--primary,#07565b);text-decoration:underline;text-underline-offset:2px;font-weight:650}
+.incident-card-feedback{font-size:12px;line-height:1.6;margin:0 18px 16px;color:#596180;overflow-wrap:anywhere}
+.incident-card-feedback a{color:var(--primary,#0c113b);text-decoration:underline;text-underline-offset:2px;font-weight:650}
 .incident-card-feedback--error{padding:10px 12px;border-radius:9px;background:#fcecea;color:#a94649}
 .incident-card--compact .incident-card-topline{padding:12px 16px}
 .incident-card--compact .incident-card-content{padding:15px 16px}
@@ -83,32 +83,32 @@
 .incident-card--compact .incident-card-actions{padding:0 16px 15px}
 .incident-card .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .incidents-card-page{gap:21px}
-.incidents-card-page .incident-state-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid #d5e3d9;border-radius:15px;background:linear-gradient(120deg,#edf4ec,#f7f8f1);overflow:hidden}
+.incidents-card-page .incident-state-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border:1px solid #d7dae1;border-radius:15px;background:linear-gradient(120deg,#edeff3,#f8f8fb);overflow:hidden}
 .incidents-card-page .incident-state-summary .ds-kpi{gap:13px;min-height:99px;padding:18px 22px;border:0;border-radius:0;box-shadow:none;background:transparent}
-.incidents-card-page .incident-state-summary .ds-kpi+.ds-kpi{border-left:1px solid #d6e3d9}
-.incidents-card-page .incident-state-summary .ds-kpi-symbol{width:43px;height:43px;border:1px solid #d7e2d8;border-radius:12px;background:#fff8;color:#6f7046}
+.incidents-card-page .incident-state-summary .ds-kpi+.ds-kpi{border-left:1px solid #d8dae1}
+.incidents-card-page .incident-state-summary .ds-kpi-symbol{width:43px;height:43px;border:1px solid #d9dbe0;border-radius:12px;background:#fff8;color:#6f7046}
 .incidents-card-page .incident-state-summary .tone-blue{color:#426e88;background:#e5edf4;border-color:#d3e0e7}
 .incidents-card-page .incident-state-summary .tone-mint{color:#287654;background:#dfefe2;border-color:#cbded0}
 .incidents-card-page .incident-state-summary .ds-kpi-copy{gap:2px;grid-template-columns:auto 1fr;align-items:baseline;column-gap:9px}
-.incidents-card-page .incident-state-summary .ds-kpi-copy>strong{font-size:27px;letter-spacing:-.7px;line-height:1.15;color:#163c39}
-.incidents-card-page .incident-state-summary .ds-kpi-copy>span{font-size:13px;font-weight:650;color:#35584d}
-.incidents-card-page .incident-state-summary .ds-kpi-copy>small{font-size:12px;grid-column:1/-1;color:#697e71;margin-top:4px;line-height:1.4}
+.incidents-card-page .incident-state-summary .ds-kpi-copy>strong{font-size:27px;letter-spacing:-.7px;line-height:1.15;color:#181c3a}
+.incidents-card-page .incident-state-summary .ds-kpi-copy>span{font-size:13px;font-weight:650;color:#3a3f53}
+.incidents-card-page .incident-state-summary .ds-kpi-copy>small{font-size:12px;grid-column:1/-1;color:#5f6788;margin-top:4px;line-height:1.4}
 .incidents-card-page .incident-filter-panel{padding:17px 18px 12px;border-radius:15px}
 .incidents-card-page .incident-filter-grid{display:grid;grid-template-columns:minmax(200px,1.55fr) repeat(4,minmax(105px,1fr));gap:10px;align-items:end}
-.incidents-card-page .incident-filter-grid .ds-search,.incidents-card-page .incident-filter-grid .ds-filter{height:48px;border-radius:9px;border-color:#dce5df;background:#f8faf6}
-.incidents-card-page .incident-filter-grid .ds-search{gap:9px;padding:0 12px;color:#5c7a70}
+.incidents-card-page .incident-filter-grid .ds-search,.incidents-card-page .incident-filter-grid .ds-filter{height:48px;border-radius:9px;border-color:#dedfe3;background:#f7f7f9}
+.incidents-card-page .incident-filter-grid .ds-search{gap:9px;padding:0 12px;color:#585f7e}
 .incidents-card-page .incident-filter-grid .ds-search input,.incidents-card-page .incident-filter-grid .ds-search input::placeholder{font-size:13px}
-.incidents-card-page .incident-filter-grid .ds-search input::placeholder{color:#6a7e73}
+.incidents-card-page .incident-filter-grid .ds-search input::placeholder{color:#5f6789}
 .incidents-card-page .incident-filter-grid .ds-filter{padding:7px 29px 6px 11px;gap:3px}
-.incidents-card-page .incident-filter-grid .ds-filter>span{font-size:11px;color:#6d8174}
-.incidents-card-page .incident-filter-grid .ds-filter select{font-size:13px;color:#315348}
-.incidents-card-page .incident-filter-grid .ds-filter>svg{right:9px;color:#56766a}
-.incidents-card-page .incident-filter-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:10px;margin-top:10px;border-top:1px solid #e8ece5;font-size:12px;color:#6b8072;min-height:33px}
+.incidents-card-page .incident-filter-grid .ds-filter>span{font-size:11px;color:#626a8c}
+.incidents-card-page .incident-filter-grid .ds-filter select{font-size:13px;color:#363b4e}
+.incidents-card-page .incident-filter-grid .ds-filter>svg{right:9px;color:#545b78}
+.incidents-card-page .incident-filter-summary{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:10px;margin-top:10px;border-top:1px solid #e6e7eb;font-size:12px;color:#60698b;min-height:33px}
 .incidents-card-page .incident-filter-summary button{min-height:27px;font-size:12px;padding:0}
 .incidents-card-page .incident-results-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:-6px}
 .incidents-card-page .incident-results-heading h2{font-size:20px;letter-spacing:-.5px;margin:0}
-.incidents-card-page .incident-results-heading p{font-size:12px;color:#6c8073;margin:5px 0 0;line-height:1.5}
-.incidents-card-page .incident-results-count{font-size:12px;color:#4e6c5d;white-space:nowrap;padding:7px 11px;background:#edf2e9;border:1px solid #dce6d7;border-radius:7px}
+.incidents-card-page .incident-results-heading p{font-size:12px;color:#61698b;margin:5px 0 0;line-height:1.5}
+.incidents-card-page .incident-results-count{font-size:12px;color:#4c536e;white-space:nowrap;padding:7px 11px;background:#ebecf0;border:1px solid #dadce3;border-radius:7px}
 @media(min-width:1550px){.incident-card-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:1190px){.incident-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.incidents-card-page .incident-filter-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.incidents-card-page .incident-filter-grid>label:first-child{grid-column:1/-1}.incidents-card-page .incident-state-summary .ds-kpi{padding:16px;gap:11px}.incidents-card-page .incident-state-summary .ds-kpi-copy>small{font-size:11px}}
 @media(max-width:720px){.incident-card-grid{grid-template-columns:1fr;gap:15px}.incidents-card-page .incident-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.incidents-card-page .incident-filter-summary{align-items:center;gap:10px}.incidents-card-page .incident-state-summary .ds-kpi{padding:15px 12px;gap:8px;min-height:85px}.incidents-card-page .incident-state-summary .ds-kpi-symbol{width:32px;height:32px;border-radius:9px}.incidents-card-page .incident-state-summary .ds-kpi-symbol svg{width:17px;height:17px}.incidents-card-page .incident-state-summary .ds-kpi-copy{display:grid;grid-template-columns:1fr;gap:3px}.incidents-card-page .incident-state-summary .ds-kpi-copy>strong{font-size:24px}.incidents-card-page .incident-state-summary .ds-kpi-copy>span{font-size:12px}.incidents-card-page .incident-state-summary .ds-kpi-copy>small{display:none}.incident-card-actions>*{min-height:44px}.incident-card-contact{width:44px;height:44px}}
