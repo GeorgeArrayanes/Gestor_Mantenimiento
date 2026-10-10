@@ -64,7 +64,7 @@ describe('flujo de mantenimiento aceptado', () => {
     expect(destination.pathname).toBe('/573002223344');
     const message = destination.searchParams.get('text');
     expect(message).toBe(whatsapp.body.message);
-    expect(message.startsWith('🔧 Nueva incidencia de mantenimiento\n\n')).toBe(true);
+    expect(message.startsWith('*Nueva incidencia de mantenimiento*\n\n')).toBe(true);
     for (const text of ['Carlos', 'Baño Bloque A', 'Fuga debajo del lavamanos', 'Alta', 'Gimnasio Los Arrayanes']) expect(message).toContain(text);
     expect(message).not.toMatch(/password|token|supabase|http:\/\/localhost/i);
 

@@ -24,7 +24,7 @@ describe('destino WhatsApp y referencias seguras', () => {
     const output = buildWhatsApp(incident);
     const url = new URL(output.url);
     expect(url.pathname).toBe('/573002223344');
-    expect(output.message.startsWith('🔧 Nueva incidencia de mantenimiento\n\n')).toBe(true);
+    expect(output.message.startsWith('*Nueva incidencia de mantenimiento*\n\n')).toBe(true);
     expect([...url.searchParams.keys()]).toEqual(['text']);
     expect(url.searchParams.get('text')).toContain(incident.description);
     expect(url.searchParams.get('text')).toContain(incident.code);
