@@ -17,7 +17,7 @@ export default function IncidentListView({ incidents }) {
       <div><span className="incident-code">{incident.code}<ArrowUpRight size={13} aria-hidden="true" /></span><StatusBadge value={incident.status} /></div>
       <h3>{incident.description}</h3><p>{incident.space_name}{incident.space_zone ? ` · ${incident.space_zone}` : ''}</p>
       <div><StatusBadge value={incident.priority} urgency /><small>{formatDate(incident.created_at)}</small></div>
-      <p>{incident.assigned_person_name || 'Pendiente de asignación'}</p>
+      <p>{incident.assigned_person_name || 'Sin responsable'}</p>
     </Link>)}</div>
   </div>;
 }

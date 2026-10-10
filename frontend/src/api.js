@@ -153,6 +153,33 @@ function downloadBlob(blob, filename) {
   window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
+export async function downloadIncidentReport({ period, date, format }, { signal } = {}) {
+  if (!['day', 'month', 'year'].includes(period) || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !['pdf', 'xlsx'].includes(format)) throw new Error('Selecciona un periodo y formato válidos.');
+  const token = getSessionToken();
+  const query = new URLSearchParams({ period, date, format });
+  let response;
+  try {
+    response = await fetch(`${API_URL}/incidents/reports/export?${query}`, {
+      credentials: 'include', signal, headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('No se pudo generar el reporte. Revisa tu conexión e intenta nuevamente.');
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const error = new Error(data.message || 'No fue posible generar el reporte.');
+    error.status = response.status;
+    if (response.status === 401) notifyUnauthorized(error);
+    throw error;
+  }
+  const blob = await response.blob();
+  const expectedType = format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (!blob.size || String(blob.type).split(';')[0].toLowerCase() !== expectedType) throw new Error('El servidor no devolvió un reporte válido.');
+  const suffix = period === 'day' ? date : period === 'month' ? date.slice(0, 7) : date.slice(0, 4);
+  downloadBlob(blob, `reporte-incidencias-${suffix}.${format}`);
+}
+
 export async function downloadEvidence(url, filename = 'evidencia', options = {}) {
   downloadBlob(await fetchEvidenceBlob(url, options), filename);
 }

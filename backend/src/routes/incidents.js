@@ -4,8 +4,9 @@ import { z } from 'zod';
 import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { config } from '../config.js';
-import { validateUploads } from '../services/storage.js';
+import { deleteFile, validateUploads } from '../services/storage.js';
 import { activePerson, activeSpace, addHistory, assertOpen, getIncident, incidentSelect, lockIncident, persistEvidence, publicIncident, transaction } from '../services/incident-service.js';
+import { createExcelReport, createPdfReport, reportWindow } from '../services/incident-report.js';
 import { buildWhatsApp, httpError, INCIDENT_STATUSES, parseId, PRIORITIES, PROBLEM_TYPES } from '../utils/maintenance.js';
 
 const router = Router();
@@ -99,6 +100,25 @@ router.post('/', upload.array('files', config.maxFiles), asyncHandler(async (req
   res.status(201).json({ incident: await getIncident(req.app.locals.db, id) });
 }));
 
+router.get('/reports/export', asyncHandler(async (req, res) => {
+  const d = parse(z.object({ period: z.enum(['day', 'month', 'year']), date: z.string(), format: z.enum(['pdf', 'xlsx']) }).strict(), req.query, 'Selecciona el periodo y formato del reporte.');
+  const window = reportWindow(d.period, d.date);
+  const { rows } = await req.app.locals.db.query(`${incidentSelect}
+    WHERE i.created_at >= $1 AND i.created_at < $2
+    ORDER BY i.created_at ASC,i.id ASC LIMIT 10001`, [window.start, window.end]);
+  if (rows.length > 10000) throw httpError(413, 'El reporte supera 10.000 incidencias. Selecciona un periodo más corto.');
+  const incidents = rows.map(publicIncident);
+  const file = d.format === 'pdf' ? await createPdfReport(incidents, window.label) : await createExcelReport(incidents, window.label);
+  const contentType = d.format === 'pdf' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  res.set({
+    'Content-Type': contentType,
+    'Content-Disposition': `attachment; filename="reporte-incidencias-${window.suffix}.${d.format}"`,
+    'Content-Length': String(file.length),
+    'Cache-Control': 'no-store',
+  });
+  res.send(file);
+}));
+
 router.get('/:id', asyncHandler(async (req, res) => {
   const incident = await getIncident(req.app.locals.db, req.params.id);
   const [evidences, history] = await Promise.all([
@@ -106,6 +126,20 @@ router.get('/:id', asyncHandler(async (req, res) => {
     req.app.locals.db.query(`SELECT h.*,u.name AS user_name,u.role AS user_role FROM maintenance_history h JOIN users u ON u.id=h.user_id WHERE h.incident_id=$1 ORDER BY h.created_at,h.id`, [incident.id])
   ]);
   res.json({ incident, evidences: evidences.rows.map((e) => ({ ...e, file_url: `/api/evidences/${e.id}/download` })), history: history.rows });
+}));
+
+router.delete('/:id', asyncHandler(async (req, res) => {
+  const deleted = await transaction(req.app.locals.db, async (client) => {
+    const incident = await lockIncident(client, req.params.id);
+    const { rows: evidence } = await client.query('SELECT storage_key FROM maintenance_evidences WHERE incident_id=$1', [incident.id]);
+    await client.query('DELETE FROM maintenance_history WHERE incident_id=$1', [incident.id]);
+    await client.query('DELETE FROM maintenance_evidences WHERE incident_id=$1', [incident.id]);
+    await client.query('DELETE FROM maintenance_incidents WHERE id=$1', [incident.id]);
+    return { id: incident.id, code: incident.code, storageKeys: evidence.map((item) => item.storage_key) };
+  });
+  const cleanup = await Promise.allSettled(deleted.storageKeys.map((key) => deleteFile(key)));
+  for (const result of cleanup) if (result.status === 'rejected') console.error('No fue posible retirar una evidencia de la incidencia eliminada.', result.reason.message);
+  res.json({ deleted: true, incident: { id: deleted.id, code: deleted.code } });
 }));
 
 router.patch('/:id', asyncHandler(async (req, res) => {

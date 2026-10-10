@@ -8,7 +8,7 @@ Aplicación para el Jefe de Mantenimiento y administradores del Gimnasio Los Arr
 - `backend/`: Express, PostgreSQL, JWT en cookie httpOnly y bcrypt; autorización en servidor.
 - `database/`: migraciones SQL versionadas. La V1 usa tablas de mantenimiento independientes.
 
-Módulos: Dashboard, Nueva incidencia, Incidencias, Personal, Espacios y Administradores. Sólo SUPER_ADMIN gestiona las cuentas administrativas. ADMIN opera incidencias y catálogos. No existen accesos del personal, inventario, órdenes de trabajo independientes, programación ni mensajería automática.
+Módulos: Dashboard, Nueva incidencia, Incidencias, reportes, Personal, Espacios y Administradores. Sólo SUPER_ADMIN gestiona las cuentas administrativas. ADMIN opera incidencias y catálogos. No existen accesos del personal, inventario, órdenes de trabajo independientes, programación ni mensajería automática.
 
 ## Inicio local
 
@@ -37,7 +37,7 @@ Para la demostración temporal, configure `DEV_MEMORY_DB=true` y ejecute `npm ru
 5. Registre notas de solución, al menos una imagen final y confirme **Cerrar incidencia**.
 6. Queda `CLOSED`; no se permiten nuevos cambios ni cierres duplicados.
 
-Códigos `MT-año-secuencia` se generan en el servidor. El dashboard calcula pendientes, asignadas, cierres del mes y tiempo de solución desde los registros reales. Las fechas se presentan en `America/Bogota`. Personal y espacios se desactivan, conservando sus referencias históricas.
+Códigos `MT-año-secuencia` se generan en el servidor. El dashboard calcula incidencias sin asignar, asignadas, cierres del mes y tiempo de solución desde los registros reales. Las fechas se presentan en `America/Bogota`. Las incidencias se pueden eliminar con confirmación y sus evidencias se retiran del almacenamiento. La vista de incidencias exporta reportes diarios, mensuales o anuales en PDF y Excel. Personal y espacios se desactivan, conservando sus referencias históricas.
 
 ## WhatsApp
 
@@ -104,7 +104,7 @@ La verificación local no sustituye una validación de despliegue con HTTPS y el
 
 ## Roadmap de producto
 
-El backlog futuro conserva inventario, mantenimiento preventivo, órdenes de trabajo, costos, proveedores, WhatsApp automático, reportes y calendario de mantenimiento. Son candidatos para versiones posteriores, pendientes de priorización; no están implementados en esta V1. Consulte `PROJECT_BACKLOG.md`.
+El backlog futuro conserva inventario, mantenimiento preventivo, órdenes de trabajo, costos, proveedores, WhatsApp automático y calendario de mantenimiento. Son candidatos para versiones posteriores, pendientes de priorización; no están implementados en esta V1. Consulte `PROJECT_BACKLOG.md`.
 
 La arquitectura separa catálogos, incidencias, historial, almacenamiento y preparación de mensajes para permitir ese crecimiento.
 

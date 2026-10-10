@@ -50,7 +50,7 @@ export default function DashboardPage() {
         <div className="campus-hero-content"><p className="eyebrow">Centro de mantenimiento</p><h1>Estado general del colegio</h1><p>Cada espacio cuenta. Organiza, asigna y resuelve.</p><Link className="primary-button" to="/incidencias">Ver incidencias <ArrowRight size={18} aria-hidden="true" /></Link></div>
         <span className="campus-hero-caption">Hola, {user?.name?.split(' ')[0] || 'Administrador'}.</span>
         <section className="dashboard-kpis" aria-label="Estado del mantenimiento" aria-busy={loading}>
-          <KpiCard label="Pendientes" value={ready ? stats.pending : '—'} icon={Clock3} tone="amber" to="/incidencias?estado=PENDING" />
+          <KpiCard label="Sin asignar" value={ready ? stats.pending : '—'} icon={Clock3} tone="amber" to="/incidencias?estado=PENDING" />
           <KpiCard label="Asignadas" value={ready ? stats.assigned : '—'} icon={UserRound} tone="blue" to="/incidencias?estado=ASSIGNED" />
           <KpiCard label="Alta sin cerrar" value={ready ? highPriority : '—'} icon={AlertTriangle} tone="rose" />
           <KpiCard label="Año escolar" value={year} icon={CalendarDays} tone="teal" />
@@ -81,11 +81,11 @@ export default function DashboardPage() {
       {loading ? <div className="loading-page dashboard-loading" role="status">Cargando el estado del mantenimiento…</div> : ready && <>
         <div className="dashboard-modules">
           <SectionPanel className="dashboard-distribution" title="Resumen de mantenimiento" subtitle="Todas las incidencias registradas">
-            <div className="dashboard-balance"><div className="incident-donut" style={{ background: total ? `conic-gradient(#d4a14a 0deg ${pendingAngle}deg, #6092af ${pendingAngle}deg ${assignedAngle}deg, #087a70 ${assignedAngle}deg 360deg)` : '#e4eae7' }} role="img" aria-label={`${counts[0]} pendientes, ${counts[1]} asignadas y ${counts[2]} cerradas`}><span><strong>{total}</strong><small>registradas</small></span></div><ul className="donut-legend">{['Pendientes', 'Asignadas', 'Cerradas'].map((label, index) => <li key={label}><i className={`legend-dot legend-${index}`} /><strong>{counts[index]}</strong><span>{label}</span></li>)}</ul></div>
+            <div className="dashboard-balance"><div className="incident-donut" style={{ background: total ? `conic-gradient(#d4a14a 0deg ${pendingAngle}deg, #6092af ${pendingAngle}deg ${assignedAngle}deg, #087a70 ${assignedAngle}deg 360deg)` : '#e4eae7' }} role="img" aria-label={`${counts[0]} sin asignar, ${counts[1]} asignadas y ${counts[2]} cerradas`}><span><strong>{total}</strong><small>registradas</small></span></div><ul className="donut-legend">{['Sin asignar', 'Asignadas', 'Cerradas'].map((label, index) => <li key={label}><i className={`legend-dot legend-${index}`} /><strong>{counts[index]}</strong><span>{label}</span></li>)}</ul></div>
             <div className="dashboard-insights"><div><Clock3 size={19} aria-hidden="true" /><span><strong>{formatAverageResolutionHours(average)}</strong><small>{average == null ? 'Aún sin cierres' : 'Tiempo medio de solución'}</small></span></div><div><CheckCircle2 size={19} aria-hidden="true" /><span><strong>{stats.closedThisMonth}</strong><small>Cerradas este mes</small></span></div></div>
           </SectionPanel>
           <SectionPanel className="dashboard-current" title="Incidencia destacada" subtitle="La asignada de mayor prioridad" action={<Link className="icon-button" to="/incidencias?estado=ASSIGNED" aria-label="Ver incidencias asignadas"><ArrowUpRight size={18} /></Link>}>
-            {current ? <IncidentCard incident={current} compact showContact={false} /> : <EmptyState icon={Wrench} title="Sin incidencias asignadas" text="Asigna un responsable para dar seguimiento al trabajo." action={stats.pending ? <Link className="text-button" to="/incidencias?estado=PENDING">Ver pendientes <ArrowRight size={15} /></Link> : null} />}
+            {current ? <IncidentCard incident={current} compact showContact={false} /> : <EmptyState icon={Wrench} title="Sin incidencias asignadas" text="Asigna un responsable para dar seguimiento al trabajo." action={stats.pending ? <Link className="text-button" to="/incidencias?estado=PENDING">Ver sin asignar <ArrowRight size={15} /></Link> : null} />}
           </SectionPanel>
         </div>
         <SectionPanel className="dashboard-recent" title="Incidencias recientes" action={<Link className="text-button" to="/incidencias">Ver todas <ArrowRight size={15} aria-hidden="true" /></Link>}>

@@ -30,7 +30,7 @@
 - [ ] Costos: registrar y consultar los gastos de mantenimiento.
 - [ ] Proveedores: gestionar los servicios externos vinculados al mantenimiento.
 - [ ] WhatsApp automático: comunicar asignaciones mediante una integración aprobada.
-- [ ] Reportes: consultar y exportar información para seguimiento y decisiones.
+- [x] Reportes: exportar incidencias por día, mes o año en PDF y Excel.
 - [ ] Calendario de mantenimiento: visualizar los trabajos programados.
 
 Estos módulos son candidatos para versiones posteriores y requieren priorización de producto. No forman parte de la V1 ni tienen fechas comprometidas.

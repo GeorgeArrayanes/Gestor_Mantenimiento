@@ -1,6 +1,6 @@
 import { AlertTriangle, CheckCircle2, Clock3, Minus, UserRound } from 'lucide-react';
 
-const labels = { PENDING: 'Pendiente', ASSIGNED: 'Asignada', CLOSED: 'Cerrada', ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja', ACTIVO: 'Activo', INACTIVO: 'Inactivo', true: 'Activo', false: 'Inactivo' };
+const labels = { PENDING: 'Sin asignar', ASSIGNED: 'Asignada', CLOSED: 'Cerrada', ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja', ACTIVO: 'Activo', INACTIVO: 'Inactivo', true: 'Activo', false: 'Inactivo' };
 const icons = { PENDING: Clock3, ASSIGNED: UserRound, CLOSED: CheckCircle2, ALTA: AlertTriangle, MEDIA: Clock3, BAJA: Minus };
 
 export default function StatusBadge({ value, urgency = false }) {

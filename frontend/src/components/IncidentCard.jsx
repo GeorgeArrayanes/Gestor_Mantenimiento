@@ -89,7 +89,7 @@ export default function IncidentCard({ incident, compact = false, showContact = 
       </>}
       <div className="incident-card-location"><MapPin size={16} aria-hidden="true" /><span><strong>{incident.space_name}</strong>{incident.space_zone && <small>{incident.space_zone}</small>}</span></div>
     </div>
-    <div className="incident-card-person"><Avatar name={incident.assigned_person_name || ''} size="sm" /><div><span>Responsable</span><strong>{incident.assigned_person_name || 'Pendiente de asignación'}</strong></div></div>
+    <div className="incident-card-person"><Avatar name={incident.assigned_person_name || ''} size="sm" /><div><span>Responsable</span><strong>{incident.assigned_person_name || 'Sin responsable'}</strong></div></div>
     <footer className="incident-card-actions">
       <Link className="incident-card-detail" to={`/incidencias/${incident.id}`}>Ver incidencia<ArrowUpRight size={16} aria-hidden="true" /></Link>
       {contact && <><a className="incident-card-contact" href={`tel:+${contact.phone}`} aria-label={`Llamar a ${contact.name}`} title={`Llamar a ${contact.name}`}><Phone size={16} aria-hidden="true" /></a><button className="incident-card-contact incident-card-contact--whatsapp" type="button" disabled={busy} onClick={prepareContact} aria-label={`Preparar WhatsApp para ${contact.name}`} title="Preparar mensaje de WhatsApp; el envío es manual"><MessageCircle size={17} aria-hidden="true" />{busy && <span className="sr-only">Preparando mensaje…</span>}</button></>}

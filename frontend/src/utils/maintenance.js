@@ -4,7 +4,7 @@ export const PROBLEM_TYPES = [
   ['MOBILIARIO', 'Mobiliario'], ['EQUIPOS', 'Equipos'], ['CERRAJERIA', 'Cerrajería'], ['OTRO', 'Otro'],
 ];
 export const PRIORITIES = [['ALTA', 'Alta'], ['MEDIA', 'Media'], ['BAJA', 'Baja']];
-export const STATUSES = [['PENDING', 'Pendiente'], ['ASSIGNED', 'Asignada'], ['CLOSED', 'Cerrada']];
+export const STATUSES = [['PENDING', 'Sin asignar'], ['ASSIGNED', 'Asignada'], ['CLOSED', 'Cerrada']];
 export const EVIDENCE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 export const MAX_EVIDENCE_SIZE = 5 * 1024 * 1024;
 export const MAX_EVIDENCE_FILES = 5;
