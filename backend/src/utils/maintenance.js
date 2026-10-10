@@ -25,15 +25,15 @@ export function buildWhatsApp(incident) {
   const phone = normalizePhone(incident.assigned_person_current_phone ?? incident.assigned_person_phone);
   const priority = { ALTA: 'Alta', MEDIA: 'Media', BAJA: 'Baja' }[incident.priority];
   const message = [
-  '*Nueva incidencia de mantenimiento*',
+  '🧰🔧*Nueva incidencia de mantenimiento*🧰🔧',
   '',
   `Hola, ${incident.assigned_person_name}.`,
   '',
   `Se te ha asignado la incidencia ${incident.code}:`,
   '',
-  `• *Ubicación:* ${incident.space_name}${incident.space_zone ? ` · ${incident.space_zone}` : ''}`,
-  `• *Problema:* ${incident.description}`,
-  `• *Prioridad:* ${priority}`,
+  `•📍*Ubicación:* ${incident.space_name}${incident.space_zone ? ` · ${incident.space_zone}` : ''}`,
+  `•🛠️*Problema:* ${incident.description}`,
+  `•🚨*Prioridad:* ${priority}`,
   '',
   'Por favor informa al Jefe de Mantenimiento cuando la reparación esté terminada.',
   '',
