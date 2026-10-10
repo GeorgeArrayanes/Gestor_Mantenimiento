@@ -104,6 +104,15 @@ function evidenceEndpoint(url) {
   return resolved;
 }
 
+function privateImageEndpoint(url) {
+  if (typeof url !== 'string') throw new Error('La imagen no tiene un enlace válido.');
+  const resolved = fileUrl(url);
+  const prefix = `${API_URL}/`;
+  const relative = resolved.startsWith(prefix) ? resolved.slice(prefix.length) : '';
+  if (!/^(spaces|personnel)\/[1-9]\d*\/image(?:\?v=\d+)?$/.test(relative)) throw new Error('La imagen no tiene un enlace válido.');
+  return resolved;
+}
+
 const imageMimeTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const evidenceMimeTypes = new Set([...imageMimeTypes, 'application/pdf']);
 
@@ -135,6 +144,31 @@ export async function fetchEvidenceBlob(url, { signal, imageOnly = false } = {})
   const mime = String(blob.type || '').split(';')[0].trim().toLowerCase();
   const allowed = imageOnly ? imageMimeTypes : evidenceMimeTypes;
   if (!blob.size || !allowed.has(mime)) throw new Error(imageOnly ? 'Vista previa no disponible para este archivo.' : 'El archivo recibido no tiene un formato permitido.');
+  return blob;
+}
+
+export async function fetchPrivateImageBlob(url, { signal } = {}) {
+  const resolved = privateImageEndpoint(url);
+  assertNotAborted(signal);
+  const token = getSessionToken();
+  let response;
+  try {
+    response = await fetch(resolved, { credentials: 'include', redirect: 'error', signal, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  } catch (error) {
+    if (error.name === 'AbortError') throw error;
+    throw new Error('No se pudo cargar la imagen.');
+  }
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const error = new Error(data.message || 'No fue posible cargar la imagen.');
+    error.status = response.status;
+    if (response.status === 401) notifyUnauthorized(error);
+    throw error;
+  }
+  const blob = await response.blob();
+  assertNotAborted(signal);
+  const mime = String(blob.type || '').split(';')[0].trim().toLowerCase();
+  if (!blob.size || !imageMimeTypes.has(mime)) throw new Error('La imagen recibida no tiene un formato permitido.');
   return blob;
 }
 

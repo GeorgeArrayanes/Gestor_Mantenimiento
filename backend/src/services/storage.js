@@ -20,6 +20,11 @@ export function validateUpload(file) {
   if (!valid) throw invalid('El contenido del archivo no coincide con su formato. Selecciona una imagen o PDF válido.');
 }
 
+export function validateImageUpload(file) {
+  validateUpload(file);
+  if (!file.mimetype.startsWith('image/')) throw invalid('Selecciona una imagen JPG, PNG o WEBP.');
+}
+
 export function validateUploads(files, { required = false } = {}) {
   if (required && !files?.length) throw invalid('Adjunta al menos una evidencia final para cerrar la incidencia.');
   if ((files?.length || 0) > config.maxFiles) throw invalid(`Selecciona máximo ${config.maxFiles} archivos.`);
@@ -35,9 +40,8 @@ function localPath(key) {
   return target;
 }
 
-export async function saveFile(file, incidentId) {
+async function saveObject(file, objectName) {
   validateUpload(file);
-  const objectName = `maintenance/${incidentId}/${crypto.randomUUID()}${extensions.get(file.mimetype)}`;
   if (config.supabaseUrl && config.supabaseKey) {
     const { error } = await supabase().storage.from(config.supabaseBucket).upload(objectName, file.buffer, { contentType: file.mimetype, upsert: false });
     if (error) throw new Error('No fue posible almacenar la evidencia.');
@@ -54,6 +58,16 @@ export async function saveFile(file, incidentId) {
   try { await fs.writeFile(target, file.buffer, { flag: 'wx', mode: 0o600 }); }
   catch (error) { if (error.code !== 'EEXIST') await fs.rm(target, { force: true }); throw error; }
   return key;
+}
+
+export async function saveFile(file, incidentId) {
+  return saveObject(file, `maintenance/${incidentId}/${crypto.randomUUID()}${extensions.get(file.mimetype)}`);
+}
+
+export async function saveDirectoryImage(file, kind, id) {
+  validateImageUpload(file);
+  if (!['spaces', 'personnel'].includes(kind) || !Number.isInteger(id) || id < 1) throw invalid('Destino de imagen inválido.');
+  return saveObject(file, `directory/${kind}/${id}/${crypto.randomUUID()}${extensions.get(file.mimetype)}`);
 }
 
 export async function deleteFile(key) {
