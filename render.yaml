@@ -37,6 +37,10 @@ services:
         value: Admin@gla.edu.co
       - key: SUPER_ADMIN_PASSWORD
         sync: false
+      - key: KEEP_ALIVE_URL
+        value: https://gestor-mantenimiento-arrayanes-api.onrender.com/api/health
+      - key: KEEP_ALIVE_INTERVAL_MS
+        value: "420000"
       - key: DEV_MEMORY_DB
         value: "false"
       - key: ALLOW_DEMO_SEED

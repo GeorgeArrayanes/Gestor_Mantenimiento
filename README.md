@@ -72,7 +72,7 @@ El frontend utiliza `/api` por defecto. El hosting debe reenviar `/api` al backe
 
 ### Render + Supabase
 
-El archivo `render.yaml` prepara dos servicios gratuitos: `gestor-mantenimiento-arrayanes` para el frontend estático y `gestor-mantenimiento-arrayanes-api` para Express. El backend aplica las migraciones pendientes, verifica el bucket privado y crea la cuenta principal antes de iniciar. Render genera `JWT_SECRET`; durante el primer despliegue solicita `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SUPER_ADMIN_PASSWORD` sin guardarlos en el repositorio.
+El archivo `render.yaml` prepara dos servicios gratuitos: `gestor-mantenimiento-arrayanes` para el frontend estático y `gestor-mantenimiento-arrayanes-api` para Express. El backend aplica las migraciones pendientes, verifica el bucket privado y crea la cuenta principal antes de iniciar. Render genera `JWT_SECRET`; durante el primer despliegue solicita `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` y `SUPER_ADMIN_PASSWORD` sin guardarlos en el repositorio. En producción, `KEEP_ALIVE_URL` consulta el endpoint de salud cada siete minutos para mantener activa la instancia sin tocar datos del aplicativo.
 
 Use en `DATABASE_URL` la conexión **Session pooler** de Supabase, puerto 5432, con la contraseña codificada para URL. Esta modalidad funciona desde redes IPv4 y conserva el estado de sesión que requiere el bloqueo de migraciones. Cree el proyecto Supabase en una región cercana a los usuarios; el bucket `mantenimiento-evidencias` se crea privado desde el backend. La cuenta inicial usa `Admin@gla.edu.co` y una contraseña de producción de al menos 12 caracteres.
 
