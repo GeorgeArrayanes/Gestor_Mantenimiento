@@ -36,8 +36,19 @@ async function removeReplacedImage(key) {
 
 router.get('/', asyncHandler(async (req, res) => {
   if (req.query.active && !['true','false'].includes(req.query.active)) throw httpError(400, 'Filtro de personal inválido.');
-  const { rows } = await req.app.locals.db.query(`SELECT * FROM maintenance_personnel ${req.query.active ? 'WHERE active=$1' : ''} ORDER BY name`, req.query.active ? [req.query.active === 'true'] : []);
-  res.json({ personnel: rows.map(publicPerson) });
+  const [people, workload] = await Promise.all([
+    req.app.locals.db.query(`SELECT * FROM maintenance_personnel ${req.query.active ? 'WHERE active=$1' : ''} ORDER BY name`, req.query.active ? [req.query.active === 'true'] : []),
+    req.app.locals.db.query(`SELECT assigned_person_id,status,COUNT(*) AS count FROM maintenance_incidents
+      WHERE assigned_person_id IS NOT NULL AND status IN ('ASSIGNED','CLOSED') GROUP BY assigned_person_id,status`),
+  ]);
+  const metrics = new Map();
+  for (const row of workload.rows) {
+    const id = Number(row.assigned_person_id);
+    const counts = metrics.get(id) || { assigned_count: 0, resolved_count: 0 };
+    counts[row.status === 'CLOSED' ? 'resolved_count' : 'assigned_count'] = Number(row.count);
+    metrics.set(id, counts);
+  }
+  res.json({ personnel: people.rows.map((row) => publicPerson({ ...row, ...(metrics.get(Number(row.id)) || { assigned_count: 0, resolved_count: 0 }) })) });
 }));
 
 router.get('/:id/image', asyncHandler(async (req, res) => {

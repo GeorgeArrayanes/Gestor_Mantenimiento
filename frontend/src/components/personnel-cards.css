@@ -1,0 +1,35 @@
+.personnel-directory .directory-people-grid{gap:20px;align-items:stretch}
+.personnel-card{display:flex;flex-direction:column;min-width:0;min-height:530px;padding:20px;border:1px solid #e3e6ee;border-radius:22px;background:#fff;box-shadow:0 4px 20px #171a3e05;transition:border-color .18s,box-shadow .18s}
+.personnel-card:hover{border-color:#bec4d8;box-shadow:0 8px 26px #171a3e0b}
+.personnel-card-portrait{position:relative;isolation:isolate;aspect-ratio:28/23;overflow:hidden;flex-shrink:0;border-radius:15px;background:#9f9fb1}
+.personnel-card-portrait>.badge{position:absolute;top:12px;right:12px;z-index:2;border:1px solid #ffffff80;padding:6px 10px;font-size:11px;box-shadow:0 2px 8px #171a3e08}
+.personnel-card .personnel-card-photo{width:100%;height:100%;background:transparent}
+.personnel-card-photo-image{object-fit:contain;object-position:center bottom}
+.personnel-card .private-image-skeleton{background:linear-gradient(105deg,#9f9fb1 35%,#b9b9c9 50%,#9f9fb1 65%);color:#f1f2f7}
+.personnel-card-placeholder{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;height:100%;padding:44px 20px 20px;background:radial-gradient(circle at 50% 48%,#c2c2d0,#9f9fb1 70%);color:#252943}
+.personnel-card-placeholder .ds-avatar{width:88px;height:88px;border:1px solid #ffffff60;border-radius:26px;background:#ffffff30;color:#171a49;box-shadow:0 8px 28px #171a3e0b;font-size:29px;font-weight:650}
+.personnel-card-placeholder>span:last-child{font-size:11px;letter-spacing:.2px}
+.personnel-card.is-inactive .personnel-card-photo-image{filter:grayscale(.85);opacity:.8}
+.personnel-card-details{position:relative;margin-top:14px;min-width:0}
+.personnel-card-details h2{font-size:20px;font-weight:700;line-height:1.25;letter-spacing:-.35px;color:#171a3e;margin:0;overflow-wrap:anywhere}
+.personnel-card-role{margin:5px 0 0;padding-right:72px;color:#676b7b;font-size:14px;line-height:1.45;overflow-wrap:anywhere;min-height:20px}
+.personnel-card-contact{display:flex;align-items:flex-start;gap:10px;min-height:40px;margin-top:18px;padding-right:72px;min-width:0}
+.personnel-card-phone-icon{display:grid;place-items:center;width:32px;height:32px;margin-top:1px;flex-shrink:0;border-radius:10px;background:#f1f2f7;color:#666b80}
+.personnel-card-contact>div{display:grid;gap:4px;min-width:0}
+.personnel-card-contact>div>span{font-size:11px;color:#73788c;line-height:1.35}
+.personnel-card-contact strong{font-size:14px;line-height:1.4;font-weight:500;color:#252943;overflow-wrap:anywhere}
+.personnel-card-crest{position:absolute;right:-4px;bottom:-4px;width:72px;height:76px;object-fit:contain;opacity:.4;pointer-events:none}
+.personnel-card-stats{display:grid;grid-template-columns:1fr 1fr;margin:20px 0 0;padding:10px 0;border-radius:12px;background:#f6f7fa}
+.personnel-card-stats>div{display:flex;flex-direction:column;gap:5px;min-width:0;padding:0 16px}
+.personnel-card-stats>div+div{border-left:1px solid #e0e3eb}
+.personnel-card-stats dd{order:-1;margin:0;font-size:22px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;color:#171a3e}
+.personnel-card-stats dt{font-size:11px;line-height:1.4;color:#686d80}
+.personnel-card-notes{margin:12px 0 0;font-size:12px;line-height:1.55;color:#676b7b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;white-space:pre-wrap}
+.personnel-card-footer{margin-top:auto;padding-top:24px}
+.personnel-card-edit{position:relative;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:44px;padding:11px 40px;border:1px solid transparent;border-radius:12px;background:#171a49;color:#fff;font-size:14px;font-weight:500;line-height:1.4;box-shadow:0 2px 5px #171a490a;transition:background .18s,box-shadow .18s}
+.personnel-card-edit>svg{position:absolute;right:17px}
+.personnel-card-edit:hover{background:#0c113b;box-shadow:0 4px 12px #171a491a}
+.personnel-metrics-note{display:flex;align-items:flex-start;gap:8px;margin:0 2px;color:#676b7b;font-size:12px;line-height:1.6}
+.personnel-metrics-note>svg{margin-top:2px;flex-shrink:0}
+@media(min-width:1550px){.personnel-directory .directory-people-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:620px){.personnel-directory .directory-people-grid{grid-template-columns:1fr;gap:16px}.personnel-card{min-height:0;padding:18px;border-radius:20px}.personnel-card-portrait{aspect-ratio:28/23}.personnel-card-details h2{font-size:21px}}
