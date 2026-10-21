@@ -10,7 +10,7 @@ export async function createMemoryPool() {
   const memory = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memory.adapters.createPg();
   const pool = new adapter.Pool();
-  for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql']) {
+  for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql']) {
     await pool.query(await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8'));
   }
   // pg-mem ignores transactions: snapshots and serialization provide faithful

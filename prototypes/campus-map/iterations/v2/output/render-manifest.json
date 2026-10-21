@@ -1,0 +1,66 @@
+{
+  "overview": {
+    "resolution": [
+      3200,
+      2200
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 89.5,
+    "utc": "2026-10-15T14:11:46.567897+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "5ed6875a204cff04960ff98e8062fbe06c3214483a27a1c39d67c180021c2793",
+    "png_sha256": "39fd5d1e95adac42506c53154fe2acc87d74958e48f9534118b5e0fe17af5c18",
+    "refinement_sha256": "e8ec4209f0693ab2c0608f0bd15cec70c793b325974519215cc5ca610600591c",
+    "layout_sha256": "28a58f505c3b5615db38ddcfcc39f915a4ce0d43ebca21e72e197ead047f5b52",
+    "iteration": 2
+  },
+  "administrativo": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 41.4,
+    "utc": "2026-10-15T14:12:28.207592+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "5ed6875a204cff04960ff98e8062fbe06c3214483a27a1c39d67c180021c2793",
+    "png_sha256": "c696364fa851e1563fe333c1d2cb8a959cd7add0823e9c981c8e943c9f26dce9",
+    "refinement_sha256": "e8ec4209f0693ab2c0608f0bd15cec70c793b325974519215cc5ca610600591c",
+    "layout_sha256": "28a58f505c3b5615db38ddcfcc39f915a4ce0d43ebca21e72e197ead047f5b52",
+    "iteration": 2
+  },
+  "salones": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 43.17,
+    "utc": "2026-10-15T14:13:11.523594+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "5ed6875a204cff04960ff98e8062fbe06c3214483a27a1c39d67c180021c2793",
+    "png_sha256": "676bf91b78ee2e727046e84e2303bccf3f48614f0f165800ee29c131735b79e7",
+    "refinement_sha256": "e8ec4209f0693ab2c0608f0bd15cec70c793b325974519215cc5ca610600591c",
+    "layout_sha256": "28a58f505c3b5615db38ddcfcc39f915a4ce0d43ebca21e72e197ead047f5b52",
+    "iteration": 2
+  },
+  "preescolar": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 36.99,
+    "utc": "2026-10-15T14:13:48.675151+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "5ed6875a204cff04960ff98e8062fbe06c3214483a27a1c39d67c180021c2793",
+    "png_sha256": "f2377355e0edba127e646387c3eccfe6b01c7d0136d45a1e35bdc5d1fe30c421",
+    "refinement_sha256": "e8ec4209f0693ab2c0608f0bd15cec70c793b325974519215cc5ca610600591c",
+    "layout_sha256": "28a58f505c3b5615db38ddcfcc39f915a4ce0d43ebca21e72e197ead047f5b52",
+    "iteration": 2
+  }
+}

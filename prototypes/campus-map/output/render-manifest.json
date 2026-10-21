@@ -1,0 +1,110 @@
+{
+  "overview": {
+    "resolution": [
+      3200,
+      2200
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 99.97,
+    "utc": "2026-10-15T20:55:51.279713+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "f881ad7af6acc20a7a5da6d75fb9d1e470ed7b3b5cbc3e8f664ecaa1dcde799d",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  },
+  "administrativo": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 39.91,
+    "utc": "2026-10-15T20:56:31.489471+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "80fb44e6b688088cf89154ec33ea3f6ddc6b443b99c83275bf9b537e428a8932",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  },
+  "salones": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 43.36,
+    "utc": "2026-10-15T20:57:15.155818+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "287b51c545e47655a7c93cbc00f3e896407d99de6d4a0bcbe2543765a55773e0",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  },
+  "preescolar": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 33.67,
+    "utc": "2026-10-15T20:58:31.114871+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "8c2c8ab424bf96e6d59a3c45583bfd3bdfa6f5f058daa80baf5aeeaea22d802d",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  },
+  "conjunto-bloques": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 41.82,
+    "utc": "2026-10-15T20:57:57.161135+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "ad2b362cf256a972e22c1b17603ae536e3db0cc958ede837f420c41a08e6105d",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  },
+  "bachillerato": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 39.66,
+    "utc": "2026-10-15T20:59:10.926829+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be",
+    "png_sha256": "e2ae17cca6f6ad7ff0b2db443bd0a825a81d97bf78d613e23ee624c20ba258b1",
+    "refinement_sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da",
+    "layout_sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9",
+    "geometry_sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6",
+    "zones_sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc",
+    "iteration": 5
+  }
+}

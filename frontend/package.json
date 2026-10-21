@@ -14,7 +14,8 @@
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",
-    "lucide-react": "latest"
+    "lucide-react": "latest",
+    "react-zoom-pan-pinch": "4.2.0"
   },
   "devDependencies": {
     "vitest": "latest"

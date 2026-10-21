@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { requireRole } from '../middleware/auth.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { config } from '../config.js';
-import { deleteFile, validateUploads } from '../services/storage.js';
+import { deleteFile, prepareUploads, validateUploads } from '../services/storage.js';
 import { activePerson, activeSpace, addHistory, assertOpen, getIncident, incidentSelect, lockIncident, persistEvidence, publicIncident, transaction } from '../services/incident-service.js';
 import { createExcelReport, createPdfReport, reportWindow } from '../services/incident-report.js';
 import { buildWhatsApp, httpError, INCIDENT_STATUSES, parseId, PRIORITIES, PROBLEM_TYPES } from '../utils/maintenance.js';
@@ -81,6 +81,7 @@ router.get('/', asyncHandler(async (req, res) => {
 router.post('/', upload.array('files', config.maxFiles), asyncHandler(async (req, res) => {
   const d = parse(incidentSchema, req.body, 'Selecciona espacio, tipo y prioridad e ingresa una descripción de al menos 10 caracteres.');
   validateUploads(req.files);
+  req.files = await prepareUploads(req.files);
   const id = await transaction(req.app.locals.db, async (client, savedKeys) => {
     const space = await activeSpace(client, d.space_id);
     const person = d.assigned_person_id ? await activePerson(client, d.assigned_person_id) : null;
@@ -174,6 +175,7 @@ router.post('/:id/assign', asyncHandler(async (req, res) => {
 router.post('/:id/close', upload.array('files', config.maxFiles), asyncHandler(async (req, res) => {
   const d = parse(z.object({ resolution_notes: z.string().trim().min(10).max(4000), confirmed: z.literal('true') }).strict(), req.body, 'Describe la solución (mínimo 10 caracteres) y confirma el cierre de la incidencia.');
   validateUploads(req.files, { required: true });
+  req.files = await prepareUploads(req.files);
   const id = await transaction(req.app.locals.db, async (client, savedKeys) => {
     const current = await lockIncident(client, req.params.id);
     assertOpen(current);

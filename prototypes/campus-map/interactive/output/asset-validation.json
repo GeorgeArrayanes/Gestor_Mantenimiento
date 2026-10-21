@@ -1,0 +1,170 @@
+{
+  "source": {
+    "source_iteration": 5,
+    "source_blend_sha256": "8b4a1b7e16fa6e8d18df9733b5b9ab2d66ef9839c5427f6c787dc5c18d1c1f08",
+    "source_render_sha256": "f881ad7af6acc20a7a5da6d75fb9d1e470ed7b3b5cbc3e8f664ecaa1dcde799d",
+    "camera": {
+      "normalized_bounds": [
+        0.11027217656373978,
+        0.0795632153749466,
+        0.8908684849739075,
+        0.8990978002548218
+      ],
+      "clipped": false,
+      "ortho_scale": 196.41915893554688,
+      "location": [
+        136.64227294921875,
+        -136.64227294921875,
+        141.3640594482422
+      ],
+      "rotation_radians": [
+        0.9553165435791016,
+        -1.1763476237547366e-07,
+        0.7853981852531433
+      ]
+    },
+    "method": "Opaque Object Info Color emission; full scene depth occlusion; identical orthographic camera; source not saved.",
+    "glass_selection": "Front glazing is selectable as an opaque semantic surface; original artwork remains transparent."
+  },
+  "simplification_max_error_px": 0.5,
+  "minimum_contour_area_px": 3,
+  "regions": [
+    {
+      "id": "administrativo",
+      "visible_pixels": 145890,
+      "subpaths": 2,
+      "vertices": 688,
+      "vector_pixel_iou": 0.99998
+    },
+    {
+      "id": "bloques-salones",
+      "visible_pixels": 231705,
+      "subpaths": 20,
+      "vertices": 2104,
+      "vector_pixel_iou": 0.99991
+    },
+    {
+      "id": "preescolar",
+      "visible_pixels": 221321,
+      "subpaths": 12,
+      "vertices": 2174,
+      "vector_pixel_iou": 0.99944
+    },
+    {
+      "id": "bachillerato",
+      "visible_pixels": 108036,
+      "subpaths": 1,
+      "vertices": 504,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "transicion",
+      "visible_pixels": 64502,
+      "subpaths": 1,
+      "vertices": 540,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "grado-11",
+      "visible_pixels": 29793,
+      "subpaths": 1,
+      "vertices": 148,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "comedor",
+      "visible_pixels": 35973,
+      "subpaths": 8,
+      "vertices": 442,
+      "vector_pixel_iou": 0.99983
+    },
+    {
+      "id": "economato",
+      "visible_pixels": 25458,
+      "subpaths": 1,
+      "vertices": 342,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "primeros-auxilios",
+      "visible_pixels": 7216,
+      "subpaths": 1,
+      "vertices": 228,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "danzas-1",
+      "visible_pixels": 3603,
+      "subpaths": 1,
+      "vertices": 208,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "danzas-2",
+      "visible_pixels": 9093,
+      "subpaths": 1,
+      "vertices": 300,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "tienda-1",
+      "visible_pixels": 45788,
+      "subpaths": 1,
+      "vertices": 536,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "gym",
+      "visible_pixels": 6562,
+      "subpaths": 1,
+      "vertices": 94,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "futbol-principal",
+      "visible_pixels": 87848,
+      "subpaths": 9,
+      "vertices": 1452,
+      "vector_pixel_iou": 0.99995
+    },
+    {
+      "id": "futbol-norte",
+      "visible_pixels": 17361,
+      "subpaths": 2,
+      "vertices": 212,
+      "vector_pixel_iou": 1.0
+    },
+    {
+      "id": "patio-central",
+      "visible_pixels": 635933,
+      "subpaths": 21,
+      "vertices": 4280,
+      "vector_pixel_iou": 0.99994
+    }
+  ],
+  "assets": [
+    {
+      "name": "campus-1600.webp",
+      "width": 1600,
+      "height": 1100,
+      "bytes": 151304,
+      "sha256": "9f0c682597809b62413454d7ce17c6ff254c847dce95716c7fc23285e632d6f9"
+    },
+    {
+      "name": "campus-2400.webp",
+      "width": 2400,
+      "height": 1650,
+      "bytes": 281474,
+      "sha256": "0659e20d80cc2f1c7b7a86b1625f958d2aa3438674173ed93a1e105eb8b8c0f4"
+    },
+    {
+      "name": "campus-3200.webp",
+      "width": 3200,
+      "height": 2200,
+      "bytes": 423074,
+      "sha256": "1744eaa628fa108a40c1c439dd682114c2b1149ffd5274ff4f965f1aea540a31"
+    }
+  ],
+  "public_regions_bytes": 138558,
+  "source_unchanged": true
+}

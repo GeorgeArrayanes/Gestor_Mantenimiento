@@ -4,7 +4,7 @@
 .directory-page .eyebrow{font-size:12px;letter-spacing:1.2px;color:#515874}
 .directory-page .primary-button{border-radius:11px;font-size:13px}
 .directory-team-heading{position:relative;isolation:isolate;overflow:hidden;padding:25px 26px;min-height:150px;border:1px solid #e4e5e8;border-radius:18px;background:#f8f9f5}
-.directory-team-heading:before{content:'';position:absolute;inset:0 0 0 40%;z-index:-1;background:linear-gradient(90deg,#f8f9f5 0%,#f8f9f5c9 33%,#f8f9f55c 100%),url('/campus-maintenance.jpg') right 44%/cover;opacity:.72}
+.directory-team-heading:before{content:'';position:absolute;inset:0 0 0 40%;z-index:-1;background:linear-gradient(90deg,#f8f9f5 0%,#f8f9f5c9 33%,#f8f9f55c 100%),url('/campus-maintenance.webp') right 44%/cover;opacity:.72}
 .directory-team-heading>div{max-width:58%}
 .directory-team-heading>.primary-button{align-self:center;box-shadow:0 5px 18px #090f3f24}
 .directory-page .directory-toolbar-panel{padding:15px 18px;border-radius:15px;background:#fff;box-shadow:0 3px 16px #161b3b04}

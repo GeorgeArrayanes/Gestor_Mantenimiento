@@ -1,0 +1,16 @@
+{
+  "blender": "4.5.9 LTS",
+  "source_frame": "2:2",
+  "region_count": 26,
+  "detailed_buildings": [
+    "administrativo",
+    "salones",
+    "preescolar"
+  ],
+  "objects": 1673,
+  "mesh_objects": 1402,
+  "render_device": "GPU",
+  "seed": 42,
+  "validation_errors": [],
+  "scope": "Visual prototype only; all dimensions approximate. No application or database integration."
+}

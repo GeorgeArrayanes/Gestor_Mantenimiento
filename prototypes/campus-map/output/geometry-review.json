@@ -1,0 +1,188 @@
+{
+  "football": {
+    "playing_axis": "horizontal / long u axis",
+    "halfway_line": "u=0.5, across short axis",
+    "goals": "opposite short ends",
+    "penalty_areas": "left and right ends",
+    "center_circle_world_radius": 2.662,
+    "same_lawn_footprint": true
+  },
+  "north_football": {
+    "playing_axis": "vertical / long u axis",
+    "halfway_line": "u=0.5, across short axis",
+    "goals": "opposite short ends",
+    "penalty_areas": "upper and lower ends",
+    "center_circle_world_radius": 1.252,
+    "same_lawn_footprint": false,
+    "reference_region": "4:43",
+    "adjacent_to": "4:47 / GYM",
+    "additional_field": true,
+    "main_horizontal_field_preserved": true,
+    "source_corners": [
+      [
+        677.42,
+        109.24
+      ],
+      [
+        637.205,
+        174.76
+      ],
+      [
+        713.135,
+        174.76
+      ],
+      [
+        744.74,
+        109.24
+      ]
+    ]
+  },
+  "transverse_height": {
+    "storeys": 2,
+    "core_height": 3.7,
+    "maximum_roof_z": 4.8,
+    "previous_maximum_roof_z": 10.36,
+    "roof_height_ratio": 0.463,
+    "elevated_connectors_removed": true,
+    "footprint_and_setbacks_unchanged": true
+  },
+  "classroom_ensemble": {
+    "main_bars": 4,
+    "transverse_bars": 1,
+    "transverse_region": "4:23",
+    "shared_materials": true,
+    "main_bars_storeys": 3,
+    "transverse_storeys": 2,
+    "connected_galleries": 0,
+    "ground_links": 2
+  },
+  "classroom_spacing": {
+    "units": "relative design units, not surveyed meters",
+    "rear_end_retraction": 3.0,
+    "transverse_offset": 2.25,
+    "transverse_length_factor": 0.93,
+    "upper_pair_outward_offsets": 0.55,
+    "upper_pair_gallery_gap": 2.048,
+    "front_pair_unchanged": true,
+    "envelope_clearances": {
+      "bloque-3": {
+        "roof_gap": 3.439,
+        "gallery_gap": 2.474
+      },
+      "bloque-4": {
+        "roof_gap": 3.107,
+        "gallery_gap": 2.273
+      }
+    },
+    "narrow_uncovered_links": [
+      {
+        "from": "bloque-3",
+        "length": 4.043
+      },
+      {
+        "from": "bloque-4",
+        "length": 3.226
+      }
+    ],
+    "description": "Clear roof and gallery gaps, with narrow uncovered circulation links."
+  },
+  "preschool_lateral_facade": {
+    "large_window_assemblies": 2,
+    "repeated_small_outer_windows": 0,
+    "wing": "entrance / courtyard-facing white wing",
+    "window_height": 5.3,
+    "description": "Two broad, two-storey glazed openings separated by a white central pier."
+  },
+  "preschool_roof": {
+    "reference_region": "4:33",
+    "footprint_vertices": 6,
+    "glass_vertices": 6,
+    "glass_area": 577.12,
+    "reference_area": 1063.038,
+    "two_glass_arms": true,
+    "shared_ridge_junction": [
+      39.41749572753906,
+      30.102828979492188,
+      9.25
+    ],
+    "panels": 74,
+    "roof_partition_area_error": 0.0,
+    "all_glass_vertices_inside_reference": true,
+    "glass_world_footprint": [
+      [
+        30.254070281982422,
+        37.501251220703125,
+        0.0
+      ],
+      [
+        65.86993408203125,
+        40.7393798828125,
+        0.0
+      ],
+      [
+        67.69766998291016,
+        38.24643325805664,
+        0.0
+      ],
+      [
+        48.58091735839844,
+        22.70440673828125,
+        0.0
+      ],
+      [
+        63.526424407958984,
+        14.86103630065918,
+        0.0
+      ],
+      [
+        36.41556167602539,
+        16.200437545776367,
+        0.0
+      ]
+    ],
+    "description": "Complete V roof follows the re-entrant corner and both arms; blue/white edges set its insets."
+  },
+  "bachillerato": {
+    "region": "4:25",
+    "enclosed_storeys": 3,
+    "open_courtyard_removed": true,
+    "continuous_roof": true,
+    "blue_roof_fields": 6,
+    "glazed_roof_monitors": 2,
+    "glass_entrance_hall": true
+  },
+  "gym": {
+    "region": "4:47",
+    "type": "open_air_exercise_park",
+    "building": false,
+    "walls": 0,
+    "roof": 0,
+    "equipment": [
+      "pull-up bars",
+      "exercise bench",
+      "steps"
+    ]
+  },
+  "tienda": {
+    "region": "4:35",
+    "moved_toward_preschool": true,
+    "original_center": [
+      78.89756774902344,
+      -6.494060039520264,
+      0.0
+    ],
+    "new_center": [
+      87.14688873291016,
+      4.400999546051025,
+      0.0
+    ],
+    "translation": [
+      8.249320983886719,
+      10.895059585571289,
+      0.0
+    ],
+    "original_head_to_preschool_tip": 12.738,
+    "new_head_to_preschool_tip": 1.8,
+    "description": "Shop head moved next to the end of the white preschool wing; short paved link."
+  }
+}

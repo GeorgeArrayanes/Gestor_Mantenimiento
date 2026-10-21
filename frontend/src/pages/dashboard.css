@@ -1,5 +1,5 @@
 .dashboard-workspace { display: grid; grid-template-columns: minmax(0, 2.75fr) minmax(275px, 1fr); gap: 18px; align-items: start; }
-.campus-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 360px; border-radius: 20px; background: #191f49 url('/campus-maintenance.jpg') center 55% / cover; box-shadow: 0 8px 24px #161b3f12; display: flex; flex-direction: column; }
+.campus-hero { position: relative; isolation: isolate; overflow: hidden; min-height: 360px; border-radius: 20px; background: #191f49 url('/campus-maintenance.webp') center 55% / cover; box-shadow: 0 8px 24px #161b3f12; display: flex; flex-direction: column; }
 .campus-hero::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, #0a103af0 0%, #151a41d9 30%, #1a1e3c55 66%, #15182e12 100%), linear-gradient(0deg, #0b113abd 0%, transparent 38%); }
 .campus-hero-content { padding: 27px 30px 24px; }
 .dashboard-page .campus-hero-content .eyebrow { color: #dbdee7; font-size: 10px; letter-spacing: 2px; margin-bottom: 13px; }

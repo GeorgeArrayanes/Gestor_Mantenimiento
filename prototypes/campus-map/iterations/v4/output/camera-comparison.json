@@ -1,0 +1,5 @@
+{
+  "same_base_camera": true,
+  "max_parameter_delta": 0.0,
+  "reference": "iterations/v1/output/camera-validation.json"
+}

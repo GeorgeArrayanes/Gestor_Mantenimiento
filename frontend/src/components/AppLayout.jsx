@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowUpRight, Building2, CalendarDays, ClipboardList, LayoutDashboard, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus, ShieldCheck, UsersRound, X } from 'lucide-react';
+import { ArrowUpRight, Building2, CalendarDays, ClipboardList, LayoutDashboard, LogOut, Map, Menu, PanelLeftClose, PanelLeftOpen, Plus, ShieldCheck, UsersRound, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { isSuperAdminRole } from '../utils/roles.js';
 import { Avatar } from './DesignSystem.jsx';
@@ -8,7 +8,7 @@ import { Avatar } from './DesignSystem.jsx';
 export function Brand({ inverse = false }) {
   return <div className={`brand ${inverse ? 'brand-inverse' : ''}`}><span className="brand-mark"><img src="/brand-logo.png" alt="" aria-hidden="true" /></span><div className="brand-copy"><strong>Gestor<br />Mantenimiento</strong><small>Gimnasio Los Arrayanes</small></div></div>;
 }
-const operation = [['/', 'Dashboard', LayoutDashboard], ['/incidencias/nueva', 'Nueva incidencia', Plus], ['/incidencias', 'Incidencias', ClipboardList]];
+const operation = [['/', 'Dashboard', LayoutDashboard], ['/mapa', 'Mapa del colegio', Map], ['/incidencias/nueva', 'Nueva incidencia', Plus], ['/incidencias', 'Incidencias', ClipboardList]];
 export default function AppLayout() {
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);

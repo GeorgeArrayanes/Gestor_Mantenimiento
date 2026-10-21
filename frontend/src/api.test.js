@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { api, createSession, downloadEvidence, fetchEvidenceBlob, fileUrl, getSessionToken, onUnauthorized, openEvidence, setSessionToken } from './api.js';
+import { api, clearSessionToken, createSession, downloadEvidence, fetchEvidenceBlob, fetchPrivateImageBlob, fileUrl, getSessionToken, onUnauthorized, openEvidence, setSessionToken } from './api.js';
 
 afterEach(() => {
+  clearSessionToken();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
@@ -162,8 +164,9 @@ describe('lectura y apertura de evidencias privadas', () => {
     const controller = new AbortController();
     await expect(fetchEvidenceBlob('/api/evidences/8/download', { signal: controller.signal, imageOnly: true })).resolves.toBe(blob);
     expect(fetchMock).toHaveBeenCalledWith('/api/evidences/8/download', {
-      credentials: 'include', redirect: 'error', signal: controller.signal, headers: { Authorization: 'Bearer token-privado' },
+      credentials: 'include', redirect: 'error', signal: expect.any(AbortSignal), headers: { Authorization: 'Bearer token-privado' },
     });
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(false);
   });
 
   it.each([
@@ -251,5 +254,182 @@ describe('lectura y apertura de evidencias privadas', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, blob: async () => new Blob(['<html>'], { type: 'text/html' }) }));
     await expect(openEvidence('/api/evidences/2/download', 'informe.pdf')).rejects.toThrow('formato permitido');
     expect(target.close).toHaveBeenCalledOnce(); expect(URL.createObjectURL).not.toHaveBeenCalled();
+  });
+});
+
+describe('aislamiento de la caché de imágenes privadas', () => {
+  function session(token = '') {
+    const values = new Map();
+    vi.stubGlobal('window', {
+      sessionStorage: { getItem: key => values.get(key) || null, setItem: (key, value) => values.set(key, value), removeItem: key => values.delete(key) },
+    });
+    setSessionToken(token);
+    return values;
+  }
+
+  function imageResponse(content = 'picture') {
+    const blob = new Blob([content], { type: 'image/png' });
+    return { ok: true, status: 200, blob: async () => blob };
+  }
+
+  it('reutiliza imágenes de espacios, personal y evidencias sin crear URLs del navegador', async () => {
+    session('first-user');
+    const fetchMock = vi.fn().mockImplementation(async () => imageResponse());
+    const createObjectURL = vi.fn(), revokeObjectURL = vi.fn();
+    vi.stubGlobal('fetch', fetchMock); vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+    for (const url of ['/api/spaces/1/image?v=1', '/api/personnel/2/image?v=3']) {
+      const blob = await fetchPrivateImageBlob(url);
+      await expect(fetchPrivateImageBlob(url)).resolves.toBe(blob);
+    }
+    const evidence = await fetchEvidenceBlob('/api/evidences/3/download');
+    await expect(fetchEvidenceBlob('/api/evidences/3/download', { imageOnly: true })).resolves.toBe(evidence);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(createObjectURL).not.toHaveBeenCalled(); expect(revokeObjectURL).not.toHaveBeenCalled();
+  });
+
+  it('distingue las versiones de la foto y vuelve a descargarla al vencer 60 segundos', async () => {
+    session(); vi.useFakeTimers();
+    const fetchMock = vi.fn().mockImplementation(async () => imageResponse()); vi.stubGlobal('fetch', fetchMock);
+    await fetchPrivateImageBlob('/api/spaces/1/image?v=1');
+    await fetchPrivateImageBlob('/api/spaces/1/image?v=2');
+    await fetchPrivateImageBlob('/api/spaces/1/image?v=1');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.advanceTimersByTime(60_000);
+    await fetchPrivateImageBlob('/api/spaces/1/image?v=1');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(['/auth/login', '/auth/logout'])('borra los bytes de la sesión por cookie al llamar %s', async path => {
+    session();
+    const fetchMock = vi.fn().mockImplementation(async url => url.includes('/auth/') ? { ok: true, json: async () => ({}) } : imageResponse());
+    vi.stubGlobal('fetch', fetchMock);
+    const first = await fetchPrivateImageBlob('/api/personnel/1/image');
+    await api(path, { method: 'POST', cookieOnly: true });
+    await expect(fetchPrivateImageBlob('/api/personnel/1/image')).resolves.not.toBe(first);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[2][1].headers).toEqual({});
+  });
+
+  it.each(['/auth/login', '/auth/logout'])('descarta también las imágenes leídas durante la transición de %s', async path => {
+    session();
+    let resolveAuth;
+    const authentication = new Promise(resolve => { resolveAuth = resolve; });
+    const fetchMock = vi.fn().mockImplementation(url => url.includes('/auth/') ? authentication : Promise.resolve(imageResponse()));
+    vi.stubGlobal('fetch', fetchMock);
+    const changingSession = api(path, { method: 'POST', cookieOnly: true });
+    const oldCookieImage = await fetchPrivateImageBlob('/api/spaces/1/image');
+    resolveAuth({ ok: true, json: async () => ({}) });
+    await changingSession;
+    await expect(fetchPrivateImageBlob('/api/spaces/1/image')).resolves.not.toBe(oldCookieImage);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('borra los bytes al establecer el respaldo bearer, cambiarlo y volver a cookie', async () => {
+    session();
+    const fetchMock = vi.fn().mockImplementation(async () => imageResponse()); vi.stubGlobal('fetch', fetchMock);
+    const url = '/api/spaces/1/image';
+    const cookieBlob = await fetchPrivateImageBlob(url);
+    setSessionToken('first-user');
+    await expect(fetchPrivateImageBlob(url)).resolves.not.toBe(cookieBlob);
+    setSessionToken('second-user');
+    await fetchPrivateImageBlob(url);
+    clearSessionToken();
+    await fetchPrivateImageBlob(url);
+    expect(fetchMock.mock.calls.map(([, options]) => options.headers)).toEqual([
+      {}, { Authorization: 'Bearer first-user' }, { Authorization: 'Bearer second-user' }, {},
+    ]);
+  });
+
+  it('detecta cambios externos del token antes de devolver bytes de otro usuario', async () => {
+    const values = session('first-user');
+    const fetchMock = vi.fn().mockImplementation(async () => imageResponse()); vi.stubGlobal('fetch', fetchMock);
+    const first = await fetchPrivateImageBlob('/api/spaces/1/image');
+    values.set('mantenimiento_session_token', 'second-user');
+    await expect(fetchPrivateImageBlob('/api/spaces/1/image')).resolves.not.toBe(first);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][1].headers).toEqual({ Authorization: 'Bearer second-user' });
+  });
+
+  it('cancela la descarga del usuario anterior cuando cambia el token sin entregar sus bytes', async () => {
+    session('first-user');
+    let resolveOld;
+    const oldResponse = new Promise(resolve => { resolveOld = resolve; });
+    const fetchMock = vi.fn().mockReturnValueOnce(oldResponse).mockImplementation(async () => imageResponse('new-user'));
+    vi.stubGlobal('fetch', fetchMock);
+    const old = fetchPrivateImageBlob('/api/spaces/1/image');
+    const canceled = expect(old).rejects.toMatchObject({ name: 'AbortError' });
+    await Promise.resolve();
+    setSessionToken('second-user');
+    await canceled;
+    expect(fetchMock.mock.calls[0][1].signal.aborted).toBe(true);
+    const current = await fetchPrivateImageBlob('/api/spaces/1/image');
+    resolveOld(imageResponse('old-user'));
+    await Promise.resolve();
+    await expect(fetchPrivateImageBlob('/api/spaces/1/image')).resolves.toBe(current);
+    expect(await current.text()).toBe('new-user'); expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('un 401 borra imágenes previas y rechaza las solicitudes pendientes con el error de sesión', async () => {
+    session('first-user');
+    const listener = vi.fn(), unsubscribe = onUnauthorized(listener);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(imageResponse())
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ message: 'La sesión expiró.' }) })
+      .mockResolvedValueOnce(imageResponse('new-session'));
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const first = await fetchPrivateImageBlob('/api/spaces/1/image');
+      await expect(fetchEvidenceBlob('/api/evidences/2/download')).rejects.toMatchObject({ status: 401, message: 'La sesión expiró.' });
+      expect(listener).toHaveBeenCalledOnce(); expect(getSessionToken()).toBe('');
+      await expect(fetchPrivateImageBlob('/api/spaces/1/image')).resolves.not.toBe(first);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+    } finally { unsubscribe(); }
+  });
+
+  it('también borra las fotos cuando una llamada JSON devuelve 401', async () => {
+    session('first-user');
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(imageResponse())
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({ message: 'Sesión expirada.' }) })
+      .mockResolvedValueOnce(imageResponse());
+    vi.stubGlobal('fetch', fetchMock);
+    const first = await fetchPrivateImageBlob('/api/spaces/1/image');
+    await expect(api('/auth/me')).rejects.toMatchObject({ status: 401 });
+    await expect(fetchPrivateImageBlob('/api/spaces/1/image')).resolves.not.toBe(first);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('permite PDF como evidencia pero nunca lo conserva en la caché', async () => {
+    session();
+    const blob = new Blob(['%PDF-1.4'], { type: 'application/pdf' });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, blob: async () => blob }); vi.stubGlobal('fetch', fetchMock);
+    await expect(fetchEvidenceBlob('/api/evidences/1/download')).resolves.toBe(blob);
+    await expect(fetchEvidenceBlob('/api/evidences/1/download')).resolves.toBe(blob);
+    await expect(fetchEvidenceBlob('/api/evidences/1/download', { imageOnly: true })).rejects.toThrow('Vista previa no disponible');
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('no almacena errores de red, respuestas HTTP fallidas ni MIME rechazado', async () => {
+    session();
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValueOnce({ ok: false, status: 503, json: async () => ({ message: 'No disponible.' }) })
+      .mockResolvedValueOnce({ ok: true, blob: async () => new Blob(['unsafe'], { type: 'text/html' }) })
+      .mockResolvedValueOnce(imageResponse());
+    vi.stubGlobal('fetch', fetchMock);
+    const url = '/api/spaces/1/image';
+    await expect(fetchPrivateImageBlob(url)).rejects.toThrow('No se pudo cargar');
+    await expect(fetchPrivateImageBlob(url)).rejects.toMatchObject({ status: 503 });
+    await expect(fetchPrivateImageBlob(url)).rejects.toThrow('formato permitido');
+    const valid = await fetchPrivateImageBlob(url);
+    await expect(fetchPrivateImageBlob(url)).resolves.toBe(valid);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+  });
+
+  it.each(['https://untrusted.test/api/spaces/1/image', '/api/spaces/1/image?token=secret', '/api/personnel/0/image', '/api/spaces/1/image#photo', '/api/spaces/../auth/me/image'])('rechaza la imagen %s antes de enviar credenciales', async url => {
+    session('private-token');
+    const fetchMock = vi.fn(); vi.stubGlobal('fetch', fetchMock);
+    await expect(fetchPrivateImageBlob(url)).rejects.toThrow('enlace válido');
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

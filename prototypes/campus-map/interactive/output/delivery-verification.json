@@ -1,0 +1,50 @@
+{
+  "passed": true,
+  "approved_iteration": 5,
+  "files": [
+    {
+      "file": "prototypes\\campus-map\\build_scene.py",
+      "sha256": "f569d81b9c711fe48e3543c69879dcfb716201f4fb052ac3cd76360913bcb6be"
+    },
+    {
+      "file": "prototypes\\campus-map\\refine_scene.py",
+      "sha256": "a6465e648eab84b4958fd1c01bfca155d245d756ef08e6a465224127bcec11da"
+    },
+    {
+      "file": "prototypes\\campus-map\\campus_geometry.py",
+      "sha256": "2002c65801638ff16e99d11a6547fad49ce2acb116eedef2d188a3d57c0a07c6"
+    },
+    {
+      "file": "prototypes\\campus-map\\corrected_zones.py",
+      "sha256": "2e7bcc1873ab35fb5891b1f70f511cbfde708f80db373fac360f9319ab6b8afc"
+    },
+    {
+      "file": "prototypes\\campus-map\\layout.json",
+      "sha256": "f8977ee1d05299677a9cda1948d9abe061f04e8b58a96ddd481cec6bb6beccc9"
+    },
+    {
+      "file": "prototypes\\campus-map\\output\\overview.png",
+      "sha256": "f881ad7af6acc20a7a5da6d75fb9d1e470ed7b3b5cbc3e8f664ecaa1dcde799d"
+    },
+    {
+      "file": "prototypes\\campus-map\\output\\arrayanes-campus.blend",
+      "sha256": "8b4a1b7e16fa6e8d18df9733b5b9ab2d66ef9839c5427f6c787dc5c18d1c1f08"
+    },
+    {
+      "file": "frontend\\public\\campus-map\\campus-1600.webp",
+      "sha256": "9f0c682597809b62413454d7ce17c6ff254c847dce95716c7fc23285e632d6f9"
+    },
+    {
+      "file": "frontend\\public\\campus-map\\campus-2400.webp",
+      "sha256": "0659e20d80cc2f1c7b7a86b1625f958d2aa3438674173ed93a1e105eb8b8c0f4"
+    },
+    {
+      "file": "frontend\\public\\campus-map\\campus-3200.webp",
+      "sha256": "1744eaa628fa108a40c1c439dd682114c2b1149ffd5274ff4f965f1aea540a31"
+    }
+  ],
+  "regions": 16,
+  "ray_samples": 2760,
+  "ray_mismatches": 0,
+  "vector_min_iou": 0.99944
+}
