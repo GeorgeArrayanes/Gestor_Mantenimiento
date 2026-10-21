@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { config } from '../config.js';
+import { optimizeImageUpload } from './image-optimization.js';
 
 const extensions = new Map([['image/jpeg', '.jpg'], ['image/png', '.png'], ['image/webp', '.webp'], ['application/pdf', '.pdf']]);
 const ephemeral = new Map();
@@ -30,6 +31,19 @@ export function validateUploads(files, { required = false } = {}) {
   if ((files?.length || 0) > config.maxFiles) throw invalid(`Selecciona máximo ${config.maxFiles} archivos.`);
   for (const file of files || []) validateUpload(file);
   if (required && !files.some((file) => file.mimetype.startsWith('image/'))) throw invalid('Adjunta al menos una fotografía de la solución. Puedes acompañarla con documentos PDF.');
+}
+
+// Prepare before starting a database transaction. Callers persist these returned
+// bytes, filename, MIME and size together; storage never changes them silently.
+export async function prepareUpload(file) {
+  validateUpload(file);
+  return optimizeImageUpload(file);
+}
+
+export async function prepareUploads(files = []) {
+  const prepared = [];
+  for (const file of files) prepared.push(await prepareUpload(file));
+  return prepared;
 }
 
 function supabase() { return createClient(config.supabaseUrl, config.supabaseKey, { auth: { persistSession: false } }); }

@@ -19,7 +19,7 @@ export default function EvidenceUpload({ files, onChange, label = 'Evidencia fot
       <UploadCloud size={28} aria-hidden="true" />
       <label className={`upload-picker${disabled ? ' disabled' : ''}`} htmlFor={inputId}>Seleccionar archivos</label>
       <input id={inputId} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" multiple disabled={disabled} aria-describedby={`${inputId}-help${error ? ` ${inputId}-error` : ''}`} onChange={(event) => { add(Array.from(event.target.files)); event.target.value = ''; }} />
-      <small id={`${inputId}-help`}>JPG, PNG, WEBP o PDF · máximo 5 MB por archivo. También puedes arrastrarlos aquí.</small>
+      <small id={`${inputId}-help`}>JPG, PNG, WEBP o PDF · máximo 5 MB por archivo. Las fotos se optimizan al guardarlas; los PDF se conservan. También puedes arrastrarlos aquí.</small>
     </div>
     <p className="upload-count">{files.length} de 5 archivos seleccionados.</p>
     {error && <p id={`${inputId}-error`} className="field-error" role="alert">{error}</p>}

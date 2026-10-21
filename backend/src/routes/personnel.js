@@ -3,7 +3,7 @@ import multer from 'multer';
 import { z } from 'zod';
 import { config } from '../config.js';
 import { requireRole } from '../middleware/auth.js';
-import { deleteFile, readFile, safeFileName, saveDirectoryImage, validateImageUpload } from '../services/storage.js';
+import { deleteFile, prepareUpload, readFile, safeFileName, saveDirectoryImage, validateImageUpload } from '../services/storage.js';
 import { asyncHandler } from '../utils/async-handler.js';
 import { httpError, normalizePhone, parseId } from '../utils/maintenance.js';
 import { transaction } from '../services/incident-service.js';
@@ -64,6 +64,7 @@ router.post('/', upload.single('image'), asyncHandler(async (req, res) => {
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) throw httpError(400, 'Completa nombre y especialidad e ingresa un teléfono válido con código de país.');
   if (req.file) validateImageUpload(req.file);
+  if (req.file) req.file = await prepareUpload(req.file);
   const d = parsed.data;
   const person = await transaction(req.app.locals.db, async (client, savedKeys) => {
     let { rows } = await client.query(`INSERT INTO maintenance_personnel(name,phone,specialty,notes,active) VALUES($1,$2,$3,$4,$5) RETURNING *`, [d.name,d.phone,d.specialty,d.notes || null,d.active ?? true]);
@@ -80,6 +81,7 @@ router.patch('/:id', upload.single('image'), asyncHandler(async (req, res) => {
   const parsed = schema.partial().safeParse(req.body);
   if (!parsed.success || (!Object.keys(parsed.data).length && !req.file)) throw httpError(400, 'Datos de personal inválidos. Verifica el teléfono y su código de país.');
   if (req.file) validateImageUpload(req.file);
+  if (req.file) req.file = await prepareUpload(req.file);
   const result = await transaction(req.app.locals.db, async (client, savedKeys) => {
     const current = (await client.query('SELECT * FROM maintenance_personnel WHERE id=$1 FOR UPDATE', [parseId(req.params.id)])).rows[0];
     if (!current) throw httpError(404, 'Persona inexistente.');

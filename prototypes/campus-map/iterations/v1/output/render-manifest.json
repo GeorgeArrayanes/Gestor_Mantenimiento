@@ -1,0 +1,54 @@
+{
+  "overview": {
+    "resolution": [
+      3200,
+      2200
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 81.33,
+    "utc": "2026-10-14T18:18:22.993203+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "20d97c09e66e13cc1953272d6a6eb321cc5a7d629fadf6de44c3df57423a1c92",
+    "png_sha256": "586bef64c8971eda795204c351621371c558d6b360bc43ae5b45538414c4a826"
+  },
+  "administrativo": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 34.31,
+    "utc": "2026-10-14T18:18:57.461709+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "20d97c09e66e13cc1953272d6a6eb321cc5a7d629fadf6de44c3df57423a1c92",
+    "png_sha256": "17efd6290c01e01f0d0c137197376b727f60d583ffbbe3dd4f8905d872e4f65f"
+  },
+  "salones": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 33.62,
+    "utc": "2026-10-14T18:19:31.200462+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "20d97c09e66e13cc1953272d6a6eb321cc5a7d629fadf6de44c3df57423a1c92",
+    "png_sha256": "d4e57aa4a02fb170d58719c14e503eef7a476e98e054e1eddafe12a3da5678b2"
+  },
+  "preescolar": {
+    "resolution": [
+      1800,
+      1350
+    ],
+    "samples": 96,
+    "device": "GPU",
+    "seconds": 32.39,
+    "utc": "2026-10-14T18:20:03.669932+00:00",
+    "blender": "4.5.9 LTS",
+    "script_sha256": "20d97c09e66e13cc1953272d6a6eb321cc5a7d629fadf6de44c3df57423a1c92",
+    "png_sha256": "746e6d74af19dcfc1a2f3d6fe736f842cd8b4b58188ca2e0ceace81fb4c12679"
+  }
+}

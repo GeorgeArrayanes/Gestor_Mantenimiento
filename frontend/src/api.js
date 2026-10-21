@@ -1,7 +1,16 @@
+import { createPrivateMediaCache } from './private-media-cache.js';
+
 const API_URL = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
 const SESSION_TOKEN_KEY = 'mantenimiento_session_token';
 
 const unauthorizedListeners = new Set();
+const privateMediaCache = createPrivateMediaCache({ canCache: (blob) => imageMimeTypes.has(blob.type.split(';')[0].trim().toLowerCase()) });
+let mediaSessionToken = null;
+
+function resetPrivateMedia(reason) {
+  privateMediaCache.clear(reason);
+  mediaSessionToken = null;
+}
 
 function storage() {
   try {
@@ -16,13 +25,15 @@ export function getSessionToken() {
 }
 
 export function setSessionToken(token) {
+  resetPrivateMedia();
   const sessionStorage = storage();
   if (!sessionStorage) return;
   if (token) sessionStorage.setItem(SESSION_TOKEN_KEY, token);
   else sessionStorage.removeItem(SESSION_TOKEN_KEY);
 }
 
-export function clearSessionToken() {
+export function clearSessionToken(reason) {
+  resetPrivateMedia(reason);
   storage()?.removeItem(SESSION_TOKEN_KEY);
 }
 
@@ -33,7 +44,7 @@ export function onUnauthorized(listener) {
 }
 
 function notifyUnauthorized(error) {
-  clearSessionToken();
+  clearSessionToken(error);
   for (const listener of unauthorizedListeners) {
     try {
       listener(error);
@@ -44,6 +55,8 @@ function notifyUnauthorized(error) {
 }
 
 export async function api(path, options = {}) {
+  const changesSession = path === '/auth/login' || path === '/auth/logout';
+  if (changesSession) resetPrivateMedia();
   const { cookieOnly = false, ...requestOptions } = options;
   const isForm = requestOptions.body instanceof FormData;
   const token = cookieOnly ? '' : getSessionToken();
@@ -63,6 +76,7 @@ export async function api(path, options = {}) {
     throw new Error('No se pudo conectar con el servidor. Revisa tu conexión e intenta nuevamente.');
   }
   const data = await response.json().catch(() => ({}));
+  if (changesSession) resetPrivateMedia();
   if (!response.ok) {
     const error = new Error(data.message || 'No fue posible completar la operación.');
     error.status = response.status;
@@ -123,53 +137,48 @@ function assertNotAborted(signal) {
 export async function fetchEvidenceBlob(url, { signal, imageOnly = false } = {}) {
   const resolved = evidenceEndpoint(url);
   assertNotAborted(signal);
-  const token = getSessionToken();
-  let response;
-  try {
-    response = await fetch(resolved, { credentials: 'include', redirect: 'error', signal, headers: token ? { Authorization: `Bearer ${token}` } : {} });
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    throw new Error('No se pudo conectar. Intenta descargar la evidencia nuevamente.');
-  }
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    const error = new Error(data.message || 'No fue posible descargar la evidencia.');
-    error.status = response.status;
-    error.data = data;
-    if (response.status === 401) notifyUnauthorized(error);
-    throw error;
-  }
-  const blob = await response.blob();
-  assertNotAborted(signal);
+  const blob = await fetchPrivateMedia(resolved, { signal, evidence: true, imageOnly });
   const mime = String(blob.type || '').split(';')[0].trim().toLowerCase();
-  const allowed = imageOnly ? imageMimeTypes : evidenceMimeTypes;
-  if (!blob.size || !allowed.has(mime)) throw new Error(imageOnly ? 'Vista previa no disponible para este archivo.' : 'El archivo recibido no tiene un formato permitido.');
+  if (imageOnly && !imageMimeTypes.has(mime)) throw new Error('Vista previa no disponible para este archivo.');
   return blob;
+}
+
+async function fetchPrivateMedia(resolved, { signal, evidence = false, imageOnly = false } = {}) {
+  const token = getSessionToken();
+  if (mediaSessionToken !== token) {
+    privateMediaCache.clear();
+    mediaSessionToken = token;
+  }
+  return privateMediaCache.get(resolved, async (requestSignal) => {
+    let response;
+    try {
+      response = await fetch(resolved, { credentials: 'include', redirect: 'error', signal: requestSignal, headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      throw new Error(evidence ? 'No se pudo conectar. Intenta descargar la evidencia nuevamente.' : 'No se pudo cargar la imagen.');
+    }
+    assertNotAborted(requestSignal);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      assertNotAborted(requestSignal);
+      const error = new Error(data.message || (evidence ? 'No fue posible descargar la evidencia.' : 'No fue posible cargar la imagen.'));
+      error.status = response.status;
+      error.data = data;
+      if (response.status === 401) notifyUnauthorized(error);
+      throw error;
+    }
+    const blob = await response.blob();
+    assertNotAborted(requestSignal);
+    const mime = String(blob.type || '').split(';')[0].trim().toLowerCase();
+    if (!blob.size || !(evidence ? evidenceMimeTypes : imageMimeTypes).has(mime)) throw new Error(imageOnly ? 'Vista previa no disponible para este archivo.' : evidence ? 'El archivo recibido no tiene un formato permitido.' : 'La imagen recibida no tiene un formato permitido.');
+    return blob;
+  }, { signal });
 }
 
 export async function fetchPrivateImageBlob(url, { signal } = {}) {
   const resolved = privateImageEndpoint(url);
   assertNotAborted(signal);
-  const token = getSessionToken();
-  let response;
-  try {
-    response = await fetch(resolved, { credentials: 'include', redirect: 'error', signal, headers: token ? { Authorization: `Bearer ${token}` } : {} });
-  } catch (error) {
-    if (error.name === 'AbortError') throw error;
-    throw new Error('No se pudo cargar la imagen.');
-  }
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    const error = new Error(data.message || 'No fue posible cargar la imagen.');
-    error.status = response.status;
-    if (response.status === 401) notifyUnauthorized(error);
-    throw error;
-  }
-  const blob = await response.blob();
-  assertNotAborted(signal);
-  const mime = String(blob.type || '').split(';')[0].trim().toLowerCase();
-  if (!blob.size || !imageMimeTypes.has(mime)) throw new Error('La imagen recibida no tiene un formato permitido.');
-  return blob;
+  return fetchPrivateMedia(resolved, { signal });
 }
 
 function downloadBlob(blob, filename) {

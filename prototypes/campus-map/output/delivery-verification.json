@@ -1,0 +1,84 @@
+{
+  "iteration": 5,
+  "verified_at": "2026-10-15T15:59:55.5649606-05:00",
+  "renders": [
+    {
+      "view": "overview",
+      "resolution": [
+        3200,
+        2200
+      ],
+      "seconds": 99.97,
+      "device": "GPU",
+      "hashes_match": true
+    },
+    {
+      "view": "administrativo",
+      "resolution": [
+        1800,
+        1350
+      ],
+      "seconds": 39.91,
+      "device": "GPU",
+      "hashes_match": true
+    },
+    {
+      "view": "salones",
+      "resolution": [
+        1800,
+        1350
+      ],
+      "seconds": 43.36,
+      "device": "GPU",
+      "hashes_match": true
+    },
+    {
+      "view": "conjunto-bloques",
+      "resolution": [
+        1800,
+        1350
+      ],
+      "seconds": 41.82,
+      "device": "GPU",
+      "hashes_match": true
+    },
+    {
+      "view": "preescolar",
+      "resolution": [
+        1800,
+        1350
+      ],
+      "seconds": 33.67,
+      "device": "GPU",
+      "hashes_match": true
+    },
+    {
+      "view": "bachillerato",
+      "resolution": [
+        1800,
+        1350
+      ],
+      "seconds": 39.66,
+      "device": "GPU",
+      "hashes_match": true
+    }
+  ],
+  "same_base_camera": true,
+  "max_camera_parameter_delta": 0,
+  "scene_objects": 5437,
+  "scene_validation_errors": [],
+  "all_review_cameras_unclipped": true,
+  "native_file_opened_successfully": true,
+  "preserved_geometry_hashes_equal": true,
+  "visual_review": [
+    "overview",
+    "conjunto-bloques"
+  ],
+  "scope": "Visual prototype only",
+  "gallery_review": {
+    "ready": true,
+    "current_images_loaded": true,
+    "comparison": "v4 to v5",
+    "keyboard_slider_verified": true
+  }
+}

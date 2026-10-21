@@ -1,5 +1,3 @@
-import ExcelJS from 'exceljs';
-import PDFDocument from 'pdfkit';
 import { httpError } from '../utils/maintenance.js';
 
 const TIME_ZONE = 'America/Bogota';
@@ -82,6 +80,7 @@ function summary(incidents) {
 }
 
 export async function createExcelReport(incidents, periodLabel) {
+  const { default: ExcelJS } = await import('exceljs');
   const workbook = new ExcelJS.Workbook();
   workbook.creator = 'Gestor Mantenimiento';
   workbook.created = new Date();
@@ -134,6 +133,7 @@ export async function createExcelReport(incidents, periodLabel) {
 }
 
 export async function createPdfReport(incidents, periodLabel) {
+  const { default: PDFDocument } = await import('pdfkit');
   const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margins: { top: 36, right: 36, bottom: 40, left: 36 }, bufferPages: true, info: { Title: `Reporte de incidencias · ${periodLabel}`, Author: 'Gestor Mantenimiento' } });
   const chunks = [];
   doc.on('data', (chunk) => chunks.push(chunk));

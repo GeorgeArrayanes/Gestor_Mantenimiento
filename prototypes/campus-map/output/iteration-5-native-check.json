@@ -1,0 +1,27 @@
+{
+  "iteration": 5,
+  "preserved_geometry_prefixes": [
+    "salones.",
+    "bloque-2.",
+    "bloque-3.",
+    "bloque-4.",
+    "Preescolar",
+    "Football lawn"
+  ],
+  "geometry_hashes_equal": true,
+  "transverse_previous_z_bounds": [
+    1.9073486612342094e-07,
+    10.359999656677246
+  ],
+  "transverse_current_z_bounds": [
+    0.11999999731779099,
+    4.800000190734863
+  ],
+  "maximum_z_ratio": 0.4633,
+  "total_height_ratio": 0.4517,
+  "transverse_storeys": 2,
+  "elevated_connectors": 0,
+  "football_pitches": 2,
+  "cameras": 7,
+  "packed_images": 1
+}

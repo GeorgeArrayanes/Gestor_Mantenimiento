@@ -9,7 +9,7 @@ import { seedDatabase } from '../src/seed.js';
 import { config, projectRoot } from '../src/config.js';
 
 export const DEMO_PASSWORD = 'Mantenimiento2026!';
-export const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jKxkAAAAASUVORK5CYII=', 'base64');
+export const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAADElEQVQImWP4//8/AAX+Av5Y8msOAAAAAElFTkSuQmCC', 'base64');
 export const PDF = Buffer.from('%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF');
 
 // TEST_POSTGRES_URL must point to a disposable test database. Each integration
@@ -32,7 +32,7 @@ export async function createTestPool() {
   };
   try {
     await control.query(`CREATE SCHEMA "${schema}"`);
-    for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql']) {
+    for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql']) {
       await pool.query(await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8'));
     }
     return pool;

@@ -1,0 +1,20 @@
+{
+  "blender": "4.5.9 LTS",
+  "devices": [
+    {
+      "name": "NVIDIA GeForce GTX 1070 with Max-Q Design",
+      "type": "CUDA"
+    },
+    {
+      "name": "Intel Core i7-8750H CPU @ 2.20GHz",
+      "type": "CPU"
+    }
+  ],
+  "attempts": [
+    {
+      "device": "GPU",
+      "success": true
+    }
+  ],
+  "render_device": "GPU"
+}

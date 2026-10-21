@@ -1,0 +1,9 @@
+output/*.blend1
+output/render-probe.png
+output/preview*.png
+output/preview-manifest.json
+__pycache__/
+iterations/*/output/*.blend1
+iterations/*/output/preview*
+iterations/*/output/render-probe.png
+iterations/*/__pycache__/
