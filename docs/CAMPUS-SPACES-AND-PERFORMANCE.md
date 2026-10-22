@@ -1,5 +1,7 @@
 # Espacios internos y rendimiento · 19 de octubre de 2026
 
+Actualización del 21 de octubre: los bloques ahora se seleccionan por separado, el directorio incluye sus espacios y se puede iniciar una incidencia desde el edificio. La entrega vigente y la migración 006 están documentadas en [INDEPENDENT-CAMPUS-BLOCKS.md](INDEPENDENT-CAMPUS-BLOCKS.md). Los conteos y la agrupación descritos más abajo conservan el registro de la entrega anterior.
+
 ## Alcance y uso
 
 La nueva solicitud permite crear espacios dentro de los edificios del mapa. Al elegir un edificio aparece «Añadir espacio»; el formulario pide nombre y ubicación interna. El registro se guarda mediante el endpoint existente `POST /api/spaces`, aparece en el desplegable de ese edificio y se puede volver a seleccionar después de recargar. No se dibujan interiores ni se cargan modelos adicionales. El mapa arquitectónico aprobado permanece intacto.

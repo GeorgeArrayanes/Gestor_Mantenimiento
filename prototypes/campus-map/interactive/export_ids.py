@@ -18,7 +18,11 @@ OUT.mkdir(exist_ok=True)
 SOURCE=ROOT/'output'/'arrayanes-campus.blend'
 CATALOG=[
     ('administrativo','Edificio Administrativo','building',['4:37']),
-    ('bloques-salones','Conjunto de salones','building',['4:15','4:17','4:19','4:21','4:23']),
+    ('bloque-1','Edificio Biblioteca','building',['4:17']),
+    ('bloque-2','Edificio Artes','building',['4:15']),
+    ('bloque-3','Bloque de salones 3','building',['4:19']),
+    ('bloque-4','Bloque de salones 4','building',['4:21']),
+    ('bloque-atravesado','Bloque atravesado','building',['4:23']),
     ('preescolar','Preescolar','building',['4:33']),
     ('bachillerato','Bachillerato','building',['4:25']),
     ('transicion','Transición','building',['4:27']),
@@ -35,16 +39,61 @@ CATALOG=[
     ('patio-central','Patio central y canchas','outdoor',['4:6']),
 ]
 
+CLASSROOM_PREFIXES = {
+    'salones.': 'bloque-1',
+    'bloque-2.': 'bloque-2',
+    'bloque-3.': 'bloque-3',
+    'bloque-4.': 'bloque-4',
+    'bloque-atravesado.': 'bloque-atravesado',
+}
+classroom_cores = {}
+screen_owners = {}
+
+
+def prepare_classroom_cores():
+    # The approved generator stores vertices in world space, including the
+    # anonymous facade lattice beams. Use each actual oriented core as an
+    # anchor; collections alone cannot distinguish blocks 2, 3 and 4.
+    for prefix, key in CLASSROOM_PREFIXES.items():
+        if key == 'bloque-atravesado':
+            continue  # The low block has named geometry and no anonymous lattice.
+        obj = bpy.data.objects.get(prefix + 'white core')
+        assert obj is not None, 'Missing classroom core: ' + key
+        points = [obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
+        center = sum(points, Vector()) / len(points)
+        length_axis = points[1] - points[0]
+        width_axis = points[3] - points[0]
+        classroom_cores[key] = (center, length_axis.normalized(), width_axis.normalized(),
+                                length_axis.length / 2, width_axis.length / 2)
+
+
+def screen_owner(obj):
+    points = [obj.matrix_world @ vertex.co for vertex in obj.data.vertices]
+    center = sum(points, Vector()) / len(points)
+    distances = []
+    for key, (anchor, ex, ey, half_length, half_width) in classroom_cores.items():
+        offset = center - anchor
+        dx = max(0, abs(offset.dot(ex)) - half_length)
+        dy = max(0, abs(offset.dot(ey)) - half_width)
+        distances.append((dx * dx + dy * dy, key))
+    distances.sort()
+    assert distances[0][0] < 1, 'Lattice beam is not beside its classroom core: ' + obj.name
+    assert distances[1][0] - distances[0][0] > .01, 'Ambiguous lattice ownership: ' + obj.name
+    owner = distances[0][1]
+    screen_owners[obj.name] = owner
+    return owner
+
 
 def classify(obj):
     n=obj.name
     if n.startswith('administrativo.') and not n.startswith(('administrativo.entry paving','administrativo.linear drainage')):
         return 'administrativo'
     if n.startswith(('Administrativo · escudo GLA','GLA lettering')): return 'administrativo'
-    if n.startswith(('salones.','bloque-2.','bloque-3.','bloque-4.','bloque-atravesado.')) and '.paved apron' not in n:
-        return 'bloques-salones'
+    for prefix, key in CLASSROOM_PREFIXES.items():
+        if n.startswith(prefix) and '.paved apron' not in n:
+            return key
     if n.startswith('Decorative diagonal') and any(c.name.startswith(('02 ·','05 ·')) for c in obj.users_collection):
-        return 'bloques-salones'
+        return screen_owner(obj)
     if n.startswith('Preescolar') and not n.startswith(('Preescolar irregular base','Preescolar continuous V play floor','Preescolar blue learning track','Preescolar track center marking','Preescolar crossing','Preescolar colored seat','Preescolar planted edge')):
         return 'preescolar'
     if n.startswith(('bachillerato.','Bachillerato blue roof section','Bachillerato glazed roof monitor')):
@@ -68,6 +117,7 @@ source_hash=hashlib.sha256(SOURCE.read_bytes()).hexdigest()
 approved=json.loads((ROOT/'output'/'camera-validation.json').read_text())['overview']
 bpy.ops.wm.open_mainfile(filepath=str(SOURCE))
 scene=bpy.context.scene
+prepare_classroom_cores()
 camera=scene.camera
 assert camera.data.type=='ORTHO'
 assert abs(camera.data.ortho_scale-approved['ortho_scale'])<1e-5
@@ -121,6 +171,8 @@ assert source_hash==hashlib.sha256(SOURCE.read_bytes()).hexdigest()
 metadata={'width':3200,'height':2200,'source_iteration':5,'source_blend_sha256':source_hash,
     'source_render_sha256':hashlib.sha256((ROOT/'output'/'overview.png').read_bytes()).hexdigest(),
     'camera':approved,'regions':list(palette.values()),'object_assignments':assignments,
+    'selection_revision':2,
+    'classroom_lattice_owners':screen_owners,
     'method':'Opaque Object Info Color emission; full scene depth occlusion; identical orthographic camera; source not saved.',
     'glass_selection':'Front glazing is selectable as an opaque semantic surface; original artwork remains transparent.'}
 (OUT/'mask-source.json').write_text(json.dumps(metadata,ensure_ascii=False,indent=2),encoding='utf-8')

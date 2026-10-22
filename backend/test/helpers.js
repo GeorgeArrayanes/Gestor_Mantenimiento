@@ -32,7 +32,7 @@ export async function createTestPool() {
   };
   try {
     await control.query(`CREATE SCHEMA "${schema}"`);
-    for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql']) {
+    for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql', '006_individual_campus_blocks.sql']) {
       await pool.query(await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8'));
     }
     return pool;

@@ -128,7 +128,7 @@ for index,region in enumerate(source['regions'],1):
     overlay=Image.alpha_composite(overlay,Image.fromarray(tint))
     print('VECTORIZED',region['id'],len(xs),round(iou,5),flush=True)
 
-payload={'width':width,'height':height,'sourceIteration':5,'coordinateSystem':'top-left / approved orthographic render',
+payload={'width':width,'height':height,'sourceIteration':5,'selectionRevision':source.get('selection_revision',1),'coordinateSystem':'top-left / approved orthographic render',
          'sourceRenderSha256':source['source_render_sha256'],'sourceBlendSha256':source['source_blend_sha256'],
          'regions':regions}
 (PUBLIC/'regions.json').write_text(json.dumps(payload,ensure_ascii=False,separators=(',',':')),encoding='utf-8')

@@ -1,5 +1,7 @@
 # Mapa del colegio · Etapa A
 
+Actualización del 21 de octubre: la selección individual de los bloques y los reportes desde edificios están implementados. Ver `docs/INDEPENDENT-CAMPUS-BLOCKS.md` para la entrega vigente, compatibilidad de los espacios anteriores y comprobaciones. La información de Etapa A que sigue es histórica.
+
 Actualización del 19 de octubre: una solicitud posterior autoriza crear y seleccionar espacios internos por edificio, además de optimizar el aplicativo y las fotos. Esa implementación está documentada en `docs/CAMPUS-SPACES-AND-PERFORMANCE.md`. El resto de esta nota conserva el registro histórico de la Etapa A.
 
 ## Alcance aprobado

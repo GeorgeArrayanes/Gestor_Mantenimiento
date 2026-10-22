@@ -1,0 +1,39 @@
+{
+  "passed": true,
+  "baseline_commit": "861dc79",
+  "source_unchanged": true,
+  "camera_unchanged": true,
+  "old_classroom_pixels": 231705,
+  "new_classroom_pixels": 231705,
+  "classroom_union_iou": 1.0,
+  "other_region_iou": {
+    "administrativo": 1.0,
+    "preescolar": 1.0,
+    "bachillerato": 1.0,
+    "transicion": 1.0,
+    "grado-11": 1.0,
+    "comedor": 1.0,
+    "economato": 1.0,
+    "primeros-auxilios": 1.0,
+    "danzas-1": 1.0,
+    "danzas-2": 1.0,
+    "tienda-1": 1.0,
+    "gym": 1.0,
+    "futbol-principal": 1.0,
+    "futbol-norte": 1.0,
+    "patio-central": 1.0
+  },
+  "lattice_objects_by_block": {
+    "bloque-1": 102,
+    "bloque-2": 102,
+    "bloque-3": 102,
+    "bloque-4": 102
+  },
+  "independent_blocks": {
+    "bloque-1": 73601,
+    "bloque-2": 52692,
+    "bloque-3": 37819,
+    "bloque-4": 45302,
+    "bloque-atravesado": 22291
+  }
+}

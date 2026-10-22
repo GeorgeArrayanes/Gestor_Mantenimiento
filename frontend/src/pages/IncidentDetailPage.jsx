@@ -9,7 +9,7 @@ import { isImageEvidence } from '../components/EvidenceImage.jsx';
 import EmptyState from '../components/EmptyState.jsx';
 import Modal from '../components/Modal.jsx';
 import Toast from '../components/Toast.jsx';
-import { activeRecord, evidenceError, formatDate, HISTORY_LABELS, PRIORITIES, problemLabel, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
+import { activeRecord, campusRegionLabel, evidenceError, formatDate, HISTORY_LABELS, PRIORITIES, problemLabel, PROBLEM_TYPES, spaceLabel } from '../utils/maintenance.js';
 import usePageLifecycle from './usePageLifecycle.js';
 import './maintenance-pages.css';
 import './detail-evidence.css';
@@ -52,6 +52,7 @@ export default function IncidentDetailPage() {
     return () => controller.abort();
   }, [id, catalogRetry]);
   const incident = data?.incident;
+  const currentBuilding = campusRegionLabel(spaces.find(space => String(space.id) === String(incident?.space_id))?.campus_region_id);
   const closed = incident?.status === 'CLOSED';
   const availablePersonnel = personnel.filter(activeRecord);
   const initialEvidence = (data?.evidences || []).filter((item) => item.category === 'INITIAL');
@@ -114,7 +115,7 @@ export default function IncidentDetailPage() {
       {closed && <div className="detail-closed-note"><ShieldCheck aria-hidden="true" />Solución verificada y registrada. Esta incidencia conserva su historial completo.</div>}
       {actionError && !dialog && <div className="page-error" role="alert">{actionError}</div>}
       <div className="detail-grid"><div className="detail-main">
-        <section className="panel"><h2 className="detail-section-title"><Wrench aria-hidden="true" />Información de la incidencia</h2><dl className="detail-facts"><div><dt>Espacio / ubicación</dt><dd>{incident.space_name}{incident.space_zone && <><br /><span className="helper">{incident.space_zone}</span></>}</dd></div><div><dt>Tipo de problema</dt><dd>{problemLabel(incident.problem_type)}</dd></div><div><dt>Registrada por</dt><dd>{incident.created_by_name}</dd></div><div><dt>Fecha de registro</dt><dd>{formatDate(incident.created_at, true)}</dd></div></dl><span className="detail-label">Descripción</span><p className="detail-description">{incident.description}</p></section>
+        <section className="panel"><h2 className="detail-section-title"><Wrench aria-hidden="true" />Información de la incidencia</h2><dl className="detail-facts"><div><dt>Espacio / ubicación</dt><dd>{incident.space_name}{incident.space_zone && <><br /><span className="helper">{incident.space_zone}</span></>}{currentBuilding && <><br /><span className="helper">Edificio actual: {currentBuilding}</span></>}</dd></div><div><dt>Tipo de problema</dt><dd>{problemLabel(incident.problem_type)}</dd></div><div><dt>Registrada por</dt><dd>{incident.created_by_name}</dd></div><div><dt>Fecha de registro</dt><dd>{formatDate(incident.created_at, true)}</dd></div></dl><span className="detail-label">Descripción</span><p className="detail-description">{incident.description}</p></section>
         {compareEvidence ? <section className="panel evidence-comparison" aria-labelledby="comparison-heading">
           <h2 className="detail-section-title" id="comparison-heading"><Image aria-hidden="true" />Evidencia de la reparación</h2>
           <p className="evidence-comparison-intro">El problema registrado y la solución verificada.</p>

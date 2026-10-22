@@ -62,7 +62,7 @@ describe('asociación explícita de espacios con el campus', () => {
   });
 
   it('permite varios espacios en un edificio y mantiene independientes dos edificios y uno sin vínculo', async () => {
-    expect(CAMPUS_REGION_IDS).toHaveLength(16);
+    expect(CAMPUS_REGION_IDS).toHaveLength(21);
     const first = CAMPUS_REGIONS.find(region => region.id === 'administrativo');
     const second = CAMPUS_REGIONS.find(region => region.id === 'comedor');
     const data = [
@@ -99,6 +99,46 @@ describe('asociación explícita de espacios con el campus', () => {
     await context.admin.patch(`/api/spaces/${created.id}`).send({ campus_region_id: 'grado-11' }).expect(200);
     expect(await listedSpace(created.id)).toMatchObject({ campus_region_id: 'grado-11' });
     expect((await storedSpace(created.id)).campus_region_id).toBe('grado-11');
+  });
+
+  it('mantiene cinco listas independientes con nombres y ubicaciones internos idénticos', async () => {
+    const ids = ['bloque-1', 'bloque-2', 'bloque-3', 'bloque-4', 'bloque-atravesado'];
+    const created = [];
+    for (const regionId of ids) {
+      created.push((await context.admin.post('/api/spaces').send({
+        name: 'Salón 101 de separación', zone: 'Primer piso', campus_region_id: regionId
+      }).expect(201)).body.space);
+    }
+    const listed = (await context.admin.get('/api/spaces').expect(200)).body.spaces;
+    for (const [index, regionId] of ids.entries()) {
+      expect(listed.filter(space => space.campus_region_id === regionId && space.name === 'Salón 101 de separación'))
+        .toEqual([expect.objectContaining({ id: created[index].id, campus_region_id: regionId })]);
+    }
+    const before = await storedSpace(created[0].id);
+    await context.admin.post('/api/spaces').send({
+      name: before.name, zone: before.zone, campus_region_id: before.campus_region_id
+    }).expect(409);
+    // Moving an existing classroom must not overwrite its peer in another block.
+    await context.admin.patch(`/api/spaces/${created[0].id}`).send({ campus_region_id: 'bloque-2' }).expect(409);
+    expect(await storedSpace(created[0].id)).toEqual(before);
+  });
+
+  it('conserva los espacios compartidos heredados sin repartirlos entre los nuevos bloques', async () => {
+    const created = (await context.admin.post('/api/spaces').send({
+      name: 'Sala común anterior', zone: 'Circulación compartida', campus_region_id: 'bloques-salones'
+    }).expect(201)).body.space;
+    await context.admin.patch(`/api/spaces/${created.id}`).send({ name: 'Sala común renombrada' }).expect(200);
+    expect(await listedSpace(created.id)).toMatchObject({ campus_region_id: 'bloques-salones' });
+    expect(CAMPUS_REGIONS.find(region => region.id === 'bloques-salones')).toMatchObject({ legacy: true });
+    await context.admin.patch(`/api/spaces/${created.id}`).send({ campus_region_id: 'bloque-4' }).expect(200);
+    expect(await listedSpace(created.id)).toMatchObject({ campus_region_id: 'bloque-4' });
+  });
+
+  it.each([null, 'bloques-salones'])('conserva la unicidad dentro del ámbito %j', async regionId => {
+    const data = { name: `Espacio único ${regionId || 'sin edificio'}`, zone: 'Planta baja', campus_region_id: regionId };
+    await context.admin.post('/api/spaces').send(data).expect(201);
+    await context.admin.post('/api/spaces').send(data).expect(409);
+    await context.admin.post('/api/spaces').send({ ...data, campus_region_id: 'bloque-1' }).expect(201);
   });
 
   it.each([null, ''])('desvincula un espacio con campus_region_id=%j', async (emptyRegion) => {

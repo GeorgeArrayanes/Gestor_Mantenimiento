@@ -43,8 +43,9 @@
       "sha256": "1744eaa628fa108a40c1c439dd682114c2b1149ffd5274ff4f965f1aea540a31"
     }
   ],
-  "regions": 16,
-  "ray_samples": 2760,
+  "regions": 20,
+  "selection_revision": 2,
+  "ray_samples": 3400,
   "ray_mismatches": 0,
   "vector_min_iou": 0.99944
 }

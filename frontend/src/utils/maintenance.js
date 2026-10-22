@@ -1,3 +1,5 @@
+import { CAMPUS_REGIONS } from '../../../shared/campus-regions.mjs';
+
 export const PROBLEM_TYPES = [
   ['ELECTRICIDAD', 'Electricidad'], ['PLOMERIA', 'Plomería'], ['CARPINTERIA', 'Carpintería'],
   ['PINTURA', 'Pintura'], ['INFRAESTRUCTURA', 'Infraestructura'], ['ILUMINACION', 'Iluminación'],
@@ -24,7 +26,8 @@ export function formatAverageResolutionHours(value) {
   return `${hours.toLocaleString('es-CO', { maximumFractionDigits: 1 })} h`;
 }
 export function activeRecord(record) { return record.active === true || record.active === 'true'; }
-export function spaceLabel(space) { return [space.name, space.zone].filter(Boolean).join(' · '); }
+export function campusRegionLabel(regionId) { return CAMPUS_REGIONS.find(region => region.id === regionId)?.label || ''; }
+export function spaceLabel(space) { return [space.name, space.zone, campusRegionLabel(space.campus_region_id)].filter(Boolean).join(' · '); }
 export function normalizePhone(value) {
   const raw = String(value || '').trim();
   if (!raw || !/^\+?[\d\s().-]+$/.test(raw)) return '';

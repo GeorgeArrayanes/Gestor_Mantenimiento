@@ -37,11 +37,39 @@
       "vector_pixel_iou": 0.99998
     },
     {
-      "id": "bloques-salones",
-      "visible_pixels": 231705,
-      "subpaths": 20,
-      "vertices": 2104,
-      "vector_pixel_iou": 0.99991
+      "id": "bloque-1",
+      "visible_pixels": 73601,
+      "subpaths": 10,
+      "vertices": 882,
+      "vector_pixel_iou": 0.99992
+    },
+    {
+      "id": "bloque-2",
+      "visible_pixels": 52692,
+      "subpaths": 12,
+      "vertices": 866,
+      "vector_pixel_iou": 0.99983
+    },
+    {
+      "id": "bloque-3",
+      "visible_pixels": 37819,
+      "subpaths": 8,
+      "vertices": 670,
+      "vector_pixel_iou": 0.99981
+    },
+    {
+      "id": "bloque-4",
+      "visible_pixels": 45302,
+      "subpaths": 8,
+      "vertices": 658,
+      "vector_pixel_iou": 0.99993
+    },
+    {
+      "id": "bloque-atravesado",
+      "visible_pixels": 22291,
+      "subpaths": 8,
+      "vertices": 890,
+      "vector_pixel_iou": 0.99964
     },
     {
       "id": "preescolar",
@@ -165,6 +193,6 @@
       "sha256": "1744eaa628fa108a40c1c439dd682114c2b1149ffd5274ff4f965f1aea540a31"
     }
   ],
-  "public_regions_bytes": 138558,
+  "public_regions_bytes": 155982,
   "source_unchanged": true
 }

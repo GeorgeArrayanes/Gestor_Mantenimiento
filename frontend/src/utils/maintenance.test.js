@@ -1,7 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { evidenceError, formatAverageResolutionHours, formatDate, normalizePhone, problemLabel, sortIncidents } from './maintenance.js';
+import { campusRegionLabel, evidenceError, formatAverageResolutionHours, formatDate, normalizePhone, problemLabel, sortIncidents, spaceLabel } from './maintenance.js';
 
 describe('utilidades de mantenimiento', () => {
+  it('distingue espacios con igual nombre y piso en edificios diferentes sin alterar ubicaciones antiguas', () => {
+    const room = { name: 'Salón 101', zone: 'Primer piso' };
+    expect(spaceLabel({ ...room, campus_region_id: 'bloque-1' })).toBe('Salón 101 · Primer piso · Edificio Biblioteca');
+    expect(spaceLabel({ ...room, campus_region_id: 'bloque-2' })).toBe('Salón 101 · Primer piso · Edificio Artes');
+    expect(spaceLabel({ ...room, campus_region_id: null })).toBe('Salón 101 · Primer piso');
+    expect(spaceLabel({ ...room, campus_region_id: 'unknown' })).toBe('Salón 101 · Primer piso');
+    expect(campusRegionLabel('preescolar')).toBe('Preescolar');
+    expect(campusRegionLabel(undefined)).toBe('');
+  });
   it.each([
     [null, '—'], [undefined, '—'],
     [0, '< 1 h'], [0.00001, '< 1 h'], [0.04, '< 1 h'], [0.9999, '< 1 h'],
