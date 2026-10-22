@@ -69,7 +69,7 @@
     },
     {
       "id": "bloque-3",
-      "label": "Bloque de salones 3",
+      "label": "Edificio Auditorio",
       "kind": "building",
       "sourceRegions": [
         "4:19"
@@ -83,7 +83,7 @@
     },
     {
       "id": "bloque-4",
-      "label": "Bloque de salones 4",
+      "label": "Edificio Ciencias",
       "kind": "building",
       "sourceRegions": [
         "4:21"
