@@ -10,8 +10,12 @@ export async function createMemoryPool() {
   const memory = newDb({ autoCreateForeignKeyIndices: true });
   const adapter = memory.adapters.createPg();
   const pool = new adapter.Pool();
-  for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql']) {
-    await pool.query(await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8'));
+  for (const file of ['001_init.sql', '002_super_admin.sql', '003_maintenance.sql', '004_directory_images.sql', '005_campus_regions.sql', '006_individual_campus_blocks.sql']) {
+    let sql = await fs.readFile(path.join(projectRoot, 'database', 'migrations', file), 'utf8');
+    // PostgreSQL gives this unnamed UNIQUE the name used by migration 006.
+    // pg-mem generates a hash instead; use the real PostgreSQL name in memory.
+    if (file === '003_maintenance.sql') sql = sql.replace('UNIQUE(name,zone)', 'CONSTRAINT maintenance_spaces_name_zone_key UNIQUE(name,zone)');
+    await pool.query(sql);
   }
   // pg-mem ignores transactions: snapshots and serialization provide faithful
   // rollback and concurrent transition behavior for ephemeral development/tests.

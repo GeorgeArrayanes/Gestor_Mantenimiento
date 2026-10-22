@@ -1,7 +1,11 @@
 // Stable semantic IDs from the approved orthographic Blender scene.
 export const CAMPUS_REGIONS = Object.freeze([
   { id: 'administrativo', label: 'Edificio Administrativo', kind: 'building' },
-  { id: 'bloques-salones', label: 'Conjunto de salones', kind: 'building' },
+  { id: 'bloque-1', label: 'Edificio Biblioteca', kind: 'building' },
+  { id: 'bloque-2', label: 'Edificio Artes', kind: 'building' },
+  { id: 'bloque-3', label: 'Edificio Auditorio', kind: 'building' },
+  { id: 'bloque-4', label: 'Edificio Ciencias', kind: 'building' },
+  { id: 'bloque-atravesado', label: 'Bloque atravesado', kind: 'building' },
   { id: 'preescolar', label: 'Preescolar', kind: 'building' },
   { id: 'bachillerato', label: 'Bachillerato', kind: 'building' },
   { id: 'transicion', label: 'Transición', kind: 'building' },
@@ -16,5 +20,7 @@ export const CAMPUS_REGIONS = Object.freeze([
   { id: 'futbol-principal', label: 'Cancha de fútbol principal', kind: 'outdoor' },
   { id: 'futbol-norte', label: 'Cancha de fútbol norte', kind: 'outdoor' },
   { id: 'patio-central', label: 'Patio central y canchas', kind: 'outdoor' },
+  // Existing shared spaces retain their association until explicitly reassigned.
+  { id: 'bloques-salones', label: 'Salones · espacios compartidos', kind: 'building', legacy: true },
 ]);
 export const CAMPUS_REGION_IDS = Object.freeze(CAMPUS_REGIONS.map(region => region.id));

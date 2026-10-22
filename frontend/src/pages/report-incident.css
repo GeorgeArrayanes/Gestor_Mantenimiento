@@ -7,6 +7,8 @@
 .report-page .ds-form-heading h2{font-size:17px;letter-spacing:-.35px;margin:0 0 4px;color:#21264a}
 .report-page .ds-form-heading p{font-size:12px;color:#60688a;line-height:1.5}
 .report-page .form-grid{gap:19px 20px}
+.report-location-notice{margin:0;padding:12px 14px;border:1px solid #dce2ee;border-radius:9px;background:#f1f4fa;color:#566586;font-size:12px;line-height:1.7}
+.report-location-notice a{color:#283c70;text-decoration:underline;text-underline-offset:3px}
 .report-page .maintenance-form label,.report-page .maintenance-form legend{font-size:13px;color:#3d4257}
 .report-page .maintenance-form label{gap:8px}
 .report-page .maintenance-form input,.report-page .maintenance-form select,.report-page .maintenance-form textarea{min-height:45px;padding:11px 12px;font-size:14px;border-color:#d7d9df;border-radius:9px;background:#fdfdff;color:#1e2243}

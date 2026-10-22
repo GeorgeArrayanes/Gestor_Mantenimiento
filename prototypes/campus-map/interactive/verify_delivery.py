@@ -30,15 +30,19 @@ for item in assets['assets']:
     check_file(PUBLIC / item['name'], item['sha256'])
 regions = json.loads((PUBLIC / 'regions.json').read_text(encoding='utf-8'))
 assert (regions['width'], regions['height'], regions['sourceIteration']) == (3200, 2200, 5)
-assert len(regions['regions']) == len({item['id'] for item in regions['regions']}) == 16
+assert len(regions['regions']) == len({item['id'] for item in regions['regions']}) == 20
+classrooms = {'bloque-1', 'bloque-2', 'bloque-3', 'bloque-4', 'bloque-atravesado'}
+assert classrooms <= {item['id'] for item in regions['regions']}
+assert 'bloques-salones' not in {item['id'] for item in regions['regions']}
+assert regions['selectionRevision'] == 2
 assert min(item['vector_pixel_iou'] for item in assets['regions']) > .999
 rays = json.loads((OUT / 'raycast-validation.json').read_text())
-assert rays['passed'] and rays['mismatch_count'] == 0 and rays['samples'] == 2760
+assert rays['passed'] and rays['mismatch_count'] == 0 and rays['samples'] == 3400
 for screenshot in ['qa-desktop-map.jpg', 'qa-mobile-map.jpg']:
     assert (OUT / screenshot).stat().st_size > 10000
 
 report = {'passed': True, 'approved_iteration': 5, 'files': checks,
-          'regions': 16, 'ray_samples': rays['samples'], 'ray_mismatches': 0,
+          'regions': 20, 'selection_revision': 2, 'ray_samples': rays['samples'], 'ray_mismatches': 0,
           'vector_min_iou': min(item['vector_pixel_iou'] for item in assets['regions'])}
 (OUT / 'delivery-verification.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
-print('DELIVERY_INTEGRITY_OK ' + json.dumps({'files': len(checks), 'regions': 16}))
+print('DELIVERY_INTEGRITY_OK ' + json.dumps({'files': len(checks), 'regions': 20, 'selection_revision': 2}))

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TransformComponent, TransformWrapper } from 'react-zoom-pan-pinch';
-import { ArrowDown, ArrowRight, Building2, Check, ChevronRight, Hand, Info, Layers3, List, LoaderCircle, Map, Maximize, Minus, MousePointer2, Plus, RotateCcw, Search } from 'lucide-react';
+import { ArrowDown, ChevronRight, Hand, Info, Layers3, List, LoaderCircle, Map, Maximize, Minus, MousePointer2, Plus, RotateCcw } from 'lucide-react';
 import { canSelectMapRegion, moveMapGesture, validateMapRegions } from './campus-map-demo.js';
 import { api } from '../api.js';
 import CampusSpacesPanel from './CampusSpacesPanel.jsx';
+import CampusDirectory from './CampusDirectory.jsx';
+import { campusDirectory } from './campus-spaces.js';
+import { CAMPUS_REGIONS } from '../../../shared/campus-regions.mjs';
 import './campus-map.css';
 
 const ASSETS = '/campus-map/';
@@ -29,6 +32,7 @@ export default function CampusMapPage() {
   const [imageReady, setImageReady] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [selectedSpaceId, setSelectedSpaceId] = useState('');
   const [hovered, setHovered] = useState(null);
   const [scale, setScale] = useState(1);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -40,10 +44,10 @@ export default function CampusMapPage() {
   const directoryRef = useRef(null);
   const viewportRef = useRef(null);
   const regions = map?.regions || [];
-  const region = regions.find(item => item.id === selected);
+  const region = regions.find(item => item.id === selected) || CAMPUS_REGIONS.find(item => item.legacy && item.id === selected);
   const hoverRegion = regions.find(item => item.id === hovered);
   const ready = Boolean(map && imageReady && !imageFailed && !error);
-  const visibleRegions = useMemo(() => regions.filter(item => item.label.toLocaleLowerCase('es').includes(query.trim().toLocaleLowerCase('es'))), [regions, query]);
+  const directory = useMemo(() => campusDirectory(regions, spaces, query), [regions, spaces, query]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -95,14 +99,14 @@ export default function CampusMapPage() {
     panelRef.current?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
     window.requestAnimationFrame(() => panelRef.current?.querySelector('h2')?.focus({ preventScroll: true }));
   }
-  function select(id, fromList = false) {
-    setSelected(id); setHovered(null);
-    if (fromList && window.matchMedia('(max-width: 1150px)').matches) showPanel();
+  function select(id, fromList = false, spaceId = '') {
+    setSelected(id); setSelectedSpaceId(spaceId); setHovered(null);
+    if (fromList) showPanel();
   }
   function clearSelection() {
     const previous = selected;
-    setSelected(null);
-    window.requestAnimationFrame(() => document.getElementById(`campus-region-${previous}`)?.focus({ preventScroll: true }));
+    setSelected(null); setSelectedSpaceId('');
+    window.requestAnimationFrame(() => (document.getElementById(`campus-region-${previous}`) || document.getElementById(`campus-directory-region-${previous}`))?.focus({ preventScroll: true }));
   }
   function pointerDown(event) {
     if (event.pointerType === 'mouse') pointers.current.clear();
@@ -140,9 +144,9 @@ export default function CampusMapPage() {
         </TransformWrapper>
         <div className="campus-map-credit"><span><span className="campus-credit-dot" />Escenario aprobado · Cámara isométrica original</span><span>Gimnasio Los Arrayanes</span></div>
       </section>
-      <div className="campus-panel-anchor" ref={panelRef}><CampusSpacesPanel region={region} spaces={spaces} loading={spacesLoading} error={spacesError} onReload={() => setSpacesAttempt(value => value + 1)} onCreated={space => setSpaces(current => [...current.filter(item => item.id !== space.id), space])} onClear={clearSelection} /></div>
+      <div className="campus-panel-anchor" ref={panelRef}><CampusSpacesPanel region={region} spaces={spaces} loading={spacesLoading} error={spacesError} onReload={() => setSpacesAttempt(value => value + 1)} onCreated={space => setSpaces(current => [...current.filter(item => item.id !== space.id), space])} onClear={clearSelection} selectedSpaceId={selectedSpaceId} onSelectSpace={setSelectedSpaceId} /></div>
     </div>
-    <section className="campus-directory" aria-labelledby="campus-directory-heading" tabIndex={-1} ref={directoryRef}><div className="campus-directory-heading"><div><p className="campus-eyebrow">Otra forma de explorar</p><h2 id="campus-directory-heading">Directorio del campus <span>{regions.length || '—'}</span></h2><p>Selecciona una instalación desde la lista. También puedes usar el teclado.</p></div><label className="campus-directory-search"><Search size={16} aria-hidden="true" /><span className="campus-sr-only">Buscar una instalación</span><input type="search" placeholder="Buscar una instalación" value={query} onChange={event => setQuery(event.target.value)} disabled={!map} /></label></div>{map ? visibleRegions.length ? <ul className="campus-directory-grid">{visibleRegions.map(item => <li key={item.id}><button type="button" aria-pressed={selected === item.id} onClick={() => select(item.id, true)}><span className="campus-directory-icon">{selected === item.id ? <Check size={15} /> : <Building2 size={15} />}</span><span>{item.label}</span><ArrowRight size={14} className="campus-directory-arrow" aria-hidden="true" /></button></li>)}</ul> : <p className="campus-search-empty" role="status">No hay instalaciones que coincidan con «{query}».</p> : <p className="campus-search-empty">{error ? 'El directorio estará disponible cuando se carguen las zonas del mapa.' : 'Cargando el directorio…'}</p>}</section>
+    <CampusDirectory entries={directory} count={regions.length} mapReady={Boolean(map)} query={query} onQuery={setQuery} selectedRegion={selected} selectedSpaceId={selectedSpaceId} onSelect={(id, spaceId = '') => select(id, true, spaceId)} loading={spacesLoading} error={spacesError} onReload={() => setSpacesAttempt(value => value + 1)} targetRef={directoryRef} />
     <div className="campus-sr-only" role="status" aria-live="polite" aria-atomic="true">{region ? `${region.label} seleccionada. Elige un espacio interno en su lista.` : 'Vista general del campus. Selecciona una zona.'}</div>
   </div>;
 }

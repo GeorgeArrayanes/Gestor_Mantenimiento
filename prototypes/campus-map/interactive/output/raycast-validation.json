@@ -17,8 +17,8 @@
   },
   "source_blend_sha256": "8b4a1b7e16fa6e8d18df9733b5b9ab2d66ef9839c5427f6c787dc5c18d1c1f08",
   "source_unchanged": true,
-  "labels_sha256": "d9359e0ececce5adb9352a3940b038ddb203394ede368b34020249e793d512a6",
-  "id_png_sha256": "039f72411a5802faeb90059fe9d7b9e6fdf21ccc7f8514a95fc00c1e8d7257d3",
+  "labels_sha256": "7c97cc810c3c5aeb9c7d57ac2cc3bed67b148851857474e674783800e3ec4f46",
+  "id_png_sha256": "ee6eecf93ea139f269e54d010fef643077ab0284d6d88fa7568cf33ed9b3b9e8",
   "camera": {
     "normalized_bounds": [
       0.11027217656373978,
@@ -51,7 +51,7 @@
     "triangles": 99366,
     "skipped_empty": []
   },
-  "samples": 2760,
+  "samples": 3400,
   "mismatch_count": 0,
   "regions": [
     {
@@ -92,524 +92,685 @@
       }
     },
     {
-      "id": "bloques-salones",
+      "id": "bloque-1",
       "label": 2,
-      "interior_candidates": 223457,
+      "interior_candidates": 69904,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "bloque-2.standing-seam-roof": 18,
-        "bloque-3.standing-seam-roof": 15,
-        "bloque-4.standing-seam-roof": 8,
-        "salones.standing-seam-roof": 8,
-        "salones.end frame": 6,
-        "bloque-atravesado.ridge skylight": 5,
-        "bloque-4.blue green facade panel.002": 5,
-        "salones.corridor slab": 5,
-        "bloque-atravesado.standing-seam-roof": 4,
+        "salones.standing-seam-roof": 53,
+        "salones.end frame": 15,
+        "salones.corridor slab": 8,
+        "salones.corridor slab.001": 5,
+        "salones.white corridor rail.002": 4,
+        "salones.white corridor rail": 4,
+        "salones.blue green facade panel.001": 4,
+        "salones.ridge skylight": 3,
+        "salones.recessed window.016": 3,
         "salones.corridor slab.002": 3,
-        "bloque-4.dark horizontal ribbon": 3,
-        "bloque-3.ridge skylight": 2,
-        "bloque-3.end frame": 2,
-        "bloque-3.recessed window.014": 2,
-        "bloque-2.ridge skylight": 2,
-        "bloque-4.white columns": 2,
-        "bloque-atravesado.end frame.001": 2,
-        "bloque-4.corridor slab.001": 2,
-        "bloque-4.white core": 2,
-        "salones.blue green facade panel.003": 2,
-        "bloque-4.corridor slab": 2,
-        "salones.recessed window.014": 2,
-        "bloque-2.end frame": 2,
-        "salones.white corridor rail": 2,
-        "salones.dark horizontal ribbon": 2,
-        "bloque-3.white fascia": 1,
-        "bloque-3.corridor slab.002": 1,
-        "bloque-4.ridge skylight": 1,
-        "bloque-atravesado.blue green facade panel.013": 1,
-        "bloque-3.recessed window.006": 1,
-        "bloque-3.white columns": 1,
-        "bloque-2.corridor slab.002": 1,
-        "bloque-2.window mullion.055": 1,
-        "bloque-4.dark horizontal ribbon.002": 1,
-        "bloque-3.recessed window.013": 1,
-        "bloque-4.recessed window.011": 1,
-        "bloque-3.window mullion.038": 1,
-        "bloque-4.corridor slab.002": 1,
-        "bloque-3.white corridor rail.001": 1,
-        "bloque-4.white corridor rail.002": 1,
-        "bloque-4.roof seam.017": 1,
-        "bloque-4.recessed window.014": 1,
-        "bloque-atravesado.gutter": 1,
-        "bloque-atravesado.white fascia": 1,
-        "bloque-4.blue green facade panel.011": 1,
-        "bloque-2.window mullion.042": 1,
-        "bloque-2.blue green facade panel.008": 1,
-        "bloque-2.white fascia": 1,
-        "bloque-2.screen horizontal.004": 1,
-        "Decorative diagonal.133": 1,
-        "salones.recessed window.019": 1,
-        "bloque-2.blue green facade panel.010": 1,
-        "salones.recessed window.017": 1,
-        "salones.white fascia.001": 1,
-        "bloque-4.end frame": 1,
-        "salones.recessed window.013": 1,
-        "salones.white corridor rail.002": 1,
-        "salones.blue green facade panel.007": 1,
-        "bloque-4.end narrow glazing": 1,
+        "salones.recessed window.014": 3,
+        "salones.recessed window.005": 3,
+        "salones.dark horizontal ribbon.001": 3,
+        "salones.gutter": 2,
+        "salones.recessed window.018": 2,
+        "salones.recessed window.011": 2,
+        "salones.recessed window.013": 2,
+        "salones.recessed window.019": 2,
+        "salones.recessed window.020": 2,
+        "salones.end narrow glazing": 2,
+        "salones.blue green facade panel.004": 2,
+        "salones.white columns.003": 2,
+        "salones.white columns.004": 2,
+        "salones.white columns.002": 2,
+        "salones.roof seam.016": 1,
+        "salones.end frame.001": 1,
+        "salones.roof seam.004": 1,
+        "salones.roof seam.001": 1,
+        "salones.window mullion.055": 1,
+        "salones.white fascia": 1,
+        "salones.window transom.017": 1,
         "salones.recessed window.012": 1,
-        "bloque-4.white corridor rail": 1,
+        "Decorative diagonal.035": 1,
+        "salones.screen upright.002": 1,
         "salones.screen upright": 1,
-        "salones.screen upright.001": 1,
-        "salones.white corridor rail.004": 1,
-        "salones.end narrow glazing": 1,
-        "salones.white columns.003": 1,
-        "salones.recessed window": 1,
-        "salones.recessed window.001": 1,
         "salones.blue green facade panel.009": 1,
-        "salones.blue green facade panel.001": 1,
-        "salones.white columns.002": 1,
-        "salones.dark horizontal ribbon.001": 1,
-        "salones.corridor slab.001": 1,
-        "salones.white columns.005": 1,
-        "salones.ridge skylight": 1,
-        "salones.blue green facade panel.011": 1,
-        "bloque-atravesado.sill.001": 1
+        "salones.recessed window.015": 1,
+        "salones.dark horizontal ribbon.002": 1,
+        "salones.blue green facade panel.002": 1,
+        "salones.recessed window.002": 1,
+        "salones.recessed window.004": 1,
+        "salones.blue green facade panel.005": 1,
+        "salones.blue green facade panel.003": 1,
+        "salones.dark horizontal ribbon": 1,
+        "salones.screen horizontal.005": 1,
+        "salones.sill.001": 1,
+        "salones.screen horizontal.002": 1,
+        "salones.window mullion.005": 1,
+        "salones.white columns.001": 1,
+        "salones.blue green facade panel": 1,
+        "salones.recessed window.001": 1
+      }
+    },
+    {
+      "id": "bloque-2",
+      "label": 3,
+      "interior_candidates": 49334,
+      "samples": 160,
+      "mismatches": 0,
+      "front_objects": {
+        "bloque-2.standing-seam-roof": 55,
+        "bloque-2.end frame": 13,
+        "bloque-2.ridge skylight": 9,
+        "bloque-2.corridor slab.002": 7,
+        "bloque-2.recessed window.016": 6,
+        "bloque-2.dark horizontal ribbon.002": 6,
+        "bloque-2.corridor slab.001": 5,
+        "bloque-2.recessed window.020": 4,
+        "bloque-2.white corridor rail.002": 4,
+        "bloque-2.gutter": 3,
+        "bloque-2.recessed window.015": 3,
+        "bloque-2.end narrow glazing": 3,
+        "bloque-2.end frame.001": 2,
+        "bloque-2.blue green facade panel.010": 2,
+        "bloque-2.recessed window.007": 2,
+        "bloque-2.white core": 2,
+        "bloque-2.white corridor rail": 2,
+        "bloque-2.white columns": 2,
+        "bloque-2.recessed window": 2,
+        "bloque-2.dark horizontal ribbon": 2,
+        "bloque-2.dark horizontal ribbon.001": 2,
+        "bloque-2.roof seam.018": 1,
+        "bloque-2.roof seam.019": 1,
+        "bloque-2.roof seam.014": 1,
+        "bloque-2.roof seam.020": 1,
+        "bloque-2.roof seam.027": 1,
+        "bloque-2.dark horizontal ribbon.005": 1,
+        "bloque-2.roof seam.008": 1,
+        "bloque-2.roof seam.016": 1,
+        "bloque-2.recessed window.018": 1,
+        "bloque-2.blue green facade panel.011": 1,
+        "bloque-2.white columns.005": 1,
+        "bloque-2.window transom.019": 1,
+        "bloque-2.white columns.004": 1,
+        "bloque-2.white columns.007": 1,
+        "Decorative diagonal.121": 1,
+        "bloque-2.screen horizontal.011": 1,
+        "bloque-2.corridor slab.005": 1,
+        "bloque-2.screen horizontal.005": 1,
+        "bloque-2.screen horizontal.006": 1,
+        "bloque-2.white fascia": 1,
+        "bloque-2.recessed window.009": 1,
+        "bloque-2.window mullion.021": 1,
+        "bloque-2.sill": 1,
+        "bloque-2.screen horizontal.002": 1
+      }
+    },
+    {
+      "id": "bloque-3",
+      "label": 4,
+      "interior_candidates": 35012,
+      "samples": 160,
+      "mismatches": 0,
+      "front_objects": {
+        "bloque-3.standing-seam-roof": 55,
+        "bloque-3.end frame": 20,
+        "bloque-3.corridor slab.002": 9,
+        "bloque-3.end narrow glazing": 9,
+        "bloque-3.ridge skylight": 8,
+        "bloque-3.dark horizontal ribbon.002": 4,
+        "bloque-3.recessed window.016": 3,
+        "bloque-3.recessed window.017": 3,
+        "bloque-3.recessed window.014": 3,
+        "bloque-3.recessed window.010": 3,
+        "bloque-3.roof seam.014": 2,
+        "bloque-3.roof seam.007": 2,
+        "bloque-3.recessed window.015": 2,
+        "bloque-3.white fascia": 2,
+        "bloque-3.window mullion.039": 2,
+        "bloque-3.recessed window.013": 2,
+        "bloque-3.recessed window.012": 2,
+        "bloque-3.window mullion.041": 2,
+        "bloque-3.blue green facade panel.008": 2,
+        "bloque-3.white fascia.001": 1,
+        "bloque-3.roof seam.024": 1,
+        "bloque-3.roof seam.023": 1,
+        "bloque-3.end frame.001": 1,
+        "bloque-3.white core": 1,
+        "bloque-3.roof seam.005": 1,
+        "bloque-3.roof seam.008": 1,
+        "bloque-3.roof seam.012": 1,
+        "bloque-3.window mullion.050": 1,
+        "bloque-3.window transom.017": 1,
+        "bloque-3.blue green facade panel.011": 1,
+        "bloque-3.dark horizontal ribbon.005": 1,
+        "bloque-3.screen horizontal.013": 1,
+        "Decorative diagonal.240": 1,
+        "bloque-3.window transom.012": 1,
+        "bloque-3.gutter": 1,
+        "bloque-3.recessed window.009": 1,
+        "bloque-3.window mullion.044": 1,
+        "bloque-3.white columns.003": 1,
+        "bloque-3.recessed window.011": 1,
+        "bloque-3.window mullion.034": 1,
+        "bloque-3.recessed window.001": 1,
+        "bloque-3.white columns": 1,
+        "bloque-3.roof seam.002": 1,
+        "bloque-3.white columns.004": 1
+      }
+    },
+    {
+      "id": "bloque-4",
+      "label": 5,
+      "interior_candidates": 42405,
+      "samples": 160,
+      "mismatches": 0,
+      "front_objects": {
+        "bloque-4.standing-seam-roof": 47,
+        "bloque-4.end frame": 17,
+        "bloque-4.corridor slab.002": 9,
+        "bloque-4.ridge skylight": 5,
+        "bloque-4.end narrow glazing": 5,
+        "bloque-4.corridor slab": 5,
+        "bloque-4.white fascia": 4,
+        "bloque-4.recessed window.009": 4,
+        "bloque-4.dark horizontal ribbon.001": 4,
+        "bloque-4.corridor slab.001": 4,
+        "bloque-4.white columns.002": 4,
+        "bloque-4.blue green facade panel.001": 4,
+        "bloque-4.blue green facade panel.002": 3,
+        "bloque-4.dark horizontal ribbon": 3,
+        "bloque-4.gutter": 2,
+        "bloque-4.white columns.004": 2,
+        "bloque-4.blue green facade panel.008": 2,
+        "bloque-4.recessed window.010": 2,
+        "bloque-4.white core": 2,
+        "bloque-4.window mullion.024": 2,
+        "bloque-4.recessed window.004": 2,
+        "bloque-4.white corridor rail": 2,
+        "bloque-4.white columns": 2,
+        "bloque-4.roof seam.012": 1,
+        "bloque-4.roof seam.020": 1,
+        "bloque-4.dark horizontal ribbon.005": 1,
+        "bloque-4.roof seam.005": 1,
+        "bloque-4.recessed window.011": 1,
+        "bloque-4.roof seam.007": 1,
+        "bloque-4.recessed window.014": 1,
+        "bloque-4.blue green facade panel.011": 1,
+        "bloque-4.white corridor rail.002": 1,
+        "bloque-4.screen upright.003": 1,
+        "bloque-4.screen upright.002": 1,
+        "bloque-4.screen horizontal.010": 1,
+        "bloque-4.dark horizontal ribbon.002": 1,
+        "bloque-4.recessed window.007": 1,
+        "bloque-4.white columns.003": 1,
+        "bloque-4.window mullion.010": 1,
+        "bloque-4.blue green facade panel.006": 1,
+        "bloque-4.blue green facade panel.003": 1,
+        "bloque-4.sill.001": 1,
+        "bloque-4.window mullion": 1,
+        "bloque-4.blue green facade panel.004": 1,
+        "bloque-4.recessed window.002": 1,
+        "bloque-4.recessed window.008": 1,
+        "bloque-4.window transom.010": 1
+      }
+    },
+    {
+      "id": "bloque-atravesado",
+      "label": 6,
+      "interior_candidates": 19574,
+      "samples": 160,
+      "mismatches": 0,
+      "front_objects": {
+        "bloque-atravesado.standing-seam-roof": 63,
+        "bloque-atravesado.ridge skylight": 12,
+        "bloque-atravesado.end frame.001": 11,
+        "bloque-atravesado.corridor slab.001": 8,
+        "bloque-atravesado.gutter.001": 8,
+        "bloque-atravesado.corridor slab": 8,
+        "bloque-atravesado.white fascia.001": 7,
+        "bloque-atravesado.dark horizontal ribbon.001": 4,
+        "bloque-atravesado.white corridor rail": 4,
+        "bloque-atravesado.sill.001": 3,
+        "bloque-atravesado.white corridor rail.001": 3,
+        "bloque-atravesado.blue green facade panel.012": 2,
+        "bloque-atravesado.sill": 2,
+        "bloque-atravesado.white fascia": 2,
+        "bloque-atravesado.roof seam.022": 2,
+        "bloque-atravesado.screen upright.007": 2,
+        "bloque-atravesado.screen horizontal.012": 2,
+        "bloque-atravesado.end frame": 1,
+        "bloque-atravesado.roof seam.009": 1,
+        "bloque-atravesado.roof seam.010": 1,
+        "bloque-atravesado.white columns.001": 1,
+        "bloque-atravesado.white columns.010": 1,
+        "bloque-atravesado.white columns.011": 1,
+        "bloque-atravesado.window mullion.030": 1,
+        "bloque-atravesado.recessed window.010": 1,
+        "bloque-atravesado.white columns.005": 1,
+        "bloque-atravesado.dark horizontal ribbon": 1,
+        "bloque-atravesado.window mullion.034": 1,
+        "bloque-atravesado.blue green facade panel.003": 1,
+        "bloque-atravesado.recessed window.005": 1,
+        "bloque-atravesado.dark horizontal ribbon.002": 1,
+        "bloque-atravesado.screen horizontal.015": 1,
+        "bloque-atravesado.dark horizontal ribbon.003": 1,
+        "bloque-atravesado.blue green facade panel.007": 1
       }
     },
     {
       "id": "preescolar",
-      "label": 3,
+      "label": 7,
       "interior_candidates": 209889,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "Preescolar north blue roof": 22,
-        "Preescolar west blue roof": 15,
-        "Preescolar entrance large glazing": 14,
-        "Preescolar entrance large glazing.001": 13,
-        "Preescolar entrance core": 8,
-        "Preescolar entrance roof": 7,
+        "Preescolar north blue roof": 23,
+        "Preescolar entrance roof": 17,
+        "Preescolar west blue roof": 16,
+        "Preescolar entrance large glazing": 12,
+        "Preescolar entrance large glazing.001": 9,
+        "Preescolar entrance core": 6,
         "Preescolar V white perimeter fascia.001": 4,
+        "Preescolar north core": 4,
         "Preescolar white outer structure.001": 4,
-        "Preescolar V glass arm 2 panel.018": 3,
-        "Preescolar V white perimeter fascia": 3,
-        "Preescolar V glass arm 1 panel.041": 3,
-        "Preescolar V white perimeter fascia.002": 3,
+        "Preescolar V glass arm 2 panel.022": 3,
         "Preescolar entrance broad window sill": 3,
-        "Preescolar V glass arm 1 panel.003": 2,
-        "Preescolar V glass arm 1 panel.013": 2,
-        "Preescolar V glass arm 1 panel.033": 2,
+        "Preescolar V glass arm 2 panel.026": 2,
+        "Preescolar V rafter.003": 2,
         "Preescolar V glass arm 1 panel.028": 2,
+        "Preescolar V glass arm 1 panel.039": 2,
+        "Preescolar V glass arm 1 panel.031": 2,
+        "Preescolar V glass arm 2 panel.025": 2,
+        "Preescolar V glass arm 2 panel.023": 2,
+        "Preescolar V glass arm 1 panel.027": 2,
+        "Preescolar north internal gallery": 2,
         "Preescolar entrance large window frame": 2,
-        "Preescolar north core": 2,
-        "Preescolar entrance large window reveal.001": 2,
-        "Preescolar west roof rib.019": 1,
-        "Preescolar west roof rib.032": 1,
-        "Preescolar north roof rib.017": 1,
-        "Preescolar V glass arm 2 panel": 1,
-        "Preescolar V rafter": 1,
-        "Preescolar V rafter.054": 1,
+        "Preescolar west roof rib.020": 1,
+        "Preescolar west roof rib.029": 1,
         "Preescolar V glass arm 2 panel.006": 1,
-        "Preescolar west roof rib.036": 1,
+        "Preescolar V glass arm 2 panel.004": 1,
+        "Preescolar V rafter": 1,
         "Preescolar V glass arm 1 panel.012": 1,
-        "Preescolar V glass arm 1 panel.014": 1,
         "Preescolar north roof rib.036": 1,
+        "Preescolar west roof rib.015": 1,
         "Preescolar V glass arm 2 panel.024": 1,
-        "Preescolar west roof rib.001": 1,
-        "Preescolar V glass arm 2 panel.026": 1,
-        "Preescolar west roof rib.006": 1,
-        "Preescolar V glass arm 1 panel.001": 1,
-        "Preescolar V rafter.056": 1,
-        "Preescolar V glass arm 2 panel.014": 1,
+        "Preescolar V glass arm 2 panel.010": 1,
+        "Preescolar V glass arm 2 panel.012": 1,
         "Preescolar V glass arm 1 panel.002": 1,
+        "Preescolar V glass arm 1 panel.003": 1,
+        "Preescolar V glass arm 2 panel.014": 1,
         "Preescolar V glass arm 2 panel.016": 1,
-        "Preescolar V glass arm 2 panel.005": 1,
-        "Preescolar V glass arm 1 panel.007": 1,
-        "Preescolar V glass arm 1 panel.027": 1,
-        "Preescolar V glass arm 1 panel.024": 1,
-        "Preescolar V glass arm 1 panel.010": 1,
+        "Preescolar V rafter.001": 1,
+        "Preescolar V rafter.012": 1,
+        "Preescolar V glass arm 1 panel.016": 1,
+        "Preescolar V glass arm 1 panel.020": 1,
         "Preescolar V glass arm 1 panel.025": 1,
         "Preescolar V glass arm 1 panel.023": 1,
-        "Preescolar V glass arm 1 panel.009": 1,
-        "Preescolar V glass arm 1 panel.026": 1,
-        "Preescolar V glass arm 1 panel.043": 1,
+        "Preescolar V glass arm 1 panel.015": 1,
         "Preescolar V glazing purlin.002": 1,
-        "Preescolar V glass arm 2 panel.027": 1,
-        "Preescolar V truss tie.013": 1,
-        "Preescolar V glass arm 2 panel.021": 1,
-        "Preescolar V rafter.061": 1,
-        "Preescolar V glass arm 2 panel.013": 1,
-        "Preescolar entrance large window reveal": 1,
-        "Preescolar V glass arm 2 panel.019": 1,
+        "Preescolar V glass arm 1 panel.022": 1,
+        "Preescolar V rafter.035": 1,
+        "Preescolar V rafter.037": 1,
+        "Preescolar V glass arm 1 panel.037": 1,
+        "Preescolar V glass arm 1 panel.030": 1,
         "Preescolar V rafter.069": 1,
-        "Preescolar white outer structure.002": 1,
-        "Preescolar V glass arm 2 panel.023": 1,
-        "Preescolar V rafter.073": 1,
-        "Preescolar V glass arm 1 panel.045": 1,
-        "Preescolar V glass arm 1 panel": 1
+        "Preescolar V rafter.065": 1,
+        "Preescolar V white perimeter fascia.002": 1,
+        "Preescolar north X brace.007": 1,
+        "Preescolar V rafter.033": 1,
+        "Preescolar V glass arm 1 panel.033": 1,
+        "Preescolar entrance large window frame.001": 1,
+        "Preescolar entrance large window reveal.001": 1,
+        "Preescolar V glass arm 1 panel.013": 1,
+        "Preescolar V glass arm 1 panel.004": 1,
+        "Preescolar V rafter.056": 1
       }
     },
     {
       "id": "bachillerato",
-      "label": 4,
+      "label": 8,
       "interior_candidates": 104686,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "bachillerato.continuous white roof": 43,
-        "bachillerato.campus front curtain wall": 16,
-        "Bachillerato blue roof section": 12,
-        "Bachillerato blue roof section.004": 10,
-        "bachillerato.enclosed teaching volume": 10,
-        "Bachillerato blue roof section.003": 6,
-        "Bachillerato blue roof section.001": 6,
-        "Bachillerato blue roof section.005": 6,
-        "bachillerato.main glass hall": 5,
-        "Bachillerato blue roof section.002": 5,
-        "bachillerato.white roof parapet": 4,
-        "bachillerato.campus front entrance canopy": 4,
+        "bachillerato.continuous white roof": 39,
+        "bachillerato.campus front curtain wall": 19,
+        "Bachillerato blue roof section.001": 11,
+        "Bachillerato blue roof section.003": 10,
+        "Bachillerato blue roof section": 9,
+        "Bachillerato blue roof section.002": 8,
+        "Bachillerato blue roof section.004": 8,
+        "bachillerato.enclosed teaching volume": 8,
+        "Bachillerato blue roof section.005": 7,
+        "bachillerato.portal pier.001": 6,
+        "bachillerato.portal lintel": 5,
+        "bachillerato.main glass hall": 4,
         "bachillerato.entrance canopy": 3,
-        "bachillerato.campus front white lintel": 3,
-        "bachillerato.portal pier.001": 3,
-        "bachillerato.deep white window jamb.019": 2,
-        "bachillerato.campus front portal pier": 2,
-        "bachillerato.window transom.017": 1,
-        "bachillerato.roof standing seam.002": 1,
-        "bachillerato.roof standing seam.005": 1,
-        "Bachillerato glazed roof monitor.001": 1,
+        "bachillerato.campus front portal pier.001": 3,
+        "bachillerato.white roof parapet.001": 3,
+        "bachillerato.campus front portal pier": 3,
+        "bachillerato.white roof parapet": 2,
+        "bachillerato.campus front white lintel": 2,
         "Bachillerato glazed roof monitor": 1,
-        "bachillerato.deep white window jamb.008": 1,
-        "bachillerato.monitor glazing frame.003": 1,
-        "bachillerato.roof standing seam.014": 1,
-        "bachillerato.deep white window jamb.020": 1,
-        "bachillerato.window transom.022": 1,
-        "bachillerato.recessed window.022": 1,
-        "bachillerato.window mullion.068": 1,
-        "bachillerato.window transom.020": 1,
-        "bachillerato.roof standing seam.027": 1,
-        "bachillerato.white roof parapet.001": 1,
-        "bachillerato.hall transom": 1,
-        "bachillerato.blue facade band.001": 1,
+        "bachillerato.roof standing seam.036": 1,
+        "bachillerato.hall mullion": 1,
+        "bachillerato.roof monitor white base.001": 1,
+        "Bachillerato glazed roof monitor.001": 1,
+        "bachillerato.hall mullion.007": 1,
+        "bachillerato.roof standing seam.024": 1,
+        "bachillerato.window transom.015": 1,
         "bachillerato.campus front glazing mullion.004": 1,
-        "bachillerato.campus front portal pier.001": 1,
-        "bachillerato.campus front glazing mullion.009": 1
+        "bachillerato.campus front entrance canopy": 1
       }
     },
     {
       "id": "transicion",
-      "label": 5,
+      "label": 9,
       "interior_candidates": 61546,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "transicion.standing-seam-roof": 67,
-        "transicion.body": 16,
-        "transicion.sill": 6,
-        "transicion.color panel.003": 5,
-        "transicion.recessed window.009": 4,
-        "transicion.color panel.001": 3,
-        "transicion.recessed window.002": 3,
-        "transicion.recessed window.004": 3,
+        "transicion.standing-seam-roof": 64,
+        "transicion.body": 17,
+        "transicion.color panel.003": 9,
+        "transicion.color panel.001": 5,
+        "transicion.sill.001": 4,
+        "transicion.white fascia": 3,
+        "transicion.recessed window.013": 3,
+        "transicion.sill": 3,
         "transicion.recessed window.006": 3,
-        "transicion.recessed window": 2,
+        "transicion.end window.011": 3,
         "transicion.recessed window.011": 2,
-        "transicion.roof seam.027": 2,
-        "transicion.white fascia": 2,
-        "transicion.recessed window.014": 2,
+        "transicion.recessed window.001": 2,
+        "transicion.recessed window.002": 2,
+        "transicion.gutter": 2,
+        "transicion.roof seam.017": 2,
         "transicion.recessed window.017": 2,
-        "transicion.color panel.005": 2,
-        "transicion.recessed window.007": 2,
-        "transicion.end window.006": 2,
-        "transicion.end window.008": 2,
-        "transicion.gutter": 1,
-        "transicion.roof seam.014": 1,
-        "transicion.roof seam.010": 1,
-        "transicion.roof seam.012": 1,
-        "transicion.roof seam.016": 1,
+        "transicion.end window.010": 2,
+        "transicion.recessed window.008": 2,
+        "transicion.end window.009": 2,
+        "transicion.roof seam.002": 1,
         "transicion.white fascia.001": 1,
-        "transicion.window transom.010": 1,
-        "transicion.floor edge.001": 1,
-        "transicion.window mullion.029": 1,
-        "transicion.window mullion.039": 1,
+        "transicion.roof seam.015": 1,
+        "transicion.recessed window.010": 1,
+        "transicion.window mullion.034": 1,
+        "transicion.recessed window.009": 1,
         "transicion.recessed window.012": 1,
-        "transicion.roof seam.030": 1,
-        "transicion.recessed window.001": 1,
-        "transicion.window mullion.006": 1,
-        "transicion.window transom.002": 1,
-        "transicion.recessed window.013": 1,
-        "transicion.window mullion.009": 1,
+        "transicion.window mullion.035": 1,
+        "transicion.roof seam.016": 1,
+        "transicion.roof seam.018": 1,
+        "transicion.roof seam.024": 1,
+        "transicion.window mullion.007": 1,
+        "transicion.window mullion.005": 1,
+        "transicion.recessed window.005": 1,
+        "transicion.window transom.003": 1,
+        "transicion.window mullion.015": 1,
         "transicion.window mullion.014": 1,
-        "transicion.window mullion.045": 1,
-        "transicion.sill.001": 1,
-        "transicion.recessed window.016": 1,
-        "transicion.window mullion.051": 1,
-        "transicion.window mullion.044": 1,
-        "transicion.roof seam.033": 1,
-        "transicion.window mullion.022": 1,
-        "transicion.end window.010": 1,
-        "transicion.recessed window.008": 1,
-        "transicion.end window.009": 1,
+        "transicion.recessed window.004": 1,
         "transicion.window mullion.047": 1,
-        "transicion.window mullion.049": 1
+        "transicion.recessed window.014": 1,
+        "transicion.window transom.015": 1,
+        "transicion.recessed window.015": 1,
+        "transicion.roof seam.040": 1,
+        "transicion.window mullion.022": 1,
+        "transicion.window mullion.052": 1,
+        "transicion.color panel.005": 1,
+        "transicion.end window.006": 1,
+        "transicion.floor edge.001": 1
       }
     },
     {
       "id": "grado-11",
-      "label": 6,
+      "label": 10,
       "interior_candidates": 27963,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "grado-11.standing-seam-roof": 112,
-        "grado-11.body": 31,
-        "grado-11.roof seam.013": 3,
-        "grado-11.end window.005": 3,
-        "grado-11.roof seam.018": 2,
-        "grado-11.roof seam.006": 1,
-        "grado-11.roof seam.008": 1,
-        "grado-11.roof seam.004": 1,
+        "grado-11.standing-seam-roof": 110,
+        "grado-11.body": 23,
+        "grado-11.end window.005": 8,
+        "grado-11.end window.003": 4,
+        "grado-11.roof seam.004": 2,
+        "grado-11.roof seam.011": 2,
+        "grado-11.roof seam.025": 2,
         "grado-11.roof seam.001": 1,
+        "grado-11.roof seam.003": 1,
+        "grado-11.roof seam.007": 1,
         "grado-11.roof seam.009": 1,
-        "grado-11.roof seam.014": 1,
-        "grado-11.roof seam.011": 1,
-        "grado-11.gutter": 1,
+        "grado-11.roof seam.022": 1,
+        "grado-11.roof seam.020": 1,
+        "grado-11.roof seam.024": 1,
+        "grado-11.window mullion.017": 1,
         "grado-11.end window.004": 1
       }
     },
     {
       "id": "comedor",
-      "label": 7,
+      "label": 11,
       "interior_candidates": 33665,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "comedor.standing-seam-roof": 126,
-        "comedor.body": 7,
+        "comedor.standing-seam-roof": 125,
+        "comedor.body": 11,
         "comedor.white fascia.001": 5,
-        "comedor.roof seam.030": 2,
-        "comedor.roof seam.019": 2,
-        "comedor.white fascia": 2,
-        "comedor.roof seam.014": 2,
-        "comedor.end window.002": 2,
-        "comedor.end window.001": 2,
-        "comedor.roof seam.027": 1,
-        "comedor.gutter.001": 1,
+        "comedor.roof seam.015": 3,
+        "comedor.end window.002": 3,
+        "comedor.end window.001": 3,
+        "comedor.roof seam.027": 2,
         "comedor.roof seam.033": 1,
-        "comedor.roof seam.035": 1,
-        "comedor.roof seam.016": 1,
+        "comedor.roof seam.029": 1,
+        "comedor.gutter.001": 1,
         "comedor.roof seam.023": 1,
-        "comedor.color panel.005": 1,
-        "comedor.roof seam.010": 1,
-        "comedor.roof seam.015": 1,
-        "comedor.roof seam": 1
+        "comedor.window mullion.019": 1,
+        "comedor.white fascia": 1,
+        "comedor.roof seam.014": 1,
+        "comedor.roof seam.001": 1
       }
     },
     {
       "id": "economato",
-      "label": 8,
+      "label": 12,
       "interior_candidates": 23520,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "economato.flat roof": 113,
+        "economato.flat roof": 119,
         "economato.color panel.003": 12,
-        "economato.body": 7,
-        "economato.recessed window.005": 5,
-        "economato.color panel": 3,
-        "economato.color panel.001": 3,
-        "economato.sill": 2,
-        "economato.window mullion.004": 2,
-        "economato.recessed window.001": 2,
-        "economato.window mullion.002": 2,
+        "economato.sill": 4,
+        "economato.window mullion.002": 4,
+        "economato.body": 3,
+        "economato.window mullion.025": 2,
         "economato.recessed window.008": 1,
-        "economato.recessed window.006": 1,
-        "economato.window mullion.022": 1,
+        "economato.window mullion.023": 1,
+        "economato.color panel.004": 1,
+        "economato.window mullion.016": 1,
         "economato.recessed window.007": 1,
-        "economato.window mullion.018": 1,
-        "economato.recessed window.002": 1,
-        "economato.recessed window.004": 1,
+        "economato.window transom.006": 1,
+        "economato.recessed window.005": 1,
+        "economato.window mullion.017": 1,
+        "economato.recessed window.006": 1,
+        "economato.window transom.002": 1,
         "economato.recessed window.003": 1,
-        "economato.window transom.001": 1
+        "economato.window mullion.014": 1,
+        "economato.recessed window.001": 1,
+        "economato.color panel.001": 1,
+        "economato.window mullion.006": 1,
+        "economato.window mullion.004": 1
       }
     },
     {
       "id": "primeros-auxilios",
-      "label": 9,
+      "label": 13,
       "interior_candidates": 6156,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "primeros-auxilios.standing-seam-roof": 128,
-        "primeros-auxilios.white fascia.001": 5,
-        "primeros-auxilios.body": 5,
+        "primeros-auxilios.standing-seam-roof": 136,
+        "primeros-auxilios.body": 6,
+        "primeros-auxilios.roof seam.009": 5,
         "primeros-auxilios.roof seam.004": 3,
-        "primeros-auxilios.roof seam.012": 3,
-        "primeros-auxilios.roof seam.013": 3,
-        "primeros-auxilios.roof seam.006": 2,
-        "primeros-auxilios.roof seam.008": 2,
-        "primeros-auxilios.roof seam.014": 2,
-        "primeros-auxilios.gutter": 1,
+        "primeros-auxilios.roof seam.001": 2,
         "primeros-auxilios.roof seam.002": 1,
-        "primeros-auxilios.roof seam.003": 1,
         "primeros-auxilios.roof seam.005": 1,
-        "primeros-auxilios.roof seam.009": 1,
-        "primeros-auxilios.roof seam.007": 1,
-        "primeros-auxilios.roof seam.010": 1
+        "primeros-auxilios.white fascia.001": 1,
+        "primeros-auxilios.roof seam.008": 1,
+        "primeros-auxilios.roof seam.010": 1,
+        "primeros-auxilios.roof seam.012": 1,
+        "primeros-auxilios.roof seam.014": 1,
+        "primeros-auxilios.roof seam.013": 1
       }
     },
     {
       "id": "danzas-1",
-      "label": 10,
+      "label": 14,
       "interior_candidates": 2584,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "danzas-1.standing-seam-roof": 91,
-        "danzas-1.body": 20,
-        "danzas-1.end window.005": 16,
-        "danzas-1.end window.004": 12,
-        "danzas-1.end window.003": 5,
+        "danzas-1.standing-seam-roof": 85,
+        "danzas-1.end window.005": 20,
+        "danzas-1.body": 18,
+        "danzas-1.end window.004": 15,
+        "danzas-1.roof seam.011": 5,
+        "danzas-1.roof seam.001": 4,
+        "danzas-1.roof seam.006": 3,
+        "danzas-1.roof seam.002": 2,
         "danzas-1.white fascia.001": 2,
-        "danzas-1.roof seam.004": 2,
-        "danzas-1.roof seam.005": 2,
-        "danzas-1.roof seam.006": 2,
-        "danzas-1.roof seam.011": 2,
-        "danzas-1.roof seam.012": 2,
-        "danzas-1.roof seam.002": 1,
+        "danzas-1.end window.003": 2,
         "danzas-1.roof seam.003": 1,
-        "danzas-1.roof seam.001": 1,
-        "danzas-1.roof seam.007": 1
+        "danzas-1.roof seam.005": 1,
+        "danzas-1.roof seam.007": 1,
+        "danzas-1.roof seam.009": 1
       }
     },
     {
       "id": "danzas-2",
-      "label": 11,
+      "label": 15,
       "interior_candidates": 8080,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "danzas-2.standing-seam-roof": 90,
-        "danzas-2.white fascia": 9,
-        "danzas-2.color panel.001": 8,
-        "danzas-2.color panel": 7,
+        "danzas-2.standing-seam-roof": 88,
+        "danzas-2.white fascia": 12,
+        "danzas-2.color panel.001": 7,
         "danzas-2.body": 6,
-        "danzas-2.roof seam.003": 3,
-        "danzas-2.window mullion.003": 3,
-        "danzas-2.recessed window.004": 3,
+        "danzas-2.roof seam.002": 3,
+        "danzas-2.recessed window.001": 3,
+        "danzas-2.window mullion.002": 3,
+        "danzas-2.sill": 3,
+        "danzas-2.recessed window.003": 3,
         "danzas-2.gutter": 2,
-        "danzas-2.window mullion.001": 2,
+        "danzas-2.recessed window.002": 2,
+        "danzas-2.window mullion.005": 2,
         "danzas-2.roof seam.010": 2,
-        "danzas-2.recessed window": 2,
-        "danzas-2.sill": 2,
-        "danzas-2.recessed window.003": 2,
         "danzas-2.color panel.002": 2,
+        "danzas-2.window mullion.012": 2,
         "danzas-2.window mullion.014": 2,
-        "danzas-2.white fascia.001": 1,
+        "danzas-2.recessed window.004": 2,
+        "danzas-2.roof seam.001": 1,
+        "danzas-2.roof seam.003": 1,
         "danzas-2.roof seam.006": 1,
-        "danzas-2.roof seam.004": 1,
-        "danzas-2.roof seam.009": 1,
         "danzas-2.roof seam.007": 1,
-        "danzas-2.window mullion.005": 1,
-        "danzas-2.window transom.003": 1,
-        "danzas-2.recessed window.002": 1,
-        "danzas-2.window mullion.009": 1,
+        "danzas-2.roof seam.009": 1,
+        "danzas-2.window transom": 1,
+        "danzas-2.window mullion.003": 1,
+        "danzas-2.recessed window": 1,
+        "danzas-2.color panel": 1,
         "danzas-2.window transom.002": 1,
         "danzas-2.window mullion.004": 1,
-        "danzas-2.roof seam.008": 1,
+        "danzas-2.window mullion.007": 1,
+        "danzas-2.window transom.003": 1,
+        "danzas-2.roof seam.011": 1,
         "danzas-2.window mullion.010": 1,
-        "danzas-2.end window.003": 1,
-        "danzas-2.window mullion.013": 1
+        "danzas-2.window transom.004": 1
       }
     },
     {
       "id": "tienda-1",
-      "label": 12,
+      "label": 16,
       "interior_candidates": 43285,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "tienda.shop inset roof": 77,
-        "tienda.shop white flat roof": 34,
-        "tienda.shop body": 13,
-        "tienda.shopfront glazing.004": 11,
-        "tienda.shopfront glazing.008": 7,
-        "tienda.shop blue fascia": 4,
-        "tienda.shopfront glazing.009": 4,
-        "tienda.shopfront glazing.003": 3,
-        "tienda.shopfront glazing.002": 3,
-        "tienda.shopfront glazing": 1,
-        "tienda.shopfront glazing.005": 1,
-        "tienda.shopfront glazing.007": 1,
+        "tienda.shop inset roof": 75,
+        "tienda.shop white flat roof": 45,
+        "tienda.shopfront glazing.004": 13,
+        "tienda.shop blue fascia": 8,
+        "tienda.shop body": 7,
+        "tienda.shopfront glazing.008": 4,
+        "tienda.shopfront glazing.009": 3,
+        "Tienda entrance link awning": 1,
+        "tienda.shopfront glazing.003": 1,
+        "tienda.shopfront glazing.001": 1,
+        "tienda.shopfront transom.007": 1,
         "tienda.shopfront glazing.010": 1
       }
     },
     {
       "id": "gym",
-      "label": 13,
+      "label": 17,
       "interior_candidates": 5827,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "GYM outdoor rubber surface": 146,
-        "GYM outdoor exercise upright": 5,
-        "GYM outdoor exercise bench": 2,
-        "GYM outdoor exercise upright.001": 2,
-        "GYM outdoor perimeter": 2,
-        "GYM outdoor pull-up bar": 1,
+        "GYM outdoor rubber surface": 144,
+        "GYM outdoor exercise upright.001": 5,
+        "GYM outdoor exercise bench": 3,
+        "GYM outdoor perimeter": 3,
+        "GYM outdoor step": 2,
         "GYM outdoor step.001": 1,
-        "GYM outdoor step": 1
+        "GYM outdoor pull-up bar": 1,
+        "GYM outdoor exercise upright": 1
       }
     },
     {
       "id": "futbol-principal",
-      "label": 14,
+      "label": 18,
       "interior_candidates": 78669,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
         "Football lawn.surface": 77,
         "Subtle mown turf stripe.003": 23,
-        "Subtle mown turf stripe.001": 19,
-        "Subtle mown turf stripe": 18,
-        "Subtle mown turf stripe.002": 15,
-        "Football lawn.boundary": 3,
-        "Football lawn.penalty area": 1,
-        "Football lawn.penalty area.001": 1,
-        "Football lawn.goal area": 1,
-        "Football lawn.goal upright.002": 1,
+        "Subtle mown turf stripe.002": 19,
+        "Subtle mown turf stripe.001": 18,
+        "Subtle mown turf stripe": 16,
+        "Football lawn.boundary": 4,
+        "Football lawn.goal net support": 1,
+        "Football lawn.goal crossbar": 1,
         "Football lawn.center circle": 1
       }
     },
     {
       "id": "futbol-norte",
-      "label": 15,
+      "label": 19,
       "interior_candidates": 15920,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
         "North football field.surface": 146,
-        "North football field.boundary": 10,
-        "North football field.goal area": 1,
+        "North football field.boundary": 9,
+        "North football field.center circle": 2,
         "North football field.penalty area": 1,
-        "North football field.penalty area.001": 1,
-        "North football field.goal crossbar.001": 1
+        "North football field.halfway": 1,
+        "North football field.goal upright.002": 1
       }
     },
     {
       "id": "patio-central",
-      "label": 16,
+      "label": 20,
       "interior_candidates": 616047,
       "samples": 160,
       "mismatches": 0,
       "front_objects": {
-        "Zona 1 · Canchas · reference footprint": 107,
-        "Central court A.surface": 22,
-        "Central court B.surface": 15,
-        "Central court C.surface": 11,
-        "Central court C.boundary": 3,
-        "Central court B.backboard": 1,
-        "Central court A.basket support.001": 1
+        "Zona 1 · Canchas · reference footprint": 100,
+        "Central court A.surface": 26,
+        "Central court B.surface": 21,
+        "Central court C.surface": 9,
+        "Central court A.boundary": 2,
+        "Central court A.circle": 1,
+        "Red multi-sport court": 1
       }
     },
     {
@@ -619,50 +780,45 @@
       "samples": 200,
       "mismatches": 0,
       "front_objects": {
-        "Campus paving": 64,
-        "Studio ground": 50,
-        "Zona verde · Fútbol · reference footprint": 16,
-        "Central terracotta walk": 11,
-        "Preescolar continuous V play floor": 8,
+        "Campus paving": 63,
+        "Studio ground": 58,
+        "Zona verde · Fútbol · reference footprint": 13,
+        "Central terracotta walk": 8,
+        "Zona verde norte · reference footprint": 6,
+        "transicion.base": 6,
+        "Tree crown.041": 4,
         "administrativo.entry paving": 4,
-        "Zona verde norte · reference footprint": 3,
-        "Zona 2 · Canchas · reference footprint": 2,
-        "Tree crown.022": 2,
-        "Tree crown.039": 2,
-        "Perimeter edging": 2,
-        "Tree crown.080": 2,
-        "Planter foliage.006": 2,
-        "Play area rubber surfacing.002": 2,
-        "Tree crown.038": 1,
-        "Tree crown.011": 1,
-        "Tree crown.032": 1,
-        "Tree crown.014": 1,
-        "Tree crown.049": 1,
-        "Tree crown.041": 1,
+        "Preescolar continuous V play floor": 4,
+        "Tree crown.029": 2,
+        "Tree crown.006": 2,
+        "Tree crown.025": 2,
+        "tienda.compact paving base": 2,
+        "Tree crown.026": 1,
+        "Tree crown.023": 1,
         "grado-11.base": 1,
+        "Tree crown.049": 1,
+        "Planter foliage.004": 1,
+        "Tree crown.142": 1,
         "North sports court.surface": 1,
+        "Tree crown.038": 1,
+        "Tree crown.018": 1,
         "Tree crown.028": 1,
-        "Tree crown.021": 1,
-        "Tree crown.006": 1,
-        "Tree crown.035": 1,
-        "Tree crown.019": 1,
-        "Tree crown.076": 1,
-        "Tree crown.046": 1,
-        "Tree crown.037": 1,
-        "Tree crown.070": 1,
-        "Tree crown.164": 1,
-        "Tree crown.079": 1,
-        "salones.paved apron": 1,
-        "economato.base": 1,
-        "Concrete planter.006": 1,
-        "Tree crown.115": 1,
-        "Planter foliage.008": 1,
-        "Tree crown.103": 1,
+        "Tree crown.007": 1,
+        "Tree crown.004": 1,
+        "Tree crown.022": 1,
+        "Tree crown.077": 1,
+        "bloque-2.paved apron": 1,
+        "Bloque de salones · reference outline.002": 1,
+        "bloque-4.paved apron": 1,
+        "Tree crown.080": 1,
+        "Concrete planter.007": 1,
+        "Tree crown.100": 1,
+        "Preescolar planted edge": 1,
         "Preescolar blue learning track": 1,
-        "Campus clipped hedge.001": 1,
         "Tree crown.111": 1,
-        "Timber bench.004": 1,
-        "Tree crown.017": 1
+        "Lamp head": 1,
+        "Tree trunk.008": 1,
+        "Jardín central · reference footprint": 1
       }
     }
   ],
@@ -675,7 +831,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -685,7 +841,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.yellow identity panel",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -695,7 +851,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -705,7 +861,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -715,7 +871,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -725,7 +881,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof parapet",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -735,7 +891,7 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
@@ -745,521 +901,771 @@
       ],
       "visible_label": 1,
       "visible_object": "administrativo.roof inset",
-      "occluded_label": 8,
+      "occluded_label": 12,
       "occluded_object": "economato.flat roof"
     },
     {
       "pixel": [
-        1618,
-        646
+        1467,
+        887
       ],
       "visible_label": 2,
-      "visible_object": "bloque-3.standing-seam-roof",
-      "occluded_label": 4,
-      "occluded_object": "bachillerato.campus front doors"
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.white corridor rail.001"
     },
     {
       "pixel": [
-        1618,
-        645
+        1463,
+        884
       ],
       "visible_label": 2,
-      "visible_object": "bloque-3.standing-seam-roof",
-      "occluded_label": 4,
-      "occluded_object": "bachillerato.campus front doors"
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.recessed window.011"
     },
     {
       "pixel": [
-        1712,
-        587
+        1504,
+        864
       ],
       "visible_label": 2,
-      "visible_object": "bloque-3.standing-seam-roof",
-      "occluded_label": 4,
-      "occluded_object": "bachillerato.campus front curtain wall"
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.recessed window.012"
     },
     {
       "pixel": [
-        1711,
-        611
+        1491,
+        883
       ],
       "visible_label": 2,
-      "visible_object": "bloque-3.standing-seam-roof",
-      "occluded_label": 4,
-      "occluded_object": "bachillerato.campus front curtain wall"
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.blue green facade panel.006"
     },
     {
       "pixel": [
-        1726,
-        619
+        1479,
+        889
       ],
       "visible_label": 2,
-      "visible_object": "bloque-3.standing-seam-roof",
-      "occluded_label": 4,
-      "occluded_object": "bachillerato.campus front glazing mullion.009"
+      "visible_object": "salones.roof seam.016",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.dark horizontal ribbon.001"
     },
     {
       "pixel": [
-        1272,
-        836
+        1502,
+        864
       ],
       "visible_label": 2,
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.recessed window.012"
+    },
+    {
+      "pixel": [
+        1478,
+        876
+      ],
+      "visible_label": 2,
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.recessed window.012"
+    },
+    {
+      "pixel": [
+        1495,
+        887
+      ],
+      "visible_label": 2,
+      "visible_object": "salones.standing-seam-roof",
+      "occluded_label": 3,
+      "occluded_object": "bloque-2.blue green facade panel.006"
+    },
+    {
+      "pixel": [
+        1522,
+        777
+      ],
+      "visible_label": 3,
       "visible_object": "bloque-2.standing-seam-roof",
-      "occluded_label": 7,
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.end frame"
+    },
+    {
+      "pixel": [
+        1515,
+        759
+      ],
+      "visible_label": 3,
+      "visible_object": "bloque-2.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.dark horizontal ribbon.004"
+    },
+    {
+      "pixel": [
+        1523,
+        771
+      ],
+      "visible_label": 3,
+      "visible_object": "bloque-2.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.end frame"
+    },
+    {
+      "pixel": [
+        1548,
+        798
+      ],
+      "visible_label": 3,
+      "visible_object": "bloque-2.end frame.001",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.end frame"
+    },
+    {
+      "pixel": [
+        1220,
+        857
+      ],
+      "visible_label": 3,
+      "visible_object": "bloque-2.standing-seam-roof",
+      "occluded_label": 11,
+      "occluded_object": "comedor.roof seam.009"
+    },
+    {
+      "pixel": [
+        1227,
+        849
+      ],
+      "visible_label": 3,
+      "visible_object": "bloque-2.standing-seam-roof",
+      "occluded_label": 11,
       "occluded_object": "comedor.standing-seam-roof"
     },
     {
       "pixel": [
-        1301,
-        837
+        1222,
+        863
       ],
-      "visible_label": 2,
-      "visible_object": "bloque-2.standing-seam-roof",
-      "occluded_label": 7,
-      "occluded_object": "comedor.roof seam.014"
-    },
-    {
-      "pixel": [
-        1255,
-        840
-      ],
-      "visible_label": 2,
-      "visible_object": "bloque-2.standing-seam-roof",
-      "occluded_label": 7,
+      "visible_label": 3,
+      "visible_object": "bloque-2.end frame",
+      "occluded_label": 11,
       "occluded_object": "comedor.standing-seam-roof"
     },
     {
       "pixel": [
-        2263,
-        1038
+        1291,
+        842
       ],
       "visible_label": 3,
-      "visible_object": "Preescolar west blue roof",
+      "visible_object": "bloque-2.standing-seam-roof",
       "occluded_label": 11,
-      "occluded_object": "danzas-2.end window.005"
+      "occluded_object": "comedor.roof seam.013"
     },
     {
       "pixel": [
-        2236,
-        1065
+        1634,
+        631
       ],
-      "visible_label": 3,
-      "visible_object": "Preescolar west blue roof",
-      "occluded_label": 11,
-      "occluded_object": "danzas-2.body"
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
     },
     {
       "pixel": [
-        2260,
-        1050
+        1632,
+        641
       ],
-      "visible_label": 3,
-      "visible_object": "Preescolar west blue roof",
-      "occluded_label": 11,
-      "occluded_object": "danzas-2.end window.005"
+      "visible_label": 4,
+      "visible_object": "bloque-3.roof seam.014",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front doors"
     },
     {
       "pixel": [
-        2150,
-        1153
+        1641,
+        639
       ],
-      "visible_label": 3,
-      "visible_object": "Preescolar west roof rib.006",
-      "occluded_label": 5,
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
+    },
+    {
+      "pixel": [
+        1646,
+        635
+      ],
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
+    },
+    {
+      "pixel": [
+        1653,
+        621
+      ],
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
+    },
+    {
+      "pixel": [
+        1646,
+        641
+      ],
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front doors"
+    },
+    {
+      "pixel": [
+        1653,
+        631
+      ],
+      "visible_label": 4,
+      "visible_object": "bloque-3.standing-seam-roof",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
+    },
+    {
+      "pixel": [
+        1622,
+        637
+      ],
+      "visible_label": 4,
+      "visible_object": "bloque-3.roof seam.014",
+      "occluded_label": 8,
+      "occluded_object": "bachillerato.campus front entrance canopy"
+    },
+    {
+      "pixel": [
+        1706,
+        744
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.recessed window.009"
+    },
+    {
+      "pixel": [
+        1707,
+        744
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.white core"
+    },
+    {
+      "pixel": [
+        1753,
+        740
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.corridor slab.001"
+    },
+    {
+      "pixel": [
+        1759,
+        734
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.corridor slab.001"
+    },
+    {
+      "pixel": [
+        1762,
+        717
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.blue green facade panel.006"
+    },
+    {
+      "pixel": [
+        1760,
+        728
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.roof seam.012",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.corridor slab.001"
+    },
+    {
+      "pixel": [
+        1734,
+        736
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.dark horizontal ribbon.001"
+    },
+    {
+      "pixel": [
+        1767,
+        727
+      ],
+      "visible_label": 5,
+      "visible_object": "bloque-4.standing-seam-roof",
+      "occluded_label": 4,
+      "occluded_object": "bloque-3.white columns.005"
+    },
+    {
+      "pixel": [
+        2147,
+        1148
+      ],
+      "visible_label": 7,
+      "visible_object": "Preescolar west blue roof",
+      "occluded_label": 9,
       "occluded_object": "transicion.body"
     },
     {
       "pixel": [
-        1426,
-        373
+        1423,
+        318
       ],
-      "visible_label": 4,
-      "visible_object": "bachillerato.window transom.017",
-      "occluded_label": 6,
+      "visible_label": 8,
+      "visible_object": "bachillerato.continuous white roof",
+      "occluded_label": 10,
+      "occluded_object": "grado-11.standing-seam-roof"
+    },
+    {
+      "pixel": [
+        1429,
+        402
+      ],
+      "visible_label": 8,
+      "visible_object": "bachillerato.portal lintel",
+      "occluded_label": 10,
       "occluded_object": "grado-11.white fascia.001"
     },
     {
       "pixel": [
-        1423,
-        433
+        1425,
+        381
       ],
-      "visible_label": 4,
-      "visible_object": "bachillerato.main glass hall",
-      "occluded_label": 6,
-      "occluded_object": "grado-11.sill.001"
+      "visible_label": 8,
+      "visible_object": "bachillerato.portal lintel",
+      "occluded_label": 10,
+      "occluded_object": "grado-11.standing-seam-roof"
     },
     {
       "pixel": [
-        1943,
-        936
+        1420,
+        406
       ],
-      "visible_label": 5,
+      "visible_label": 8,
+      "visible_object": "bachillerato.hall mullion",
+      "occluded_label": 10,
+      "occluded_object": "grado-11.recessed window.011"
+    },
+    {
+      "pixel": [
+        1826,
+        889
+      ],
+      "visible_label": 9,
       "visible_object": "transicion.standing-seam-roof",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.standing-seam-roof"
+      "occluded_label": 5,
+      "occluded_object": "bloque-4.corridor slab"
     },
     {
       "pixel": [
-        1921,
-        929
+        1842,
+        888
       ],
-      "visible_label": 5,
+      "visible_label": 9,
       "visible_object": "transicion.standing-seam-roof",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.standing-seam-roof"
+      "occluded_label": 5,
+      "occluded_object": "bloque-4.white columns.004"
     },
     {
       "pixel": [
-        1932,
-        952
+        1928,
+        924
       ],
-      "visible_label": 5,
-      "visible_object": "transicion.roof seam.014",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.white fascia"
-    },
-    {
-      "pixel": [
-        1926,
-        922
-      ],
-      "visible_label": 5,
-      "visible_object": "transicion.roof seam.010",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.standing-seam-roof"
-    },
-    {
-      "pixel": [
-        1893,
-        933
-      ],
-      "visible_label": 5,
+      "visible_label": 9,
       "visible_object": "transicion.standing-seam-roof",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.color panel"
+      "occluded_label": 13,
+      "occluded_object": "primeros-auxilios.standing-seam-roof"
     },
     {
       "pixel": [
-        1959,
-        945
+        1933,
+        941
       ],
-      "visible_label": 5,
+      "visible_label": 9,
       "visible_object": "transicion.standing-seam-roof",
-      "occluded_label": 9,
+      "occluded_label": 13,
       "occluded_object": "primeros-auxilios.standing-seam-roof"
     },
     {
       "pixel": [
-        1936,
-        934
+        1918,
+        941
       ],
-      "visible_label": 5,
-      "visible_object": "transicion.roof seam.012",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.standing-seam-roof"
+      "visible_label": 9,
+      "visible_object": "transicion.standing-seam-roof",
+      "occluded_label": 13,
+      "occluded_object": "primeros-auxilios.window transom.002"
     },
     {
       "pixel": [
-        1965,
+        1944,
         954
       ],
-      "visible_label": 5,
-      "visible_object": "transicion.roof seam.016",
-      "occluded_label": 9,
-      "occluded_object": "primeros-auxilios.roof seam.013"
+      "visible_label": 9,
+      "visible_object": "transicion.standing-seam-roof",
+      "occluded_label": 13,
+      "occluded_object": "primeros-auxilios.standing-seam-roof"
     },
     {
       "pixel": [
-        1257,
-        678
+        1933,
+        938
       ],
-      "visible_label": 7,
+      "visible_label": 9,
+      "visible_object": "transicion.standing-seam-roof",
+      "occluded_label": 13,
+      "occluded_object": "primeros-auxilios.standing-seam-roof"
+    },
+    {
+      "pixel": [
+        1969,
+        948
+      ],
+      "visible_label": 9,
+      "visible_object": "transicion.white fascia.001",
+      "occluded_label": 13,
+      "occluded_object": "primeros-auxilios.standing-seam-roof"
+    },
+    {
+      "pixel": [
+        1229,
+        677
+      ],
+      "visible_label": 11,
       "visible_object": "comedor.standing-seam-roof",
-      "occluded_label": 14,
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        1284,
+        685
+      ],
+      "visible_label": 11,
+      "visible_object": "comedor.standing-seam-roof",
+      "occluded_label": 18,
       "occluded_object": "Football lawn.surface"
     },
     {
       "pixel": [
         1212,
-        962
+        971
       ],
-      "visible_label": 8,
+      "visible_label": 12,
       "visible_object": "economato.flat roof",
-      "occluded_label": 2,
-      "occluded_object": "bloque-2.white columns.007"
-    },
-    {
-      "pixel": [
-        1204,
-        961
-      ],
-      "visible_label": 8,
-      "visible_object": "economato.flat roof",
-      "occluded_label": 7,
-      "occluded_object": "comedor.body"
-    },
-    {
-      "pixel": [
-        1211,
-        969
-      ],
-      "visible_label": 8,
-      "visible_object": "economato.flat roof",
-      "occluded_label": 2,
+      "occluded_label": 3,
       "occluded_object": "bloque-2.corridor slab.003"
     },
     {
       "pixel": [
-        2575,
-        1532
+        1210,
+        976
       ],
       "visible_label": 12,
-      "visible_object": "tienda.shop white flat roof",
+      "visible_object": "economato.flat roof",
       "occluded_label": 3,
-      "occluded_object": "Preescolar entrance core"
+      "occluded_object": "bloque-2.white columns.007"
     },
     {
       "pixel": [
-        2552,
-        1557
+        2572,
+        1555
       ],
-      "visible_label": 12,
+      "visible_label": 16,
       "visible_object": "tienda.shop inset roof",
-      "occluded_label": 3,
+      "occluded_label": 7,
       "occluded_object": "Preescolar entrance core"
     },
     {
       "pixel": [
-        2531,
-        1549
+        2542,
+        1545
       ],
-      "visible_label": 12,
+      "visible_label": 16,
       "visible_object": "tienda.shop inset roof",
-      "occluded_label": 3,
+      "occluded_label": 7,
       "occluded_object": "Preescolar entrance core"
     },
     {
       "pixel": [
-        2600,
+        2561,
         1536
       ],
-      "visible_label": 12,
-      "visible_object": "tienda.shop inset roof",
-      "occluded_label": 3,
-      "occluded_object": "Preescolar entrance internal gallery"
-    },
-    {
-      "pixel": [
-        2578,
-        1538
-      ],
-      "visible_label": 12,
-      "visible_object": "tienda.shop inset roof",
-      "occluded_label": 3,
+      "visible_label": 16,
+      "visible_object": "tienda.shop white flat roof",
+      "occluded_label": 7,
       "occluded_object": "Preescolar entrance core"
     },
     {
       "pixel": [
-        1048,
-        612
+        2556,
+        1528
+      ],
+      "visible_label": 16,
+      "visible_object": "Tienda entrance link awning",
+      "occluded_label": 7,
+      "occluded_object": "Preescolar entrance core"
+    },
+    {
+      "pixel": [
+        2568,
+        1534
+      ],
+      "visible_label": 16,
+      "visible_object": "tienda.shop white flat roof",
+      "occluded_label": 7,
+      "occluded_object": "Preescolar entrance core"
+    },
+    {
+      "pixel": [
+        2546,
+        1541
+      ],
+      "visible_label": 16,
+      "visible_object": "tienda.shop white flat roof",
+      "occluded_label": 7,
+      "occluded_object": "Preescolar entrance core"
+    },
+    {
+      "pixel": [
+        2589,
+        1532
+      ],
+      "visible_label": 16,
+      "visible_object": "tienda.shop white flat roof",
+      "occluded_label": 7,
+      "occluded_object": "Preescolar entrance core"
+    },
+    {
+      "pixel": [
+        834,
+        611
       ],
       "visible_label": 0,
-      "visible_object": "Tree crown.038",
-      "occluded_label": 14,
+      "visible_object": "Tree crown.026",
+      "occluded_label": 18,
       "occluded_object": "Football lawn.surface"
     },
     {
       "pixel": [
-        552,
-        629
+        895,
+        631
       ],
       "visible_label": 0,
-      "visible_object": "Tree crown.011",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe"
-    },
-    {
-      "pixel": [
-        950,
-        632
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.032",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.002"
-    },
-    {
-      "pixel": [
-        618,
-        632
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.014",
-      "occluded_label": 14,
+      "visible_object": "Tree crown.029",
+      "occluded_label": 18,
       "occluded_object": "Football lawn.surface"
     },
     {
       "pixel": [
-        1298,
-        628
+        777,
+        626
       ],
       "visible_label": 0,
-      "visible_object": "Tree crown.049",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
+      "visible_object": "Tree crown.023",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe.001"
     },
     {
       "pixel": [
-        1114,
-        625
+        1104,
+        631
       ],
       "visible_label": 0,
       "visible_object": "Tree crown.041",
-      "occluded_label": 14,
+      "occluded_label": 18,
       "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        903,
-        638
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.028",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.002"
-    },
-    {
-      "pixel": [
-        782,
-        652
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.022",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.001"
-    },
-    {
-      "pixel": [
-        765,
-        645
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.021",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.001"
-    },
-    {
-      "pixel": [
-        494,
-        648
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.006",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe"
-    },
-    {
-      "pixel": [
-        988,
-        641
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.035",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.002"
-    },
-    {
-      "pixel": [
-        734,
-        650
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.019",
-      "occluded_label": 14,
-      "occluded_object": "Subtle mown turf stripe.001"
-    },
-    {
-      "pixel": [
-        796,
-        653
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.022",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        1109,
-        953
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.076",
-      "occluded_label": 8,
-      "occluded_object": "economato.flat roof"
-    },
-    {
-      "pixel": [
-        1099,
-        645
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.039",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        1236,
-        648
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.046",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        1079,
-        645
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.037",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        1098,
-        643
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.039",
-      "occluded_label": 14,
-      "occluded_object": "Football lawn.surface"
-    },
-    {
-      "pixel": [
-        1146,
-        829
-      ],
-      "visible_label": 0,
-      "visible_object": "Tree crown.070",
-      "occluded_label": 7,
-      "occluded_object": "comedor.roof seam.013"
     },
     {
       "pixel": [
         1291,
-        1258
+        626
       ],
       "visible_label": 0,
-      "visible_object": "Planter foliage.006",
-      "occluded_label": 16,
+      "visible_object": "Tree crown.049",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        1377,
+        443
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.142",
+      "occluded_label": 10,
+      "occluded_object": "grado-11.body"
+    },
+    {
+      "pixel": [
+        1118,
+        625
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.041",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe.003"
+    },
+    {
+      "pixel": [
+        1052,
+        641
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.038",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        718,
+        647
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.018",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe.001"
+    },
+    {
+      "pixel": [
+        902,
+        650
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.028",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe.002"
+    },
+    {
+      "pixel": [
+        492,
+        646
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.006",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe"
+    },
+    {
+      "pixel": [
+        857,
+        646
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.025",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        522,
+        649
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.007",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.boundary"
+    },
+    {
+      "pixel": [
+        468,
+        650
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.004",
+      "occluded_label": 18,
+      "occluded_object": "Subtle mown turf stripe"
+    },
+    {
+      "pixel": [
+        837,
+        648
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.025",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        788,
+        652
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.022",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        877,
+        641
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.029",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        1103,
+        638
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.041",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        1102,
+        641
+      ],
+      "visible_label": 0,
+      "visible_object": "Tree crown.041",
+      "occluded_label": 18,
+      "occluded_object": "Football lawn.surface"
+    },
+    {
+      "pixel": [
+        1286,
+        1293
+      ],
+      "visible_label": 0,
+      "visible_object": "Central terracotta walk",
+      "occluded_label": 20,
       "occluded_object": "Zona 1 · Canchas · reference footprint"
     }
   ],
   "selection_material_policy": "Glazing is treated as the front opaque geometric surface, matching the semantic pass rather than refracting photographic artwork.",
   "limitations": "Sampling verifies alignment and visibility; it is not an exhaustive per-pixel proof. Two-pixel label-interior samples avoid stochastic single-sample antialias boundaries.",
-  "seconds": 8.047
+  "seconds": 5.672
 }

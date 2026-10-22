@@ -1,22 +1,25 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Building2, Hand, Info, List, Map, MapPin, MousePointer2, Plus, RotateCcw, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowRight, Building2, Hand, Info, List, Map, MapPin, MousePointer2, Plus, RotateCcw, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { api } from '../api.js';
 import Modal from '../components/Modal.jsx';
 import StatusBadge from '../components/StatusBadge.jsx';
-import { spacesInRegion } from './campus-spaces.js';
+import { activeRecord } from '../utils/maintenance.js';
+import { incidentReportUrl, spacesInRegion } from './campus-spaces.js';
 import './maintenance-pages.css';
 
-export default function CampusSpacesPanel({ region, spaces, loading, error, onReload, onCreated, onClear }) {
-  const [selectedId, setSelectedId] = useState('');
+export default function CampusSpacesPanel({ region, spaces, loading, error, onReload, onCreated, onClear, selectedSpaceId = '', onSelectSpace }) {
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: '', zone: '' });
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState('');
   const [notice, setNotice] = useState('');
   const items = useMemo(() => spacesInRegion(spaces, region?.id), [spaces, region?.id]);
-  const selected = items.find(item => String(item.id) === selectedId);
+  const selected = items.find(item => String(item.id) === selectedSpaceId);
+  const canReport = !loading && !error && (selected ? activeRecord(selected) : items.some(activeRecord));
+  const currentRegion = useRef(region?.id);
 
-  useEffect(() => { setSelectedId(''); setNotice(''); setCreating(false); }, [region?.id]);
+  useEffect(() => { currentRegion.current = region?.id; setNotice(''); setCreating(false); }, [region?.id]);
 
   function openForm() {
     setForm({ name: '', zone: '' });
@@ -30,7 +33,8 @@ export default function CampusSpacesPanel({ region, spaces, loading, error, onRe
     try {
       const { space } = await api('/spaces', { method: 'POST', body: JSON.stringify({ name: form.name.trim(), zone: form.zone.trim(), campus_region_id: region.id, active: true }) });
       onCreated(space);
-      setSelectedId(String(space.id)); setCreating(false);
+      if (currentRegion.current !== region.id) return;
+      onSelectSpace(String(space.id)); setCreating(false);
       setNotice('Espacio añadido a este edificio. Ya puedes seleccionarlo en la lista.');
     } catch (cause) { setFormError(cause.message); }
     finally { setSaving(false); }
@@ -49,14 +53,18 @@ export default function CampusSpacesPanel({ region, spaces, loading, error, onRe
     <div className="campus-selected-symbol" aria-hidden="true"><Building2 size={25} strokeWidth={1.5} /></div>
     <p className="campus-zone-type">Gimnasio Los Arrayanes</p>
     <h2 id="campus-zone-title" tabIndex={-1}>{region.label}</h2>
-    <p className="campus-zone-intro">{region.id === 'bloques-salones' ? 'Los cuatro bloques y el bloque atravesado comparten esta lista de espacios.' : 'Organiza y selecciona las ubicaciones de este edificio.'}</p>
-    <div className="campus-internal-heading"><h3>Espacios internos <span>{items.length}</span></h3><button className="campus-add-space" type="button" disabled={loading || Boolean(error)} onClick={openForm}><Plus size={15} aria-hidden="true" />Añadir espacio</button></div>
+    <p className="campus-zone-intro">{region.legacy ? 'Estos espacios se guardaron antes de separar los bloques. Puedes asignarles su bloque desde la sección Espacios.' : 'Organiza las ubicaciones de este edificio y reporta lo que necesite atención.'}</p>
+    <div className="campus-internal-heading"><h3>Espacios internos <span>{items.length}</span></h3>{!region.legacy && <button className="campus-add-space" type="button" disabled={loading || Boolean(error)} onClick={openForm}><Plus size={15} aria-hidden="true" />Añadir espacio</button>}</div>
     {loading ? <p className="campus-space-message" role="status">Cargando espacios…</p> : error ? <div className="campus-space-error" role="alert"><p>{error}</p><button type="button" onClick={onReload}><RotateCcw size={14} aria-hidden="true" />Reintentar</button></div> : items.length ? <>
-      <label className="campus-space-select">Seleccionar espacio<select value={selectedId} onChange={event => { setSelectedId(event.target.value); setNotice(''); }}><option value="">Elige un espacio de la lista</option>{items.map(item => <option key={item.id} value={String(item.id)}>{item.name} · {item.zone}{item.active === false ? ' (archivado)' : ''}</option>)}</select></label>
+      <label className="campus-space-select">Seleccionar espacio<select value={selectedSpaceId} onChange={event => { onSelectSpace(event.target.value); setNotice(''); }}><option value="">Elige un espacio de la lista</option>{items.map(item => <option key={item.id} value={String(item.id)}>{item.name} · {item.zone}{!activeRecord(item) ? ' (archivado)' : ''}</option>)}</select></label>
       {selected ? <section className="campus-space-detail" aria-label="Espacio seleccionado"><div><MapPin size={18} aria-hidden="true" /><StatusBadge value={selected.active} /></div><h3>{selected.name}</h3><p>{selected.zone}</p><span>Dentro de {region.label}</span></section> : <p className="campus-space-message">Elige una ubicación para ver sus datos.</p>}
     </> : <div className="campus-empty"><List size={27} strokeWidth={1.4} aria-hidden="true" /><h3>Aún no hay espacios internos</h3><p>Añade el primer salón, baño u oficina de este edificio. Aparecerá en su lista.</p></div>}
+    <div className="campus-report-action">
+      {canReport ? <Link className="campus-report-button" to={incidentReportUrl(region.id, selected?.id)}>Reportar incidencia<ArrowRight size={16} aria-hidden="true" /></Link> : <button className="campus-report-button" type="button" disabled>Reportar incidencia<ArrowRight size={16} aria-hidden="true" /></button>}
+      {!loading && !error && <p>{selected && !activeRecord(selected) ? 'Este espacio está archivado. Selecciona uno activo para reportar.' : items.some(activeRecord) ? selected ? `El reporte se registrará en ${selected.name}.` : 'El edificio quedará seleccionado; elige su espacio en el formulario.' : 'Añade un espacio activo para poder registrar un reporte en este edificio.'}</p>}
+    </div>
     {notice && <p className="campus-space-success" role="status">{notice}</p>}
-    <div className="campus-panel-note"><Info size={16} aria-hidden="true" /><p>Puedes añadir salones, baños, oficinas y otras ubicaciones dentro de este edificio.</p></div>
+    <div className="campus-panel-note"><Info size={16} aria-hidden="true" /><p>{region.legacy ? <Link to="/espacios">Organizar los espacios por bloque</Link> : 'Los espacios que añadas también aparecerán en el directorio del campus.'}</p></div>
     {creating && <Modal as="form" className="modal catalog-form" labelledBy="campus-create-space-title" onClose={() => { if (!saving) setCreating(false); }} onSubmit={save}>
       <div className="modal-head"><div><p className="eyebrow">{region.label}</p><h2 id="campus-create-space-title">Añadir espacio interno</h2></div><button type="button" className="icon-button" aria-label="Cerrar formulario" disabled={saving} onClick={() => setCreating(false)}><X size={20} /></button></div>
       {formError && <p className="page-error" role="alert">{formError}</p>}
